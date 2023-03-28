@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
+import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -40,6 +41,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -49,17 +52,40 @@ import java.util.List;
 import java.util.Locale;
 import com.scand.svg.SVGHelper;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 public class MainActivity extends AppCompatActivity {
     static final String TAG = MainActivity.class.getSimpleName();
     private BrailleDisplay brailleServiceObj = null;
     final private Handler mHandler = new Handler();
     private byte[][] data = null;
-    private byte[][] dataRead = null;
+    //private byte[][] dataRead = null;
     int[] intArray;
+    int layercount;
+    String image;
+    int presentLayer=0;
 
     private ArrayList[][] tags;
 
-
+    private ArrayList<byte[][]> dataLayers;
 
 
 
@@ -74,13 +100,13 @@ public class MainActivity extends AppCompatActivity {
         brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
 
         data = new byte[brailleServiceObj.getDotLineCount()][];
-        dataRead = new byte[brailleServiceObj.getDotLineCount()][];
+        //dataRead = new byte[brailleServiceObj.getDotLineCount()][];
         tags = new ArrayList [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
             data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
             Arrays.fill(data[i], (byte) 0x00);
-            dataRead[i] = new byte[brailleServiceObj.getDotPerLineCount()];
-            Arrays.fill(dataRead[i], (byte) 0x00);
+            //dataRead[i] = new byte[brailleServiceObj.getDotPerLineCount()];
+            //Arrays.fill(dataRead[i], (byte) 0x00);
             for (int j=0; j< brailleServiceObj.getDotPerLineCount(); ++j){
                 tags[i][j]=new ArrayList<String>();
             }
@@ -88,15 +114,15 @@ public class MainActivity extends AppCompatActivity {
 
         int[] ids = im.getInputDeviceIds();
         for(int i = 0; i < ids.length;++i) {
-            //im.getInputDevice(ids[i]).getName();
             Log.d(TAG, "id: " + ids[i] + ":" + im.getInputDevice(ids[i]).getName());
         }
 
-        String filename = "circle.svg";
+        String filename = "layers.json";
         File myExternalFile;
-        //String myData = "";
+        String myData = "";
         myExternalFile = new File("/sdcard/IMAGE/", filename);
 
+        /*
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
         {
             Log.d("SVG ERROR", "Permission not granted!");
@@ -104,8 +130,8 @@ public class MainActivity extends AppCompatActivity {
         else{
             Log.d("SVG", "Permission granted!");
         }
+         */
 
-        /*
         try {
             FileInputStream fis = new FileInputStream(myExternalFile);
             DataInputStream in = new DataInputStream(fis);
@@ -116,65 +142,47 @@ public class MainActivity extends AppCompatActivity {
                 myData = myData + strLine;
             }
             in.close();
-        } catch (IOException e) {
-            Log.d("SVG ERROR", String.valueOf(e));
 
-        }
-        */
+            JSONObject reader = new JSONObject(myData);
+            JSONObject sys  = reader.getJSONObject("data");
+            image = sys.getString("graphic").substring(26);
+
+            byte[] data = image.getBytes("UTF-8");
+            data = Base64.decode(data, Base64.DEFAULT);
+            image = new String(data, "UTF-8");
+
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            InputSource is = new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+image));
+            Document doc = builder.parse(is);
+
+            NodeList nodeslist = doc.getElementsByTagName("*");;
+            //Log.d("XML", String.valueOf(nodeslist.getLength()));
+            layercount=getLayerCount(nodeslist);
+            dataLayers= new ArrayList();
+            //Log.d("XML", String.valueOf(layercount));
+            int presentLayer=1;
 
 
-        try {
-            Bitmap svg = SVGHelper.noContext().open("<svg width=\"96\" height=\"40\" viewbox=\"0 0 96 40\"> \n" +
-                    "  <circle cx=\"48\" cy=\"20\" r=\"20\" fill=\"black\"/> <circle cx=\"0\" cy=\"20\" r=\"20\" fill=\"black\"/>\n" +
-                    "</svg>").setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
-            //Bitmap svg = SVGHelper.noContext().open(myExternalFile).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
-            Log.d("SVG", "SVG converted!");
-            Log.d("SVG", "Size"+ svg.getWidth()+","+svg.getHeight());
-            /*
-            int size = svg.getRowBytes() * svg.getHeight();
-            ByteBuffer byteBuffer = ByteBuffer.allocate(size);
-            svg.copyPixelsToBuffer(byteBuffer);
-            byte[] byteArray = byteBuffer.array();
-             */
-            /*
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            svg.compress(Bitmap.CompressFormat.PNG, 100, stream);
-            byte[] byteArray = stream.toByteArray();
-            svg.recycle();
-            */
-
-            Log.d("SVG VALS", String.valueOf(svg));
-            int x = svg.getWidth();
-            int y = svg.getHeight();
-            intArray = new int[brailleServiceObj.getDotPerLineCount() * brailleServiceObj.getDotLineCount()];
-            Bitmap svgScaled=padBitmap(svg, brailleServiceObj.getDotPerLineCount()-x, brailleServiceObj.getDotLineCount()-y);
-            svg.recycle();
-            svgScaled.getPixels(intArray, 0, brailleServiceObj.getDotPerLineCount(), 0, 0, brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount());
-            //Log.d("SVG SIZE", svgScaled.getWidth()+ ", "+svgScaled.getHeight());
-            //svg.getPixels(intArray, 0, x, 0, 0, x, y);
-            int numZeros = 0;
-
-            for (int i = 0; i < intArray.length; i++) {
-                if (intArray[i] == 0) {
-                    numZeros++;
-                }
+            for (int i=1; i<=layercount; i++){
+                dataLayers.add(createBitmaps(doc, i));
+                is = new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+image));
+                doc = builder.parse(is);
             }
+
+
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
             throw new RuntimeException(e);
         }
 
-        for (int j = 0; j < dataRead.length; ++j) {
-            for (int k= 0; k< brailleServiceObj.getDotPerLineCount(); ++k){
-                if (intArray[j* brailleServiceObj.getDotPerLineCount()+k] == 0) {
-                    dataRead[j][k]=(byte) 0x00;
-                    //Log.d("ONES", "Here");
-                }
-                else{
-                    dataRead[j][k]=(byte) 0x01;
-                    tags[j][k].add("Circle");
-                }
-            }
-        }
+
+
 
         /*
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -220,9 +228,6 @@ public class MainActivity extends AppCompatActivity {
                 //return true;
             }
         });
-        //Log.d("PINARRAY", String.valueOf(brailleServiceObj.getDotLineCount())+","+String.valueOf(brailleServiceObj.getDotPerLineCount()));
-
-
 
         ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -237,20 +242,10 @@ public class MainActivity extends AppCompatActivity {
 
         ((Button) findViewById(R.id.ones)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                /*
-                for (int j = 0; j < data.length; ++j) {
-                    for (int k= 0; k< brailleServiceObj.getDotPerLineCount(); ++k){
-                        if (intArray[j* brailleServiceObj.getDotPerLineCount()+k] == 0) {
-                            data[j][k]=(byte) 0x00;
-                            //Log.d("ONES", "Here");
-                        }
-                        else{
-                            data[j][k]=(byte) 0x01;
-                        }
-                    }
-                }*/
-                brailleServiceObj.display(dataRead);
-
+                brailleServiceObj.display(dataLayers.get(presentLayer));
+                ++presentLayer;
+                if (presentLayer==layercount)
+                    presentLayer=0;
             }
         });
 
@@ -286,6 +281,95 @@ public class MainActivity extends AppCompatActivity {
                 new Paint(Paint.FILTER_BITMAP_FLAG));
 
         return paddedBitmap;
+    }
+
+    public int getLayerCount(NodeList nodeslist){
+        int layers=0;
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++){
+            Node node = nodeslist.item(i);
+            NamedNodeMap attrs = node.getAttributes();
+            for(int j = 0 ; j < attrs.getLength() ; j ++) {
+                Attr attribute = (Attr)attrs.item(j);
+                if (attribute.getName().equals("data-image-layer"))
+                {
+                    ++layers;
+                }
+
+            }
+        }
+        if (layers==0)
+            layers = 1;
+        else
+            ++layers;
+        return layers;
+    }
+
+    public String getStringFromDocument(Document doc)
+    {
+        try
+        {
+            DOMSource domSource = new DOMSource(doc);
+            StringWriter writer = new StringWriter();
+            StreamResult result = new StreamResult(writer);
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            transformer.transform(domSource, result);
+            return writer.toString();
+        }
+        catch(TransformerException ex)
+        {
+            Log.d("ERROR", "Write Failed");
+            return null;
+        }
+    }
+
+    public byte[][] createBitmaps(Document doc, int presentLayer) throws IOException {
+        int layer=0;
+        NodeList nodeslist = doc.getElementsByTagName("*");;
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++){
+            Node node = nodeslist.item(i);
+            NamedNodeMap attrs = node.getAttributes();
+            int j=0, k=0;
+            while (j<attrs.getLength()) {
+                Attr attribute = (Attr)attrs.item(j);
+                //Log.d("Layers!", attribute.getName());
+                if (attribute.getName().equals("data-image-layer"))
+                {
+                    ++layer;
+                    if (layer!= presentLayer && presentLayer!=layercount)
+                    {
+                        ((Element)node).setAttribute("display","none");
+                    }
+                }
+                ++j;
+
+            }
+        }
+        String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
+        Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
+        int x = svg.getWidth();
+        int y = svg.getHeight();
+        intArray = new int[brailleServiceObj.getDotPerLineCount() * brailleServiceObj.getDotLineCount()];
+        Bitmap svgScaled=padBitmap(svg, brailleServiceObj.getDotPerLineCount()-x, brailleServiceObj.getDotLineCount()-y);
+        svg.recycle();
+        svgScaled.getPixels(intArray, 0, brailleServiceObj.getDotPerLineCount(), 0, 0, brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount());
+
+        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
+        for (int j = 0; j < dataRead.length; ++j) {
+            for (int k= 0; k< brailleServiceObj.getDotPerLineCount(); ++k){
+                if (intArray[j* brailleServiceObj.getDotPerLineCount()+k] == 0) {
+                    dataRead[j][k]=(byte) 0x00;
+                    //Log.d("ONES", "Here");
+                }
+                else{
+                    dataRead[j][k]=(byte) 0x01;
+                    //tags[j][k].add("Objects");
+                }
+            }
+        }
+        //Log.d("LAYERS!", String.valueOf(dataRead));
+
+        return dataRead;
     }
 
 
