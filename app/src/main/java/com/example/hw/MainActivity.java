@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
             */
             /*
             for (int i=1; i<=layercount; i++){
-                dataLayers.add(createBitmaps(doc, i));
+                dataLayers.add(getBitmaps(doc, i));
                 is = new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+image));
                 doc = builder.parse(is);
             }
@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
                 if (status == TextToSpeech.SUCCESS) {
 
                     tts.setLanguage(Locale.getDefault());
-                    Log.d("TTS! ", String.valueOf(tts.getDefaultVoice()));
+                    //Log.d("TTS! ", String.valueOf(tts.getDefaultVoice()));
                     //tts.speak ("Hi, this is the Monarch. I can now speak!", TextToSpeech.QUEUE_FLUSH, null, "000000");
 
                 }
@@ -259,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 try {
-                    brailleServiceObj.display(createBitmaps(getfreshDoc(), presentLayer+1));
+                    brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer+1));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (ParserConfigurationException e) {
@@ -344,27 +344,6 @@ public class MainActivity extends AppCompatActivity {
         return paddedBitmap;
     }
 
-    /*public int getLayerCount(NodeList nodeslist){
-        int layers=0;
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++){
-            Node node = nodeslist.item(i);
-            NamedNodeMap attrs = node.getAttributes();
-            for(int j = 0 ; j < attrs.getLength() ; j ++) {
-                Attr attribute = (Attr)attrs.item(j);
-                if (attribute.getName().equals("data-image-layer"))
-                {
-                    ++layers;
-                }
-
-            }
-        }
-        if (layers==0)
-            layers = 1;
-        else
-            ++layers;
-        return layers;
-    }*/
-
     public String getStringFromDocument(Document doc)
     {
         try
@@ -384,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public byte[][] createBitmaps(Document doc, int presentLayer) throws IOException, XPathExpressionException {
+    public byte[][] getBitmaps(Document doc, int presentLayer) throws IOException, XPathExpressionException {
         int layer=0;
         XPath xPath = XPathFactory.newInstance().newXPath();
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
@@ -425,32 +404,14 @@ public class MainActivity extends AppCompatActivity {
             speaker("Full image");
         }
         getDescriptions(doc);
-
-
-
-
-
-        String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
-        //Log.d("SVG",img);
-        Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
-        int x = svg.getWidth();
-        int y = svg.getHeight();
-        intArray = new int[brailleServiceObj.getDotPerLineCount() * brailleServiceObj.getDotLineCount()];
-        Bitmap svgScaled=padBitmap(svg, brailleServiceObj.getDotPerLineCount()-x, brailleServiceObj.getDotLineCount()-y);
-        svg.recycle();
-
-        Bitmap alphas=svgScaled.extractAlpha();
-        int size = alphas.getRowBytes() * alphas.getHeight();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(size);
-        alphas.copyPixelsToBuffer(byteBuffer);
-        byte[] byteArray = byteBuffer.array();
+        byte[] byteArray= docToBitmap(doc);
         //Log.d("BITMAP", Arrays.toString(byteArray));
 
         byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
-        dataRead = new byte[brailleServiceObj.getDotLineCount()][];
+        //byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][];
         for (int i = 0; i < data.length; ++i) {
-            dataRead[i] = new byte[brailleServiceObj.getDotPerLineCount()];
-            dataRead[i]=Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), i*brailleServiceObj.getDotPerLineCount()+brailleServiceObj.getDotPerLineCount());
+            //dataRead[i] = new byte[brailleServiceObj.getDotPerLineCount()];
+            dataRead[i]=Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
         }
         return dataRead;
     }
@@ -462,9 +423,11 @@ public class MainActivity extends AppCompatActivity {
         //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i);
-            //((Element)node).setAttribute("data-present","none");
+            ((Element)node).setAttribute("display", "none");
+        }
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             String tag;
-            //Log.d("GETTING TAGS", node.getNodeName());
+            Node node = nodeslist.item(i);
             if (((Element)node).hasAttribute("aria-describedby")) {
                 tag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
                 //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
@@ -473,29 +436,8 @@ public class MainActivity extends AppCompatActivity {
                 tag=((Element)node).getAttribute("aria-description");
                 //Log.d("GETTING TAGS", "Otherwise here!");
             }
-            //Log.d("GETTING TAGS", tag);
-
-            for (int j=0;j< nodeslist.getLength() ; j++){
-                if (i!=j) {
-                    ((Element)nodeslist.item(j)).setAttribute("display", "none");
-                    }
-                }
-
-            String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
-
-            Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
-            int x = svg.getWidth();
-            int y = svg.getHeight();
-            intArray = new int[brailleServiceObj.getDotPerLineCount() * brailleServiceObj.getDotLineCount()];
-            Bitmap svgScaled=padBitmap(svg, brailleServiceObj.getDotPerLineCount()-x, brailleServiceObj.getDotLineCount()-y);
-            svg.recycle();
-
-            Bitmap alphas=svgScaled.extractAlpha();
-            int size = alphas.getRowBytes() * alphas.getHeight();
-            ByteBuffer byteBuffer = ByteBuffer.allocate(size);
-            alphas.copyPixelsToBuffer(byteBuffer);
-            byte[] byteArray = byteBuffer.array();
-
+            ((Element)node).removeAttribute("display");
+            byte[] byteArray= docToBitmap(doc);
             String[] finalLayerTags = layerTags;
             layerTags= Arrays.copyOf((IntStream.range(0,layerTags.length).mapToObj(k-> {
 
@@ -510,22 +452,22 @@ public class MainActivity extends AppCompatActivity {
                 else{
                     return finalLayerTags[k];
                 }
-            }).collect(Collectors.toList())).toArray(), layerTags.length, String[].class); ;
+            }).collect(Collectors.toList())).toArray(), layerTags.length, String[].class);
+            ((Element)node).setAttribute("display", "none");
+        }
 
-            for (int j=0;j< nodeslist.getLength() ; j++){
-                if (i!=j) {
-                    ((Element)nodeslist.item(j)).removeAttribute("display");
-                }
-            }
-            }
+
         //tags= new String[brailleServiceObj.getDotLineCount()][];
-        for (int i = 0; i < data.length; ++i) {
-            //tags[i] = new String[brailleServiceObj.getDotPerLineCount()];
-            tags[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), i*brailleServiceObj.getDotPerLineCount()+brailleServiceObj.getDotPerLineCount());
+            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+                Node node = nodeslist.item(i);
+                ((Element)node).removeAttribute("display");
+            }
+            for (int i = 0; i < data.length; ++i) {
+                tags[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+            }
+            return;
         }
-        return;
-        }
-    public void svgToBitmap(Document doc) throws IOException {
+    public byte[] docToBitmap(Document doc) throws IOException {
         String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
         //Log.d("SVG",img);
         Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
@@ -540,21 +482,8 @@ public class MainActivity extends AppCompatActivity {
         ByteBuffer byteBuffer = ByteBuffer.allocate(size);
         alphas.copyPixelsToBuffer(byteBuffer);
         byte[] byteArray = byteBuffer.array();
+        return byteArray;
     }
-/*
-    public void audioPlayer(String path, String fileName){
-        //set up MediaPlayer
-        MediaPlayer mp = new MediaPlayer();
-
-        try {
-            mp.setDataSource(path + File.separator + fileName);
-            mp.prepare();
-            mp.start();
-        } catch (Exception e) {
-            Log.d("ERROR", e.toString());
-        }
-    }
-*/
     public String[] getFile(int fileNumber) throws IOException, JSONException {
         File directory = new File("/sdcard/IMAGE/");
         File[] files = directory.listFiles();
@@ -601,7 +530,84 @@ public class MainActivity extends AppCompatActivity {
         tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, "000000");
         return;
     }
+    /*
+    public void audioPlayer(String path, String fileName){
+        //set up MediaPlayer
+        MediaPlayer mp = new MediaPlayer();
 
+        try {
+            mp.setDataSource(path + File.separator + fileName);
+            mp.prepare();
+            mp.start();
+        } catch (Exception e) {
+            Log.d("ERROR", e.toString());
+        }
+    }
+    */
+    /*public int getLayerCount(NodeList nodeslist){
+        int layers=0;
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++){
+            Node node = nodeslist.item(i);
+            NamedNodeMap attrs = node.getAttributes();
+            for(int j = 0 ; j < attrs.getLength() ; j ++) {
+                Attr attribute = (Attr)attrs.item(j);
+                if (attribute.getName().equals("data-image-layer"))
+                {
+                    ++layers;
+                }
+
+            }
+        }
+        if (layers==0)
+            layers = 1;
+        else
+            ++layers;
+        return layers;
+    }*/
 
 
 }
+
+            /*for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i);
+            //((Element)node).setAttribute("data-present","none");
+            String tag;
+            //Log.d("GETTING TAGS", node.getNodeName());
+            if (((Element)node).hasAttribute("aria-describedby")) {
+                tag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+                //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
+            }
+            else{
+                tag=((Element)node).getAttribute("aria-description");
+                //Log.d("GETTING TAGS", "Otherwise here!");
+            }
+            //Log.d("GETTING TAGS", tag);
+
+            for (int j=0;j< nodeslist.getLength() ; j++){
+                if (i!=j) {
+                    ((Element)nodeslist.item(j)).setAttribute("display", "none");
+                    }
+                }
+            byte[] byteArray= docToBitmap(doc);
+            String[] finalLayerTags = layerTags;
+            layerTags= Arrays.copyOf((IntStream.range(0,layerTags.length).mapToObj(k-> {
+
+                if (byteArray[k]!=0){
+                    if (finalLayerTags[k]==null){
+                        return tag;
+                    }
+                    else {
+                        return finalLayerTags[k] + ", " + tag;
+                    }
+                }
+                else{
+                    return finalLayerTags[k];
+                }
+            }).collect(Collectors.toList())).toArray(), layerTags.length, String[].class); ;
+
+            for (int j=0;j< nodeslist.getLength() ; j++){
+                if (i!=j) {
+                    ((Element)nodeslist.item(j)).removeAttribute("display");
+                }
+            }
+            }*/
