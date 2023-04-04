@@ -96,17 +96,10 @@ public class MainActivity extends AppCompatActivity {
         brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
 
         data = new byte[brailleServiceObj.getDotLineCount()][];
-        //dataRead = new byte[brailleServiceObj.getDotLineCount()][];
-        //tags = new ArrayList [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         tags = new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
             data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
             Arrays.fill(data[i], (byte) 0x00);
-            //dataRead[i] = new byte[brailleServiceObj.getDotPerLineCount()];
-            //Arrays.fill(dataRead[i], (byte) 0x00);
-            /*for (int j=0; j< brailleServiceObj.getDotPerLineCount(); ++j){
-                tags[i][j]=new ArrayList<String>();
-            }*/
         }
 
         int[] ids = im.getInputDeviceIds();
@@ -115,50 +108,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        /*
-        File directory = new File("/sdcard/IMAGE/");
-        File[] files = directory.listFiles();
-        Log.d("Files", "Size: "+ files.length);
-        for (int i = 0; i < files.length; i++)
-        {
-            Log.d("Files", "FileName:" + files[i].getName());
-        }
-
-        String filename = "layers.json";
-        File myExternalFile= new File("/sdcard/IMAGE/", filename);
-        String myData = "";
-
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
-        {
-            Log.d("SVG ERROR", "Permission not granted!");
-        }
-        else{
-            Log.d("SVG", "Permission granted!");
-        }
-         */
-        /*
-        try {
-
-            FileInputStream fis = new FileInputStream(myExternalFile);
-            DataInputStream in = new DataInputStream(fis);
-            BufferedReader br =
-                    new BufferedReader(new InputStreamReader(in));
-            String strLine;
-            while ((strLine = br.readLine()) != null) {
-                myData = myData + strLine;
-            }
-            in.close();
-
-            JSONObject reader = new JSONObject(myData);
-            JSONObject sys  = reader.getJSONObject("data");
-            image = sys.getString("graphic").substring(26);
-
-            byte[] data = image.getBytes("UTF-8");
-            data = Base64.decode(data, Base64.DEFAULT);
-            image = new String(data, "UTF-8");
-
-             */
 
         try {
             image=getFile(0)[0];
@@ -167,36 +116,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-            /*
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            InputSource is = new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+image));
-            Document doc = builder.parse(is);
-
-            NodeList nodeslist = doc.getElementsByTagName("*");;
-            layercount=getLayerCount(nodeslist);
-            //dataLayers= new ArrayList();
-            */
-            /*
-            for (int i=1; i<=layercount; i++){
-                dataLayers.add(getBitmaps(doc, i));
-                is = new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+image));
-                doc = builder.parse(is);
-            }
-
-
-
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-        */
+            
 
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
 
@@ -245,12 +165,7 @@ public class MainActivity extends AppCompatActivity {
 
         ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                /*for (int j = 0; j < data.length; ++j) {
-                    Arrays.fill(data[j], (byte) 0x00);
-                }*/
                 brailleServiceObj.display(data);
-                //tts.speak ("Hi, this is the Monarch. I can now speak!", TextToSpeech.QUEUE_FLUSH, null, "000000");
-                //tts.synthesizeToFile ("Hi, this is the Monarch. I can now speak!", null, new File("/sdcard/IMAGE/", "audio"), "0000");
             }
         });
 
@@ -278,7 +193,6 @@ public class MainActivity extends AppCompatActivity {
         Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
         debugSwitch.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                //tts.speak ("Hi, this is the Monarch. I can now speak!", TextToSpeech.QUEUE_FLUSH, null, "000000");
                 brailleServiceObj.setDebugView(debugSwitch.isChecked());
                 //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
             }
@@ -397,8 +311,6 @@ public class MainActivity extends AppCompatActivity {
                 Node node = nodeslist.item(i);
                 ((Element)node).setAttribute("display","none");
             }
-            //Getting element descriptions
-            //Log.d("GETTING TAGS", getStringFromDocument(doc));
         }
         else{
             speaker("Full image");
@@ -408,9 +320,7 @@ public class MainActivity extends AppCompatActivity {
         //Log.d("BITMAP", Arrays.toString(byteArray));
 
         byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
-        //byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][];
         for (int i = 0; i < data.length; ++i) {
-            //dataRead[i] = new byte[brailleServiceObj.getDotPerLineCount()];
             dataRead[i]=Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
         }
         return dataRead;
@@ -430,11 +340,9 @@ public class MainActivity extends AppCompatActivity {
             Node node = nodeslist.item(i);
             if (((Element)node).hasAttribute("aria-describedby")) {
                 tag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
-                //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
             }
             else{
                 tag=((Element)node).getAttribute("aria-description");
-                //Log.d("GETTING TAGS", "Otherwise here!");
             }
             ((Element)node).removeAttribute("display");
             byte[] byteArray= docToBitmap(doc);
@@ -456,8 +364,6 @@ public class MainActivity extends AppCompatActivity {
             ((Element)node).setAttribute("display", "none");
         }
 
-
-        //tags= new String[brailleServiceObj.getDotLineCount()][];
             for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
                 Node node = nodeslist.item(i);
                 ((Element)node).removeAttribute("display");
@@ -530,6 +436,7 @@ public class MainActivity extends AppCompatActivity {
         tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, "000000");
         return;
     }
+ 
     /*
     public void audioPlayer(String path, String fileName){
         //set up MediaPlayer
@@ -544,70 +451,5 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     */
-    /*public int getLayerCount(NodeList nodeslist){
-        int layers=0;
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++){
-            Node node = nodeslist.item(i);
-            NamedNodeMap attrs = node.getAttributes();
-            for(int j = 0 ; j < attrs.getLength() ; j ++) {
-                Attr attribute = (Attr)attrs.item(j);
-                if (attribute.getName().equals("data-image-layer"))
-                {
-                    ++layers;
-                }
-
-            }
-        }
-        if (layers==0)
-            layers = 1;
-        else
-            ++layers;
-        return layers;
-    }*/
-
 
 }
-
-            /*for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            //((Element)node).setAttribute("data-present","none");
-            String tag;
-            //Log.d("GETTING TAGS", node.getNodeName());
-            if (((Element)node).hasAttribute("aria-describedby")) {
-                tag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
-                //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
-            }
-            else{
-                tag=((Element)node).getAttribute("aria-description");
-                //Log.d("GETTING TAGS", "Otherwise here!");
-            }
-            //Log.d("GETTING TAGS", tag);
-
-            for (int j=0;j< nodeslist.getLength() ; j++){
-                if (i!=j) {
-                    ((Element)nodeslist.item(j)).setAttribute("display", "none");
-                    }
-                }
-            byte[] byteArray= docToBitmap(doc);
-            String[] finalLayerTags = layerTags;
-            layerTags= Arrays.copyOf((IntStream.range(0,layerTags.length).mapToObj(k-> {
-
-                if (byteArray[k]!=0){
-                    if (finalLayerTags[k]==null){
-                        return tag;
-                    }
-                    else {
-                        return finalLayerTags[k] + ", " + tag;
-                    }
-                }
-                else{
-                    return finalLayerTags[k];
-                }
-            }).collect(Collectors.toList())).toArray(), layerTags.length, String[].class); ;
-
-            for (int j=0;j< nodeslist.getLength() ; j++){
-                if (i!=j) {
-                    ((Element)nodeslist.item(j)).removeAttribute("display");
-                }
-            }
-            }*/
