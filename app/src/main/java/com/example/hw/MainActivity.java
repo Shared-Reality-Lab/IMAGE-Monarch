@@ -74,6 +74,9 @@ public class MainActivity extends AppCompatActivity {
     int[] intArray;
     int layercount;
     String image;
+
+    //presentLayer: The layer to be displayed when pins are raised;
+    //fileSelected: file index from the list of files in specified target directory.
     int presentLayer=0, fileSelected=0;
 
     //private ArrayList[][] tags;
@@ -127,8 +130,7 @@ public class MainActivity extends AppCompatActivity {
                 if(status != TextToSpeech.SUCCESS){
                     Log.e("error", "Initialization Failed!"+status);
                 }
-                if (status == TextToSpeech.SUCCESS) {
-
+                else {
                     tts.setLanguage(Locale.getDefault());
                 }
 
@@ -175,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     // Display current layer
-                    brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer+1));
+                    brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (ParserConfigurationException e) {
@@ -185,9 +187,8 @@ public class MainActivity extends AppCompatActivity {
                 } catch (XPathExpressionException e) {
                     throw new RuntimeException(e);
                 }
-                // Update present layer count
-                ++presentLayer;
-                if (presentLayer==layercount)
+                //Log.d("LAYER!", String.valueOf(presentLayer));
+                if (presentLayer==layercount+1)
                     presentLayer=0;
             }
         });
@@ -209,10 +210,8 @@ public class MainActivity extends AppCompatActivity {
             // Navigating between files
             case 421:
                 try {
-                    ++fileSelected;
                     presentLayer=0;
-                    String[] output;
-                    output=getFile(fileSelected);
+                    String[] output=getFile(++fileSelected);
                     image=output[0];
                     speaker("Opening file "+ output[1]);
                     brailleServiceObj.display(data);
@@ -225,10 +224,8 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             case 420:
                 try {
-                    --fileSelected;
                     presentLayer=0;
-                    String[] output;
-                    output=getFile(fileSelected);
+                    String[] output =getFile(--fileSelected);
                     image=output[0];
                     speaker("Opening file "+ output[1]);
                     brailleServiceObj.display(data);
@@ -285,19 +282,20 @@ public class MainActivity extends AppCompatActivity {
     // get present layer and the description tags from the doc
     public byte[][] getBitmaps(Document doc, int presentLayer) throws IOException, XPathExpressionException {
         int layer=0;
+        //Log.d("LAYER!", String.valueOf(presentLayer));
         XPath xPath = XPathFactory.newInstance().newXPath();
         // get list of layers
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
-        layercount=nodeslist.getLength()+1;
+        layercount=nodeslist.getLength();
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i);
             // hide layers which are not the present layer
-            if ((i+1)!= presentLayer && presentLayer!=layercount) {
+            if (i!= presentLayer && presentLayer!=layercount) {
                 ((Element)node).setAttribute("display","none");
             }
             // TTS output of layer description
-            if ((i+1)==presentLayer){
+            if (i==presentLayer){
                 //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
                     String tag;
                     //Log.d("GETTING TAGS", node.getNodeName());
@@ -325,11 +323,11 @@ public class MainActivity extends AppCompatActivity {
             speaker("Full image");
         }
         // fetch TTS tags for elements within present layer
-        getDescriptions(doc);
+        //getDescriptions(doc);
         // get bitmap of present layer
         byte[] byteArray= docToBitmap(doc);
         //Log.d("BITMAP", Arrays.toString(byteArray));
-
+        getDescriptions(doc);
         // reshape byte array into 2D array to match pin array dimensions
         byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
@@ -363,7 +361,7 @@ public class MainActivity extends AppCompatActivity {
             ((Element)node).removeAttribute("display");
             byte[] byteArray= docToBitmap(doc);
             String[] finalLayerTags = layerTags;
-            // mapping pins corresponding to the selected element to its description tag. Making the funny copy to convert object array to string array!
+            // mapping pins corresponding to the selected element to its description tag. Unable to directly convert Object array to String array but can use the funny copy hack to do it!
             layerTags= Arrays.copyOf((IntStream.range(0,layerTags.length).mapToObj(k-> {
 
                 if (byteArray[k]!=0){
@@ -381,11 +379,7 @@ public class MainActivity extends AppCompatActivity {
             // hiding element again so we can move on to the next element
             ((Element)node).setAttribute("display", "none");
         }
-            // undoing changes made at this stage...
-            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-                Node node = nodeslist.item(i);
-                ((Element)node).removeAttribute("display");
-            }
+
             // converting string array into 2D array that maps to the pins
             for (int i = 0; i < data.length; ++i) {
                 tags[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
@@ -411,7 +405,7 @@ public class MainActivity extends AppCompatActivity {
         byte[] byteArray = byteBuffer.array();
         return byteArray;
     }
-    // fetching the file to read from
+    // fetching the file to read from; returning file contents as string and file name
     public String[] getFile(int fileNumber) throws IOException, JSONException {
         File directory = new File("/sdcard/IMAGE/");
         File[] files = directory.listFiles();
@@ -448,7 +442,8 @@ public class MainActivity extends AppCompatActivity {
     public Document getfreshDoc() throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
-        InputSource is = new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+image));
+        InputSource is = new InputSource(new StringReader(image));
+        //Log.d("STRING", image);
         Document doc = builder.parse(is);
         return doc;
     }
