@@ -1,6 +1,8 @@
 package com.example.hw;
 
 
+import static java.util.Map.entry;
+
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -34,7 +36,9 @@ import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -69,11 +73,10 @@ public class MainActivity extends AppCompatActivity {
     static final String TAG = MainActivity.class.getSimpleName();
     private BrailleDisplay brailleServiceObj = null;
     //final private Handler mHandler = new Handler();
-    private byte[][] data = null;
-    //private byte[][] dataRead = null;
-    int[] intArray;
-    int layercount;
-    String image;
+    private byte[][] data = null; // byte array used to reset pins
+
+    int layercount; // number of layers found in svg
+    String image;// used to store svg in string format
 
     //presentLayer: The layer to be displayed when pins are raised;
     //fileSelected: file index from the list of files in specified target directory.
@@ -206,37 +209,30 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
+        try {
+            Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
+                put(421, "UP");
+                put(420, "DOWN");
+            }};
+            switch (keyMapping.getOrDefault(keyCode, "default")) {
             // Navigating between files
-            case 421:
-                try {
-                    presentLayer=0;
-                    String[] output=getFile(++fileSelected);
-                    image=output[0];
-                    speaker("Opening file "+ output[1]);
-                    brailleServiceObj.display(data);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
-
-                return true;
-            case 420:
-                try {
-                    presentLayer=0;
-                    String[] output =getFile(--fileSelected);
-                    image=output[0];
-                    speaker("Opening file "+ output[1]);
-                    brailleServiceObj.display(data);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
+            case "UP":
+                    Log.d(TAG, event.toString());
+                    changeFile(++fileSelected);
+                    return true;
+            // Navigating between files
+            case "DOWN":
+                    Log.d(TAG, event.toString());
+                    changeFile(--fileSelected);
+                    return true;
             default:
                 Log.d(TAG, event.toString());
                 return false;
+        }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -284,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
         int layer=0;
         //Log.d("LAYER!", String.valueOf(presentLayer));
         XPath xPath = XPathFactory.newInstance().newXPath();
-        // get list of layers
+        // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
         layercount=nodeslist.getLength();
@@ -361,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
             ((Element)node).removeAttribute("display");
             byte[] byteArray= docToBitmap(doc);
             String[] finalLayerTags = layerTags;
-            // mapping pins corresponding to the selected element to its description tag. Unable to directly convert Object array to String array but can use the funny copy hack to do it!
+            // mapping pins corresponding to the selected element to its description tag. Unable to directly convert Object array (which is the return type of mapToObj) to String array but can use the funny copy hack to do it!
             layerTags= Arrays.copyOf((IntStream.range(0,layerTags.length).mapToObj(k-> {
 
                 if (byteArray[k]!=0){
@@ -393,7 +389,7 @@ public class MainActivity extends AppCompatActivity {
         Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
         int x = svg.getWidth();
         int y = svg.getHeight();
-        intArray = new int[brailleServiceObj.getDotPerLineCount() * brailleServiceObj.getDotLineCount()];
+        int[] intArray = new int[brailleServiceObj.getDotPerLineCount() * brailleServiceObj.getDotLineCount()];
         // padding bitmap to fit to pin array size
         Bitmap svgScaled=padBitmap(svg, brailleServiceObj.getDotPerLineCount()-x, brailleServiceObj.getDotLineCount()-y);
         svg.recycle();
@@ -405,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
         byte[] byteArray = byteBuffer.array();
         return byteArray;
     }
-    // fetching the file to read from; returning file contents as string and file name
+    // fetching the file to read from; returns file contents as String and also the file name
     public String[] getFile(int fileNumber) throws IOException, JSONException {
         File directory = new File("/sdcard/IMAGE/");
         File[] files = directory.listFiles();
@@ -437,6 +433,16 @@ public class MainActivity extends AppCompatActivity {
         data = Base64.decode(data, Base64.DEFAULT);
         image = new String(data, "UTF-8");
         return new String[]{image, files[fileSelected].getName().substring(0, files[fileSelected].getName().length()-5)};
+    }
+
+    //similar to getFile. To be used when TTS read out of file name is required. Could possibly replace getFile entirely
+    public void changeFile(int fileNumber) throws JSONException, IOException {
+        presentLayer=0;
+        String[] output=getFile(fileNumber);
+        image=output[0];
+        speaker("Opening file "+ output[1]);
+        brailleServiceObj.display(data);
+        return;
     }
     // get fresh copy of the file void of previously made changes
     public Document getfreshDoc() throws ParserConfigurationException, IOException, SAXException {
