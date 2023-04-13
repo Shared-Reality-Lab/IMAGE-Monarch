@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.util.Base64;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.TypedArrayUtils;
+import androidx.core.view.GestureDetectorCompat;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -69,7 +71,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener  {
     static final String TAG = MainActivity.class.getSimpleName();
     private BrailleDisplay brailleServiceObj = null;
     //final private Handler mHandler = new Handler();
@@ -83,11 +85,12 @@ public class MainActivity extends AppCompatActivity {
     int presentLayer=0, fileSelected=0;
 
     //private ArrayList[][] tags;
-    private String[][] tags;
-
+    //private String[][] tags, descriptions;
+    private ArrayList<String[][]> tags;
     //private ArrayList<byte[][]> dataLayers;
 
     static TextToSpeech tts;
+    private GestureDetectorCompat mDetector;
 
 
 
@@ -98,16 +101,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mDetector = new GestureDetectorCompat(this,this);
+        // Set the gesture detector as the double tap
+        // listener.
+        mDetector.setOnDoubleTapListener(this);
+
         InputManager im = (InputManager) getSystemService(INPUT_SERVICE);
         brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
 
-        // Arrays for pin down and TTS tags. Can use forceRefresh() instead of data??
+        // Arrays for pin down and TTS tags
         data = new byte[brailleServiceObj.getDotLineCount()][];
-        tags = new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
             data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
             Arrays.fill(data[i], (byte) 0x00);
         }
+
+        tags = new ArrayList<>();
+        tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
+        tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
 
         int[] ids = im.getInputDeviceIds();
         for(int i = 0; i < ids.length;++i) {
@@ -141,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
             }});
 
 
-        brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
+        /*brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
             public boolean handleMotionEvent(MotionEvent e) {
                 // Observed limits of IR outputs for the pin array. Might need tweaking for more accurate mapping of finger location to pin...
@@ -155,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
                 //Log.d(TAG, String.valueOf(e.getX())+","+String.valueOf(e.getY())+ " ; "+ pinX+","+pinY);
                 try{
                     // Speak out TTS tags based on finger location
-                    speaker(tags[pinY][pinX]);
+                    speaker(tags.get(0)[pinY][pinX]);
                 }
                 catch(RuntimeException ex){
                     Log.d(TAG, String.valueOf(ex));
@@ -166,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
                 return false;
                 //return true;
             }
-        });
+        });*/
 
         ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -295,12 +306,12 @@ public class MainActivity extends AppCompatActivity {
                 //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
                     String tag;
                     //Log.d("GETTING TAGS", node.getNodeName());
-                    if (((Element)node).hasAttribute("aria-describedby")) {
-                        tag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+                    if (((Element)node).hasAttribute("aria-labelledby")) {
+                        tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
                         //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
                         }
                     else{
-                        tag=((Element)node).getAttribute("aria-description");
+                        tag=((Element)node).getAttribute("aria-label");
                         //Log.d("GETTING TAGS", "Otherwise here!");
                         }
                     speaker("Layer: "+tag);
@@ -331,12 +342,15 @@ public class MainActivity extends AppCompatActivity {
         }
         return dataRead;
     }
+    // get basic and detailed descriptions
     public void getDescriptions(Document doc) throws XPathExpressionException, IOException {
         //Log.d("GETTING TAGS", "Here!");
         XPath xPath = XPathFactory.newInstance().newXPath();
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and not(self::*[@data-image-layer]) and (self::*[@aria-describedby] or self::*[@aria-description])]", doc, XPathConstants.NODESET);
+        // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and not(self::*[@data-image-layer]) and (self::*[@aria-labelledby] or self::*[@aria-label])]", doc, XPathConstants.NODESET);
         String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
+        String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
         //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
         // intially hiding all elements filtered in the previous stage
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
@@ -344,19 +358,43 @@ public class MainActivity extends AppCompatActivity {
             ((Element)node).setAttribute("display", "none");
         }
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            String tag;
+            String tag, detailTag = null;
             Node node = nodeslist.item(i);
             // fetching the tag for each element 
-            if (((Element)node).hasAttribute("aria-describedby")) {
-                tag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+            if (((Element)node).hasAttribute("aria-labelledby")) {
+                tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
             }
             else{
-                tag=((Element)node).getAttribute("aria-description");
+                tag=((Element)node).getAttribute("aria-label");
             }
+            if (((Element)node).hasAttribute("aria-describedby")) {
+                detailTag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+            }
+            if (((Element)node).hasAttribute("aria-label")){
+                detailTag=((Element)node).getAttribute("aria-description");
+            }
+
             // showing the element whose tag is stored to obtain its bitmap mapping
             ((Element)node).removeAttribute("display");
             byte[] byteArray= docToBitmap(doc);
-            String[] finalLayerTags = layerTags;
+            // using a for loop to map since there are now 2 kinds of tags: label and detailed
+            for (int j=0; j<layerTags.length; j++){
+                if (byteArray[j]!=0){
+                    if (layerTags[j]==null){
+                        layerTags[j]=tag;
+                    }
+                    else {
+                        layerTags[j]= layerTags[j] + ", " + tag;
+                    }
+                    if (layerDesc[j]==null){
+                        layerDesc[j]=detailTag;
+                    }
+                    else {
+                        layerDesc[j]= layerDesc[j] + ", " + tag;
+                    }
+                }
+            }
+            /*String[] finalLayerTags = layerTags;
             // mapping pins corresponding to the selected element to its description tag. Unable to directly convert Object array (which is the return type of mapToObj) to String array but can use the funny copy hack to do it!
             layerTags= Arrays.copyOf((IntStream.range(0,layerTags.length).mapToObj(k-> {
 
@@ -371,14 +409,16 @@ public class MainActivity extends AppCompatActivity {
                 else{
                     return finalLayerTags[k];
                 }
-            }).collect(Collectors.toList())).toArray(), layerTags.length, String[].class);
+            }).collect(Collectors.toList())).toArray(), layerTags.length, String[].class);*/
+
             // hiding element again so we can move on to the next element
             ((Element)node).setAttribute("display", "none");
         }
 
             // converting string array into 2D array that maps to the pins
             for (int i = 0; i < data.length; ++i) {
-                tags[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+                tags.get(0)[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+                tags.get(1)[i]=Arrays.copyOfRange(layerDesc, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
             }
             return;
         }
@@ -454,12 +494,104 @@ public class MainActivity extends AppCompatActivity {
         return doc;
     }
 
+    public Integer[] pinCheck(float x, float y){
+        float xMin= 0;
+        float xMax= 1920;
+        float yMin=23;
+        float yMax=1080;
+        // Calculating pin based on position
+        int pinX= (int) (Math.ceil((x-xMin+0.000001)/((xMax-xMin)/brailleServiceObj.getDotPerLineCount()))-1);
+        int pinY= (int) Math.ceil((y-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
+        return new Integer[] {pinX, pinY};
+    }
+
     // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
     public void speaker(String text){
         tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, "000000");
         return;
     }
- 
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        if (this.mDetector.onTouchEvent(event)) {
+            //Log.d("GESTURE!","In here!");
+            return true;
+        }
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onDown(MotionEvent event) {
+        Log.d("GESTURE!","onDown: " + event.toString());
+
+        return true;
+    }
+
+    @Override
+    public boolean onFling(MotionEvent event1, MotionEvent event2,
+                           float velocityX, float velocityY) {
+        Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
+        return true;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent event) {
+        Integer [] pins=pinCheck(event.getX(), event.getY());
+        try{
+            // Speak out TTS tags based on finger location
+            speaker(tags.get(1)[pins[1]][pins[0]]);
+        }
+        catch(RuntimeException ex){
+            Log.d(TAG, String.valueOf(ex));
+        }
+        Log.d("GESTURE!", "onLongPress: " + event.toString());
+
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
+                            float distanceY) {
+        Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
+        return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent event) {
+        Log.d("GESTURE!", "onShowPress: " + event.toString());
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent event) {
+        Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
+        Integer [] pins=pinCheck(event.getX(), event.getY());
+        try{
+            // Speak out TTS tags based on finger location
+            speaker(tags.get(0)[pins[1]][pins[0]]);
+        }
+        catch(RuntimeException ex){
+            Log.d(TAG, String.valueOf(ex));
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onDoubleTap(MotionEvent event) {
+        Log.d("GESTURE!", "onDoubleTap: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onDoubleTapEvent(MotionEvent event) {
+        Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onSingleTapConfirmed(MotionEvent event) {
+        Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
+        return true;
+    }
+
     /*
     //Audio player for media files. Not being used currently
     public void audioPlayer(String path, String fileName){
