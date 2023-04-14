@@ -1,22 +1,16 @@
 package com.example.hw;
 
 
-import android.Manifest;
+import static java.util.Map.entry;
+
 import android.annotation.SuppressLint;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.hardware.input.InputManager;
-import android.net.Uri;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.os.ParcelFileDescriptor;
-import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
 import android.util.Base64;
 import android.util.Log;
@@ -29,27 +23,26 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.res.TypedArrayUtils;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import com.scand.svg.SVGHelper;
 
 import org.json.JSONException;
@@ -71,21 +64,30 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 public class MainActivity extends AppCompatActivity {
     static final String TAG = MainActivity.class.getSimpleName();
     private BrailleDisplay brailleServiceObj = null;
-    final private Handler mHandler = new Handler();
-    private byte[][] data = null;
-    //private byte[][] dataRead = null;
-    int[] intArray;
-    int layercount;
-    String image;
-    int presentLayer=0;
+    //final private Handler mHandler = new Handler();
+    private byte[][] data = null; // byte array used to reset pins
 
-    private ArrayList[][] tags;
+    int layercount; // number of layers found in svg
+    String image;// used to store svg in string format
 
-    private ArrayList<byte[][]> dataLayers;
+    //presentLayer: The layer to be displayed when pins are raised;
+    //fileSelected: file index from the list of files in specified target directory.
+    int presentLayer=0, fileSelected=0;
+
+    //private ArrayList[][] tags;
+    private String[][] tags;
+
+    //private ArrayList<byte[][]> dataLayers;
+
+    static TextToSpeech tts;
 
 
 
@@ -99,17 +101,12 @@ public class MainActivity extends AppCompatActivity {
         InputManager im = (InputManager) getSystemService(INPUT_SERVICE);
         brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
 
+        // Arrays for pin down and TTS tags. Can use forceRefresh() instead of data??
         data = new byte[brailleServiceObj.getDotLineCount()][];
-        //dataRead = new byte[brailleServiceObj.getDotLineCount()][];
-        tags = new ArrayList [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
+        tags = new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
             data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
             Arrays.fill(data[i], (byte) 0x00);
-            //dataRead[i] = new byte[brailleServiceObj.getDotPerLineCount()];
-            //Arrays.fill(dataRead[i], (byte) 0x00);
-            for (int j=0; j< brailleServiceObj.getDotPerLineCount(); ++j){
-                tags[i][j]=new ArrayList<String>();
-            }
         }
 
         int[] ids = im.getInputDeviceIds();
@@ -117,74 +114,17 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "id: " + ids[i] + ":" + im.getInputDevice(ids[i]).getName());
         }
 
-        String filename = "layers.json";
-        File myExternalFile;
-        String myData = "";
-        myExternalFile = new File("/sdcard/IMAGE/", filename);
 
-        /*
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
-        {
-            Log.d("SVG ERROR", "Permission not granted!");
-        }
-        else{
-            Log.d("SVG", "Permission granted!");
-        }
-         */
-
+        // Opening first file in the directory to be read by default
         try {
-            FileInputStream fis = new FileInputStream(myExternalFile);
-            DataInputStream in = new DataInputStream(fis);
-            BufferedReader br =
-                    new BufferedReader(new InputStreamReader(in));
-            String strLine;
-            while ((strLine = br.readLine()) != null) {
-                myData = myData + strLine;
-            }
-            in.close();
-
-            JSONObject reader = new JSONObject(myData);
-            JSONObject sys  = reader.getJSONObject("data");
-            image = sys.getString("graphic").substring(26);
-
-            byte[] data = image.getBytes("UTF-8");
-            data = Base64.decode(data, Base64.DEFAULT);
-            image = new String(data, "UTF-8");
-
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            InputSource is = new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+image));
-            Document doc = builder.parse(is);
-
-            NodeList nodeslist = doc.getElementsByTagName("*");;
-            //Log.d("XML", String.valueOf(nodeslist.getLength()));
-            layercount=getLayerCount(nodeslist);
-            dataLayers= new ArrayList();
-            //Log.d("XML", String.valueOf(layercount));
-            int presentLayer=1;
-
-
-            for (int i=1; i<=layercount; i++){
-                dataLayers.add(createBitmaps(doc, i));
-                is = new InputSource(new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+image));
-                doc = builder.parse(is);
-            }
-
-
+            image=getFile(0)[0];
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (JSONException e) {
             throw new RuntimeException(e);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
         }
-
-
-
-
-        /*
+            
+        // Setting up TTS
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
 
             @Override
@@ -193,33 +133,32 @@ public class MainActivity extends AppCompatActivity {
                 if(status != TextToSpeech.SUCCESS){
                     Log.e("error", "Initialization Failed!"+status);
                 }
+                else {
+                    tts.setLanguage(Locale.getDefault());
+                }
 
 
             }});
-        Log.e("Engine Info " , String.valueOf(tts.getEngines()));
-        */
-        /*for (TextToSpeech.EngineInfo engines : tts.getEngines()) {
-            Log.d("Engine Info " , engines.toString());
-        }*/
-
-
 
 
         brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
             public boolean handleMotionEvent(MotionEvent e) {
+                // Observed limits of IR outputs for the pin array. Might need tweaking for more accurate mapping of finger location to pin...
                 float xMin= 0;
                 float xMax= 1920;
                 float yMin=23;
                 float yMax=1080;
+                // Calculating pin based on position
                 int pinX= (int) (Math.ceil((e.getX()-xMin+0.000001)/((xMax-xMin)/brailleServiceObj.getDotPerLineCount()))-1);
                 int pinY= (int) Math.ceil((e.getY()-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
                 //Log.d(TAG, String.valueOf(e.getX())+","+String.valueOf(e.getY())+ " ; "+ pinX+","+pinY);
                 try{
-                    Log.d(TAG, String.valueOf(tags[pinY][pinX]));
+                    // Speak out TTS tags based on finger location
+                    speaker(tags[pinY][pinX]);
                 }
                 catch(RuntimeException ex){
-
+                    Log.d(TAG, String.valueOf(ex));
                 }
 
 
@@ -231,20 +170,28 @@ public class MainActivity extends AppCompatActivity {
 
         ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                for (int j = 0; j < data.length; ++j) {
-                    Arrays.fill(data[j], (byte) 0x00);
-                }
                 brailleServiceObj.display(data);
-
             }
         });
 
 
         ((Button) findViewById(R.id.ones)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                brailleServiceObj.display(dataLayers.get(presentLayer));
-                ++presentLayer;
-                if (presentLayer==layercount)
+
+                try {
+                    // Display current layer
+                    brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (ParserConfigurationException e) {
+                    throw new RuntimeException(e);
+                } catch (SAXException e) {
+                    throw new RuntimeException(e);
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException(e);
+                }
+                //Log.d("LAYER!", String.valueOf(presentLayer));
+                if (presentLayer==layercount+1)
                     presentLayer=0;
             }
         });
@@ -253,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
         debugSwitch.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 brailleServiceObj.setDebugView(debugSwitch.isChecked());
+                //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
             }
         });
 
@@ -261,10 +209,34 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        Log.d(TAG, event.toString());
-        return false;
+        try {
+            Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
+                put(421, "UP");
+                put(420, "DOWN");
+            }};
+            switch (keyMapping.getOrDefault(keyCode, "default")) {
+            // Navigating between files
+            case "UP":
+                    Log.d(TAG, event.toString());
+                    changeFile(++fileSelected);
+                    return true;
+            // Navigating between files
+            case "DOWN":
+                    Log.d(TAG, event.toString());
+                    changeFile(--fileSelected);
+                    return true;
+            default:
+                Log.d(TAG, event.toString());
+                return false;
+        }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
+    // function to pad the bitmap to match the pin array aspect ratio
     public Bitmap padBitmap(Bitmap bitmap, int padX, int padY)
     {
         Bitmap paddedBitmap = Bitmap.createBitmap(
@@ -283,27 +255,7 @@ public class MainActivity extends AppCompatActivity {
         return paddedBitmap;
     }
 
-    public int getLayerCount(NodeList nodeslist){
-        int layers=0;
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++){
-            Node node = nodeslist.item(i);
-            NamedNodeMap attrs = node.getAttributes();
-            for(int j = 0 ; j < attrs.getLength() ; j ++) {
-                Attr attribute = (Attr)attrs.item(j);
-                if (attribute.getName().equals("data-image-layer"))
-                {
-                    ++layers;
-                }
-
-            }
-        }
-        if (layers==0)
-            layers = 1;
-        else
-            ++layers;
-        return layers;
-    }
-
+    // convert the modified doc to a string
     public String getStringFromDocument(Document doc)
     {
         try
@@ -323,54 +275,205 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public byte[][] createBitmaps(Document doc, int presentLayer) throws IOException {
+    // get present layer and the description tags from the doc
+    public byte[][] getBitmaps(Document doc, int presentLayer) throws IOException, XPathExpressionException {
         int layer=0;
-        NodeList nodeslist = doc.getElementsByTagName("*");;
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++){
+        //Log.d("LAYER!", String.valueOf(presentLayer));
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
+        NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
+        //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
+        layercount=nodeslist.getLength();
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i);
-            NamedNodeMap attrs = node.getAttributes();
-            int j=0, k=0;
-            while (j<attrs.getLength()) {
-                Attr attribute = (Attr)attrs.item(j);
-                //Log.d("Layers!", attribute.getName());
-                if (attribute.getName().equals("data-image-layer"))
-                {
-                    ++layer;
-                    if (layer!= presentLayer && presentLayer!=layercount)
-                    {
-                        ((Element)node).setAttribute("display","none");
+            // hide layers which are not the present layer
+            if (i!= presentLayer && presentLayer!=layercount) {
+                ((Element)node).setAttribute("display","none");
+            }
+            // TTS output of layer description
+            if (i==presentLayer){
+                //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
+                    String tag;
+                    //Log.d("GETTING TAGS", node.getNodeName());
+                    if (((Element)node).hasAttribute("aria-describedby")) {
+                        tag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+                        //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
+                        }
+                    else{
+                        tag=((Element)node).getAttribute("aria-description");
+                        //Log.d("GETTING TAGS", "Otherwise here!");
+                        }
+                    speaker("Layer: "+tag);
                     }
-                }
-                ++j;
-
+        }
+        //If there is no tag as a layer, hide elements unless the full image is to be shown
+        if (presentLayer!=layercount){
+            
+            nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])] ", doc, XPathConstants.NODESET);
+            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+                Node node = nodeslist.item(i);
+                ((Element)node).setAttribute("display","none");
             }
         }
+        else{
+            speaker("Full image");
+        }
+        // fetch TTS tags for elements within present layer
+        //getDescriptions(doc);
+        // get bitmap of present layer
+        byte[] byteArray= docToBitmap(doc);
+        //Log.d("BITMAP", Arrays.toString(byteArray));
+        getDescriptions(doc);
+        // reshape byte array into 2D array to match pin array dimensions
+        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
+        for (int i = 0; i < data.length; ++i) {
+            dataRead[i]=Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+        }
+        return dataRead;
+    }
+    public void getDescriptions(Document doc) throws XPathExpressionException, IOException {
+        //Log.d("GETTING TAGS", "Here!");
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and not(self::*[@data-image-layer]) and (self::*[@aria-describedby] or self::*[@aria-description])]", doc, XPathConstants.NODESET);
+        String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
+        //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
+        // intially hiding all elements filtered in the previous stage
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i);
+            ((Element)node).setAttribute("display", "none");
+        }
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            String tag;
+            Node node = nodeslist.item(i);
+            // fetching the tag for each element 
+            if (((Element)node).hasAttribute("aria-describedby")) {
+                tag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+            }
+            else{
+                tag=((Element)node).getAttribute("aria-description");
+            }
+            // showing the element whose tag is stored to obtain its bitmap mapping
+            ((Element)node).removeAttribute("display");
+            byte[] byteArray= docToBitmap(doc);
+            String[] finalLayerTags = layerTags;
+            // mapping pins corresponding to the selected element to its description tag. Unable to directly convert Object array (which is the return type of mapToObj) to String array but can use the funny copy hack to do it!
+            layerTags= Arrays.copyOf((IntStream.range(0,layerTags.length).mapToObj(k-> {
+
+                if (byteArray[k]!=0){
+                    if (finalLayerTags[k]==null){
+                        return tag;
+                    }
+                    else {
+                        return finalLayerTags[k] + ", " + tag;
+                    }
+                }
+                else{
+                    return finalLayerTags[k];
+                }
+            }).collect(Collectors.toList())).toArray(), layerTags.length, String[].class);
+            // hiding element again so we can move on to the next element
+            ((Element)node).setAttribute("display", "none");
+        }
+
+            // converting string array into 2D array that maps to the pins
+            for (int i = 0; i < data.length; ++i) {
+                tags[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+            }
+            return;
+        }
+    // converts the xml doc to bitmap
+    public byte[] docToBitmap(Document doc) throws IOException {
         String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
+        //Log.d("SVG",img);
         Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
         int x = svg.getWidth();
         int y = svg.getHeight();
-        intArray = new int[brailleServiceObj.getDotPerLineCount() * brailleServiceObj.getDotLineCount()];
+        int[] intArray = new int[brailleServiceObj.getDotPerLineCount() * brailleServiceObj.getDotLineCount()];
+        // padding bitmap to fit to pin array size
         Bitmap svgScaled=padBitmap(svg, brailleServiceObj.getDotPerLineCount()-x, brailleServiceObj.getDotLineCount()-y);
         svg.recycle();
-        svgScaled.getPixels(intArray, 0, brailleServiceObj.getDotPerLineCount(), 0, 0, brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount());
+        // extracting only the alpha value of bitmap to convert it into a byte array
+        Bitmap alphas=svgScaled.extractAlpha();
+        int size = alphas.getRowBytes() * alphas.getHeight();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(size);
+        alphas.copyPixelsToBuffer(byteBuffer);
+        byte[] byteArray = byteBuffer.array();
+        return byteArray;
+    }
+    // fetching the file to read from; returns file contents as String and also the file name
+    public String[] getFile(int fileNumber) throws IOException, JSONException {
+        File directory = new File("/sdcard/IMAGE/");
+        File[] files = directory.listFiles();
 
-        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
-        for (int j = 0; j < dataRead.length; ++j) {
-            for (int k= 0; k< brailleServiceObj.getDotPerLineCount(); ++k){
-                if (intArray[j* brailleServiceObj.getDotPerLineCount()+k] == 0) {
-                    dataRead[j][k]=(byte) 0x00;
-                    //Log.d("ONES", "Here");
-                }
-                else{
-                    dataRead[j][k]=(byte) 0x01;
-                    //tags[j][k].add("Objects");
-                }
-            }
+        int filecount=files.length;
+        if (fileNumber>= filecount)
+            fileSelected=0;
+        else if (fileNumber<0)
+            fileSelected=filecount-1;
+
+        File myExternalFile= new File("/sdcard/IMAGE/", files[fileSelected].getName());
+        String myData = "";
+
+        FileInputStream fis = new FileInputStream(myExternalFile);
+        DataInputStream in = new DataInputStream(fis);
+        BufferedReader br =
+                new BufferedReader(new InputStreamReader(in));
+        String strLine;
+        while ((strLine = br.readLine()) != null) {
+            myData = myData + strLine;
         }
-        //Log.d("LAYERS!", String.valueOf(dataRead));
+        in.close();
 
-        return dataRead;
+        JSONObject reader = new JSONObject(myData);
+        JSONObject sys  = reader.getJSONObject("data");
+        image = sys.getString("graphic").substring(26);
+
+        byte[] data = image.getBytes("UTF-8");
+        data = Base64.decode(data, Base64.DEFAULT);
+        image = new String(data, "UTF-8");
+        return new String[]{image, files[fileSelected].getName().substring(0, files[fileSelected].getName().length()-5)};
     }
 
+    //similar to getFile. To be used when TTS read out of file name is required. Could possibly replace getFile entirely
+    public void changeFile(int fileNumber) throws JSONException, IOException {
+        presentLayer=0;
+        String[] output=getFile(fileNumber);
+        image=output[0];
+        speaker("Opening file "+ output[1]);
+        brailleServiceObj.display(data);
+        return;
+    }
+    // get fresh copy of the file void of previously made changes
+    public Document getfreshDoc() throws ParserConfigurationException, IOException, SAXException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        InputSource is = new InputSource(new StringReader(image));
+        //Log.d("STRING", image);
+        Document doc = builder.parse(is);
+        return doc;
+    }
+
+    // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
+    public void speaker(String text){
+        tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, "000000");
+        return;
+    }
+ 
+    /*
+    //Audio player for media files. Not being used currently
+    public void audioPlayer(String path, String fileName){
+        //set up MediaPlayer
+        MediaPlayer mp = new MediaPlayer();
+
+        try {
+            mp.setDataSource(path + File.separator + fileName);
+            mp.prepare();
+            mp.start();
+        } catch (Exception e) {
+            Log.d("ERROR", e.toString());
+        }
+    }
+    */
 
 }
