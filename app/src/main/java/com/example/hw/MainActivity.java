@@ -84,8 +84,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //fileSelected: file index from the list of files in specified target directory.
     int presentLayer=0, fileSelected=0;
 
-    //private ArrayList[][] tags;
-    //private String[][] tags, descriptions;
+
+    // short and long descriptions of objects in the present layer
     private ArrayList<String[][]> tags;
     //private ArrayList<byte[][]> dataLayers;
 
@@ -151,8 +151,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
             }});
 
-
-        /*brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
+        // commented out as it does not work with gesture control
+        brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
             public boolean handleMotionEvent(MotionEvent e) {
                 // Observed limits of IR outputs for the pin array. Might need tweaking for more accurate mapping of finger location to pin...
@@ -165,8 +165,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 int pinY= (int) Math.ceil((e.getY()-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
                 //Log.d(TAG, String.valueOf(e.getX())+","+String.valueOf(e.getY())+ " ; "+ pinX+","+pinY);
                 try{
-                    // Speak out TTS tags based on finger location
-                    speaker(tags.get(0)[pinY][pinX]);
+                    // This works! Gesture control can now be used along with the handler.
+                    onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
                     Log.d(TAG, String.valueOf(ex));
@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 return false;
                 //return true;
             }
-        });*/
+        });
 
         ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -349,10 +349,12 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
         // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
         NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and not(self::*[@data-image-layer]) and (self::*[@aria-labelledby] or self::*[@aria-label])]", doc, XPathConstants.NODESET);
+        // temporary var for objects tags
         String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
+        // temporary var for objects long descriptions
         String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
         //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
-        // intially hiding all elements filtered in the previous stage
+        // initially hiding all elements filtered in the previous stage
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i);
             ((Element)node).setAttribute("display", "none");
@@ -360,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             String tag, detailTag = null;
             Node node = nodeslist.item(i);
-            // fetching the tag for each element 
+            // fetching the tag for each element
             if (((Element)node).hasAttribute("aria-labelledby")) {
                 tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
             }
@@ -370,14 +372,15 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             if (((Element)node).hasAttribute("aria-describedby")) {
                 detailTag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
             }
-            if (((Element)node).hasAttribute("aria-label")){
+            else{
+                // this returns an empty string even if the attribute doesn't exist i.e. if there is no long description
                 detailTag=((Element)node).getAttribute("aria-description");
             }
 
             // showing the element whose tag is stored to obtain its bitmap mapping
             ((Element)node).removeAttribute("display");
             byte[] byteArray= docToBitmap(doc);
-            // using a for loop to map since there are now 2 kinds of tags: label and detailed
+            // using a 'for' loop to map since there are now 2 kinds of tags: label and detailed. Could possibly find a prettier way to do this Java objects
             for (int j=0; j<layerTags.length; j++){
                 if (byteArray[j]!=0){
                     if (layerTags[j]==null){
@@ -494,6 +497,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         return doc;
     }
 
+    // find which pin the finger position corresponds to
     public Integer[] pinCheck(float x, float y){
         float xMin= 0;
         float xMax= 1920;
@@ -538,7 +542,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     public void onLongPress(MotionEvent event) {
         Integer [] pins=pinCheck(event.getX(), event.getY());
         try{
-            // Speak out TTS tags based on finger location
+            // Speak out detailed description based on finger location
             speaker(tags.get(1)[pins[1]][pins[0]]);
         }
         catch(RuntimeException ex){
@@ -565,7 +569,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
         Integer [] pins=pinCheck(event.getX(), event.getY());
         try{
-            // Speak out TTS tags based on finger location
+            // Speak out label tags based on finger location
             speaker(tags.get(0)[pins[1]][pins[0]]);
         }
         catch(RuntimeException ex){
@@ -607,5 +611,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         }
     }
     */
+
+
 
 }
