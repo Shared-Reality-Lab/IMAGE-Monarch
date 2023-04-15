@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
             }});
 
-        // commented out as it does not work with gesture control
+
         brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
             public boolean handleMotionEvent(MotionEvent e) {
