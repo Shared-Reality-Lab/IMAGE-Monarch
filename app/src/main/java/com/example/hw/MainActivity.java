@@ -116,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             Arrays.fill(data[i], (byte) 0x00);
         }
 
+        // Initializing separate 2D arrays for short and long descriptions associated with the pins
         tags = new ArrayList<>();
         tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
         tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
@@ -503,9 +504,10 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         float xMax= 1920;
         float yMin=23;
         float yMax=1080;
+        double epsilon= 0.000001;
         // Calculating pin based on position
-        int pinX= (int) (Math.ceil((x-xMin+0.000001)/((xMax-xMin)/brailleServiceObj.getDotPerLineCount()))-1);
-        int pinY= (int) Math.ceil((y-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
+        int pinX= (int) (Math.ceil((x-xMin+epsilon)/((xMax-xMin)/brailleServiceObj.getDotPerLineCount()))-1);
+        int pinY= (int) Math.ceil((y-yMin+epsilon)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
         return new Integer[] {pinX, pinY};
     }
 
