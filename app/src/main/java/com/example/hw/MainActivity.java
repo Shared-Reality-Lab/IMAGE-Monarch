@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
             public boolean handleMotionEvent(MotionEvent e) {
-                // Observed limits of IR outputs for the pin array. Might need tweaking for more accurate mapping of finger location to pin...
+                /*// Observed limits of IR outputs for the pin array. Might need tweaking for more accurate mapping of finger location to pin...
                 float xMin= 0;
                 float xMax= 1920;
                 float yMin=23;
@@ -165,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 int pinX= (int) (Math.ceil((e.getX()-xMin+0.000001)/((xMax-xMin)/brailleServiceObj.getDotPerLineCount()))-1);
                 int pinY= (int) Math.ceil((e.getY()-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
                 //Log.d(TAG, String.valueOf(e.getX())+","+String.valueOf(e.getY())+ " ; "+ pinX+","+pinY);
+                */
                 try{
                     // This works! Gesture control can now be used along with the handler.
                     onTouchEvent(e);
@@ -447,7 +448,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
     // fetching the file to read from; returns file contents as String and also the file name
     public String[] getFile(int fileNumber) throws IOException, JSONException {
-        File directory = new File("/sdcard/IMAGE/");
+        File directory = new File("/sdcard/IMAGE/maps/");
         File[] files = directory.listFiles();
 
         int filecount=files.length;
@@ -456,7 +457,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
-        File myExternalFile= new File("/sdcard/IMAGE/", files[fileSelected].getName());
+        File myExternalFile= new File("/sdcard/IMAGE/maps/", files[fileSelected].getName());
         String myData = "";
 
         FileInputStream fis = new FileInputStream(myExternalFile);
@@ -520,7 +521,18 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     @Override
     public boolean onTouchEvent(MotionEvent event){
         if (this.mDetector.onTouchEvent(event)) {
-            //Log.d("GESTURE!","In here!");
+            int action = event.getActionMasked();
+            if (action==MotionEvent.ACTION_UP)
+            {
+                Integer [] pins=pinCheck(event.getX(), event.getY());
+                try{
+                    // Speak out label tags based on finger location
+                    speaker(tags.get(0)[pins[1]][pins[0]]);
+                }
+                catch(RuntimeException ex){
+                    Log.d(TAG, String.valueOf(ex));
+                }
+            }
             return true;
         }
         return super.onTouchEvent(event);
@@ -569,14 +581,14 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
         Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
-        Integer [] pins=pinCheck(event.getX(), event.getY());
+        /*Integer [] pins=pinCheck(event.getX(), event.getY());
         try{
             // Speak out label tags based on finger location
             speaker(tags.get(0)[pins[1]][pins[0]]);
         }
         catch(RuntimeException ex){
             Log.d(TAG, String.valueOf(ex));
-        }
+        }*/
         return true;
     }
 
