@@ -8,10 +8,12 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.hardware.input.InputManager;
+import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -71,7 +73,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-public class MainActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener  {
+public class MainActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     static final String TAG = MainActivity.class.getSimpleName();
     private BrailleDisplay brailleServiceObj = null;
     //final private Handler mHandler = new Handler();
@@ -84,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //fileSelected: file index from the list of files in specified target directory.
     int presentLayer=0, fileSelected=0;
 
+    boolean labelFill=true, shapeFill=false;
 
     // short and long descriptions of objects in the present layer
     private ArrayList<String[][]> tags;
@@ -91,7 +94,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
     static TextToSpeech tts;
     private GestureDetectorCompat mDetector;
-
 
 
 
@@ -147,6 +149,25 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 }
                 else {
                     tts.setLanguage(Locale.getDefault());
+                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(String s) {
+
+                        }
+
+                        @Override
+                        public void onDone(String s) {
+                            //Log.d("CHECKING!", s);
+                            if (s.equals("ping")){
+                                pingsPlayer(R.raw.ping);
+                            }
+                        }
+
+                        @Override
+                        public void onError(String s) {
+
+                        }
+                    });
                 }
 
 
@@ -309,6 +330,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     String tag;
                     //Log.d("GETTING TAGS", node.getNodeName());
                     if (((Element)node).hasAttribute("aria-labelledby")) {
+
                         tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
                         //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
                         }
@@ -319,6 +341,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     speaker("Layer: "+tag);
                     }
         }
+
         //If there is no tag as a layer, hide elements unless the full image is to be shown
         if (presentLayer!=layercount){
             
@@ -334,6 +357,15 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         // fetch TTS tags for elements within present layer
         //getDescriptions(doc);
         // get bitmap of present layer
+
+        if (shapeFill) {
+            nodeslist = (NodeList)xPath.evaluate("//*[(ancestor-or-self::*[@data-image-layer]) and not(descendant-or-self::*[@display])]", doc, XPathConstants.NODESET);
+            //Log.d("CHECKING!", String.valueOf(nodeslist.getLength()));
+            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+                Node node = nodeslist.item(i);
+                ((Element)node).setAttribute("fill","black");
+            }
+        }
         byte[] byteArray= docToBitmap(doc);
         //Log.d("BITMAP", Arrays.toString(byteArray));
         getDescriptions(doc);
@@ -365,6 +397,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             String tag, detailTag = null;
             Node node = nodeslist.item(i);
             // fetching the tag for each element
+
             if (((Element)node).hasAttribute("aria-labelledby")) {
                 tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
             }
@@ -377,6 +410,9 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             else{
                 // this returns an empty string even if the attribute doesn't exist i.e. if there is no long description
                 detailTag=((Element)node).getAttribute("aria-description");
+            }
+            if (labelFill) {
+                ((Element) node).setAttribute("fill", "black");
             }
 
             // showing the element whose tag is stored to obtain its bitmap mapping
@@ -431,6 +467,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     public byte[] docToBitmap(Document doc) throws IOException {
         String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
         //Log.d("SVG",img);
+        //Log.d("CHECKING!", img);
         Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
         int x = svg.getWidth();
         int y = svg.getHeight();
@@ -513,8 +550,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
 
     // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
-    public void speaker(String text){
-        tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, "000000");
+    public void speaker(String text, String... utterId){
+        tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, utterId.length > 0 ? utterId[0]  : "000000");
         return;
     }
 
@@ -527,7 +564,15 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 Integer [] pins=pinCheck(event.getX(), event.getY());
                 try{
                     // Speak out label tags based on finger location
-                    speaker(tags.get(0)[pins[1]][pins[0]]);
+
+                    if ((tags.get(1)[pins[1]][pins[0]]!=null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0))
+                    {
+                        //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
+                        speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                    }
+                    else{
+                        speaker(tags.get(0)[pins[1]][pins[0]]);
+                    }
                 }
                 catch(RuntimeException ex){
                     Log.d(TAG, String.valueOf(ex));
@@ -610,21 +655,45 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         return true;
     }
 
-    /*
-    //Audio player for media files. Not being used currently
-    public void audioPlayer(String path, String fileName){
+    public void pingsPlayer(int file){
         //set up MediaPlayer
         MediaPlayer mp = new MediaPlayer();
 
         try {
-            mp.setDataSource(path + File.separator + fileName);
+            mp=MediaPlayer.create(getApplicationContext(), file);
+            mp.start();
+
+        } catch (Exception e) {
+            Log.d("ERROR", e.toString());
+        }
+
+
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+        mediaPlayer.release();
+    }
+
+
+
+
+
+    /*
+    //Audio player for media files. Not being used currently
+    public void audioPlayer(String file){
+        //set up MediaPlayer
+        MediaPlayer mp = new MediaPlayer();
+
+        try {
+            mp.setDataSource(file);
             mp.prepare();
             mp.start();
         } catch (Exception e) {
             Log.d("ERROR", e.toString());
         }
-    }
-    */
+    }*/
+
 
 
 
