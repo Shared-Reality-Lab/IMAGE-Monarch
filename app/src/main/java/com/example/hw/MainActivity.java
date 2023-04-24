@@ -428,11 +428,13 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     else {
                         layerTags[j]= layerTags[j] + ", " + tag;
                     }
-                    if (layerDesc[j]==null){
-                        layerDesc[j]=detailTag;
-                    }
-                    else {
-                        layerDesc[j]= layerDesc[j] + ", " + tag;
+                    if (detailTag.trim().length() > 0){
+                        if (layerDesc[j]==null){
+                            layerDesc[j]=detailTag;
+                        }
+                        else {
+                            layerDesc[j]= layerDesc[j] + ", " + detailTag;
+                        }
                     }
                 }
             }
@@ -486,7 +488,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
     // fetching the file to read from; returns file contents as String and also the file name
     public String[] getFile(int fileNumber) throws IOException, JSONException {
-        File directory = new File("/sdcard/IMAGE/maps/");
+        File directory = new File("/sdcard/IMAGE/demo/");
         File[] files = directory.listFiles();
 
         int filecount=files.length;
@@ -495,7 +497,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
-        File myExternalFile= new File("/sdcard/IMAGE/maps/", files[fileSelected].getName());
+        File myExternalFile= new File("/sdcard/IMAGE/demo/", files[fileSelected].getName());
         String myData = "";
 
         FileInputStream fis = new FileInputStream(myExternalFile);
@@ -568,7 +570,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
                     if ((tags.get(1)[pins[1]][pins[0]]!=null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0))
                     {
-                        //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
+                        Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
                         speaker(tags.get(0)[pins[1]][pins[0]], "ping");
                     }
                     else{
