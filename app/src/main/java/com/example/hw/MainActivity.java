@@ -349,8 +349,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         XPath xPath = XPathFactory.newInstance().newXPath();
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
         // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and not(self::*[@data-image-layer]) and (self::*[@aria-labelledby] or self::*[@aria-label])]", doc, XPathConstants.NODESET);
-        // temporary var for objects tags
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*)) and (self::*[@aria-labelledby] or self::*[@aria-label])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
         String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
         // temporary var for objects long descriptions
         String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
