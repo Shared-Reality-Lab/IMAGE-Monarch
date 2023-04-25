@@ -346,6 +346,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         if (presentLayer!=layercount){
             
             nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])] ", doc, XPathConstants.NODESET);
+            Log.d("CHECKING!", String.valueOf(nodeslist.getLength()));
             for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
                 Node node = nodeslist.item(i);
                 ((Element)node).setAttribute("display","none");
@@ -415,6 +416,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             if (labelFill) {
                 ((Element) node).setAttribute("fill", "black");
             }
+            //Log.d("CHECKING!", tag);
 
             // showing the element whose tag is stored to obtain its bitmap mapping
             ((Element)node).removeAttribute("display");
@@ -491,12 +493,14 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         File directory = new File("/sdcard/IMAGE/demo/");
         File[] files = directory.listFiles();
 
+        Log.d("CHECKING!", String.valueOf(files.length));
         int filecount=files.length;
         if (fileNumber>= filecount)
             fileSelected=0;
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
+        Log.d("CHECKING!", String.valueOf(files[fileSelected].getName()));
         File myExternalFile= new File("/sdcard/IMAGE/demo/", files[fileSelected].getName());
         String myData = "";
 
@@ -570,7 +574,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
                     if ((tags.get(1)[pins[1]][pins[0]]!=null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0))
                     {
-                        Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
+                        //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
                         speaker(tags.get(0)[pins[1]][pins[0]], "ping");
                     }
                     else{
