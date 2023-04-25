@@ -77,6 +77,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //final private Handler mHandler = new Handler();
     private byte[][] data = null; // byte array used to reset pins
 
+    //variable to change whether TTS tags fill the object or are assigned only to the raised edges.
+    boolean labelFill=true;
     int layercount; // number of layers found in svg
     String image;// used to store svg in string format
 
@@ -379,6 +381,10 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 detailTag=((Element)node).getAttribute("aria-description");
             }
 
+            if (labelFill) {
+                ((Element) node).setAttribute("fill", "black");
+            }
+
             // showing the element whose tag is stored to obtain its bitmap mapping
             ((Element)node).removeAttribute("display");
             byte[] byteArray= docToBitmap(doc);
@@ -448,7 +454,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
     // fetching the file to read from; returns file contents as String and also the file name
     public String[] getFile(int fileNumber) throws IOException, JSONException {
-        File directory = new File("/sdcard/IMAGE/maps/");
+        File directory = new File("/sdcard/IMAGE/");
         File[] files = directory.listFiles();
 
         int filecount=files.length;
@@ -457,7 +463,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
-        File myExternalFile= new File("/sdcard/IMAGE/maps/", files[fileSelected].getName());
+        File myExternalFile= new File("/sdcard/IMAGE/", files[fileSelected].getName());
         String myData = "";
 
         FileInputStream fis = new FileInputStream(myExternalFile);
