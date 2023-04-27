@@ -77,6 +77,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //final private Handler mHandler = new Handler();
     private byte[][] data = null; // byte array used to reset pins
 
+    //variable to change whether TTS tags fill the object or are assigned only to the raised edges.
+    boolean labelFill=true;
     int layercount; // number of layers found in svg
     String image;// used to store svg in string format
 
@@ -156,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
             public boolean handleMotionEvent(MotionEvent e) {
-                // Observed limits of IR outputs for the pin array. Might need tweaking for more accurate mapping of finger location to pin...
+                /*// Observed limits of IR outputs for the pin array. Might need tweaking for more accurate mapping of finger location to pin...
                 float xMin= 0;
                 float xMax= 1920;
                 float yMin=23;
@@ -165,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 int pinX= (int) (Math.ceil((e.getX()-xMin+0.000001)/((xMax-xMin)/brailleServiceObj.getDotPerLineCount()))-1);
                 int pinY= (int) Math.ceil((e.getY()-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
                 //Log.d(TAG, String.valueOf(e.getX())+","+String.valueOf(e.getY())+ " ; "+ pinX+","+pinY);
+                */
                 try{
                     // This works! Gesture control can now be used along with the handler.
                     onTouchEvent(e);
@@ -377,6 +380,10 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 detailTag=((Element)node).getAttribute("aria-description");
             }
 
+            if (labelFill) {
+                ((Element) node).setAttribute("fill", "black");
+            }
+
             // showing the element whose tag is stored to obtain its bitmap mapping
             ((Element)node).removeAttribute("display");
             byte[] byteArray= docToBitmap(doc);
@@ -519,7 +526,18 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     @Override
     public boolean onTouchEvent(MotionEvent event){
         if (this.mDetector.onTouchEvent(event)) {
-            //Log.d("GESTURE!","In here!");
+            int action = event.getActionMasked();
+            if (action==MotionEvent.ACTION_UP)
+            {
+                Integer [] pins=pinCheck(event.getX(), event.getY());
+                try{
+                    // Speak out label tags based on finger location
+                    speaker(tags.get(0)[pins[1]][pins[0]]);
+                }
+                catch(RuntimeException ex){
+                    Log.d(TAG, String.valueOf(ex));
+                }
+            }
             return true;
         }
         return super.onTouchEvent(event);
@@ -568,14 +586,14 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
         Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
-        Integer [] pins=pinCheck(event.getX(), event.getY());
+        /*Integer [] pins=pinCheck(event.getX(), event.getY());
         try{
             // Speak out label tags based on finger location
             speaker(tags.get(0)[pins[1]][pins[0]]);
         }
         catch(RuntimeException ex){
             Log.d(TAG, String.valueOf(ex));
-        }
+        }*/
         return true;
     }
 
