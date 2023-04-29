@@ -160,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         @Override
                         public void onDone(String s) {
                             //Log.d("CHECKING!", s);
+                            // plays ping when TTS readout is completed based on utteranceId
                             if (s.equals("ping")){
                                 pingsPlayer(R.raw.ping);
                             }
@@ -552,7 +553,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             {
                 Integer [] pins=pinCheck(event.getX(), event.getY());
                 try{
-                    // Speak out label tags based on finger location
+                    // Speak out label tags based on finger location and ping when detailed description is available
                     if ((tags.get(1)[pins[1]][pins[0]]!=null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0))
                     {
                         //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
@@ -643,6 +644,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         return true;
     }
 
+    // plays audio from resource file. Has provision for other playing indicator tones if required
     public void pingsPlayer(int file){
         //set up MediaPlayer
         MediaPlayer mp = new MediaPlayer();
