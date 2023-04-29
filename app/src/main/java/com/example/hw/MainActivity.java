@@ -13,6 +13,7 @@ import android.os.BrailleDisplay;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -150,6 +151,25 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 }
                 else {
                     tts.setLanguage(Locale.getDefault());
+                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(String s) {
+
+                        }
+
+                        @Override
+                        public void onDone(String s) {
+                            //Log.d("CHECKING!", s);
+                            if (s.equals("ping")){
+                                pingsPlayer(R.raw.ping);
+                            }
+                        }
+
+                        @Override
+                        public void onError(String s) {
+
+                        }
+                    });
                 }
 
 
@@ -519,8 +539,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
 
     // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
-    public void speaker(String text){
-        tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, "000000");
+    public void speaker(String text, String... utterId){
+        tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, utterId.length > 0 ? utterId[0]  : "000000");
         return;
     }
 
@@ -533,7 +553,14 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 Integer [] pins=pinCheck(event.getX(), event.getY());
                 try{
                     // Speak out label tags based on finger location
-                    speaker(tags.get(0)[pins[1]][pins[0]]);
+                    if ((tags.get(1)[pins[1]][pins[0]]!=null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0))
+                    {
+                        //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
+                        speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                    }
+                    else{
+                        speaker(tags.get(0)[pins[1]][pins[0]]);
+                    }
                 }
                 catch(RuntimeException ex){
                     Log.d(TAG, String.valueOf(ex));
