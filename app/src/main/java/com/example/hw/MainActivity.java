@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //fileSelected: file index from the list of files in specified target directory.
     int presentLayer=0, fileSelected=0;
 
-    boolean labelFill=true, shapeFill=false;
+    boolean labelFill=true, shapeFill=false, touchEnabled=true;
 
     // short and long descriptions of objects in the present layer
     private ArrayList<String[][]> tags;
@@ -187,13 +187,14 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 int pinY= (int) Math.ceil((e.getY()-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
                 //Log.d(TAG, String.valueOf(e.getX())+","+String.valueOf(e.getY())+ " ; "+ pinX+","+pinY);
                 */
+                if(touchEnabled){
                 try{
                     // This works! Gesture control can now be used along with the handler.
                     onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
                     Log.d(TAG, String.valueOf(ex));
-                }
+                }}
 
 
 
@@ -204,6 +205,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
         ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                touchEnabled=false;
                 brailleServiceObj.display(data);
             }
         });
@@ -214,6 +216,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
                 try {
                     // Display current layer
+                    touchEnabled=true;
                     brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -431,6 +434,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         layerTags[j]= layerTags[j] + ", " + tag;
                     }
                     if (detailTag.trim().length() > 0){
+                    //if (!detailTag.equalsIgnoreCase("")){
                         if (layerDesc[j]==null){
                             layerDesc[j]=detailTag;
                         }
