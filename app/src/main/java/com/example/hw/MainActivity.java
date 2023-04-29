@@ -396,8 +396,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     else {
                         layerTags[j]= layerTags[j] + ", " + tag;
                     }
-                    //check if detailTag is not blank string. Empty string check doesn't work as expected??
-                    if (detailTag.trim().length() > 0){
+                    //check if detailTag is not blank string.
+                    if (!detailTag.equalsIgnoreCase("")){
                         if (layerDesc[j]==null){
                             layerDesc[j]=detailTag;
                         }
