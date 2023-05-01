@@ -396,11 +396,14 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     else {
                         layerTags[j]= layerTags[j] + ", " + tag;
                     }
-                    if (layerDesc[j]==null){
-                        layerDesc[j]=detailTag;
-                    }
-                    else {
-                        layerDesc[j]= layerDesc[j] + ", " + tag;
+                    //check if detailTag is not blank string.
+                    if (!detailTag.equalsIgnoreCase("")){
+                        if (layerDesc[j]==null){
+                            layerDesc[j]=detailTag;
+                        }
+                        else {
+                            layerDesc[j]= layerDesc[j] + ", " + detailTag;
+                        }
                     }
                 }
             }
