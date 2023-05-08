@@ -8,10 +8,12 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.hardware.input.InputManager;
+import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -71,7 +73,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-public class MainActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener  {
+public class MainActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     static final String TAG = MainActivity.class.getSimpleName();
     private BrailleDisplay brailleServiceObj = null;
     //final private Handler mHandler = new Handler();
@@ -149,6 +151,26 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 }
                 else {
                     tts.setLanguage(Locale.getDefault());
+                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(String s) {
+
+                        }
+
+                        @Override
+                        public void onDone(String s) {
+                            //Log.d("CHECKING!", s);
+                            // plays ping when TTS readout is completed based on utteranceId
+                            if (s.equals("ping")){
+                                pingsPlayer(R.raw.ping);
+                            }
+                        }
+
+                        @Override
+                        public void onError(String s) {
+
+                        }
+                    });
                 }
 
 
@@ -521,8 +543,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
 
     // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
-    public void speaker(String text){
-        tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, "000000");
+    public void speaker(String text, String... utterId){
+        tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, utterId.length > 0 ? utterId[0]  : "000000");
         return;
     }
 
@@ -534,8 +556,15 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             {
                 Integer [] pins=pinCheck(event.getX(), event.getY());
                 try{
-                    // Speak out label tags based on finger location
-                    speaker(tags.get(0)[pins[1]][pins[0]]);
+                    // Speak out label tags based on finger location and ping when detailed description is available
+                    if ((tags.get(1)[pins[1]][pins[0]]!=null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0))
+                    {
+                        //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
+                        speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                    }
+                    else{
+                        speaker(tags.get(0)[pins[1]][pins[0]]);
+                    }
                 }
                 catch(RuntimeException ex){
                     Log.d(TAG, String.valueOf(ex));
@@ -616,6 +645,26 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     public boolean onSingleTapConfirmed(MotionEvent event) {
         Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
         return true;
+    }
+
+    // plays audio from resource file. Has provision for other playing indicator tones if required
+    public void pingsPlayer(int file){
+        //set up MediaPlayer
+        MediaPlayer mp = new MediaPlayer();
+
+        try {
+            mp=MediaPlayer.create(getApplicationContext(), file);
+            mp.start();
+
+        } catch (Exception e) {
+            Log.d("ERROR", e.toString());
+        }
+
+
+    }
+    @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+        mediaPlayer.release();
     }
 
     /*
