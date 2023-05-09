@@ -5,7 +5,9 @@ import static java.util.Map.entry;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.hardware.input.InputManager;
 import android.media.MediaPlayer;
@@ -20,6 +22,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.Switch;
 import android.widget.Toast;
@@ -30,6 +33,7 @@ import androidx.core.content.res.TypedArrayUtils;
 import androidx.core.view.GestureDetectorCompat;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,6 +78,14 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class MainActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     static final String TAG = MainActivity.class.getSimpleName();
     private BrailleDisplay brailleServiceObj = null;
@@ -95,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
     static TextToSpeech tts;
     private GestureDetectorCompat mDetector;
+
 
 
 
@@ -177,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             }});
 
 
+
         brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
             public boolean handleMotionEvent(MotionEvent e) {
@@ -250,21 +265,26 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(421, "UP");
                 put(420, "DOWN");
+                put (503, "MAP");
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
-            // Navigating between files
-            case "UP":
+                // Navigating between files
+                case "UP":
+                        Log.d(TAG, event.toString());
+                        changeFile(++fileSelected);
+                        return true;
+                // Navigating between files
+                case "DOWN":
+                        Log.d(TAG, event.toString());
+                        changeFile(--fileSelected);
+                        return true;
+                case "MAP":
+                        Log.d(TAG, event.toString());
+                        getMap(45.54646, -73.49546);
+                        return true;
+                default:
                     Log.d(TAG, event.toString());
-                    changeFile(++fileSelected);
-                    return true;
-            // Navigating between files
-            case "DOWN":
-                    Log.d(TAG, event.toString());
-                    changeFile(--fileSelected);
-                    return true;
-            default:
-                Log.d(TAG, event.toString());
-                return false;
+                    return false;
         }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -478,7 +498,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
     // fetching the file to read from; returns file contents as String and also the file name
     public String[] getFile(int fileNumber) throws IOException, JSONException {
-        File directory = new File("/sdcard/IMAGE/");
+        File directory = new File("/sdcard/IMAGE/client/");
         File[] files = directory.listFiles();
 
         int filecount=files.length;
@@ -487,27 +507,97 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
-        File myExternalFile= new File("/sdcard/IMAGE/", files[fileSelected].getName());
-        String myData = "";
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        Bitmap bitmap = BitmapFactory.decodeFile("/sdcard/IMAGE/client/"+files[fileSelected].getName());
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        byte[] imageBytes = byteArrayOutputStream.toByteArray();
+        String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+        Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
+        PhotoRequestFormat req= new PhotoRequestFormat();
+        req.setValues(base64, dims);
 
-        FileInputStream fis = new FileInputStream(myExternalFile);
-        DataInputStream in = new DataInputStream(fis);
-        BufferedReader br =
-                new BufferedReader(new InputStreamReader(in));
-        String strLine;
-        while ((strLine = br.readLine()) != null) {
-            myData = myData + strLine;
-        }
-        in.close();
 
-        JSONObject reader = new JSONObject(myData);
-        JSONObject sys  = reader.getJSONObject("data");
-        image = sys.getString("graphic").substring(26);
+        //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+        //httpClient.addInterceptor(logging);
 
-        byte[] data = image.getBytes("UTF-8");
-        data = Base64.decode(data, Base64.DEFAULT);
-        image = new String(data, "UTF-8");
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(httpClient.build())
+                .build();
+
+
+        MakeRequest makereq= retrofit.create(MakeRequest.class);
+        Call<ResponseFormat> call= makereq.makePhotoRequest(req);
+        image= makeServerCall(call);
         return new String[]{image, files[fileSelected].getName().substring(0, files[fileSelected].getName().length()-5)};
+    }
+
+    public String getMap(Double lat, Double lon) throws JSONException {
+        presentLayer=0;
+        MapRequestFormat req= new MapRequestFormat();
+        req.setValues(lat, lon);
+        //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+        //httpClient.addInterceptor(logging);
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(httpClient.build())
+                .build();
+        MakeRequest makereq= retrofit.create(MakeRequest.class);
+        Call<ResponseFormat> call= makereq.makeMapRequest(req);
+        speaker("Opening map");
+        brailleServiceObj.display(data);
+        image= makeServerCall(call);
+        return image;
+    }
+
+    public String makeServerCall(Call<ResponseFormat> call){
+        findViewById(R.id.ones).setEnabled(false);
+        call.enqueue(new Callback<ResponseFormat>() {
+            @Override
+            public void onResponse(Call<ResponseFormat> call, Response<ResponseFormat> response) {
+                ResponseFormat resource= response.body();
+                ResponseFormat.Rendering[] renderings = resource.renderings;
+                image= (renderings[0].data.graphic).substring(26);
+                //Log.d("RESPONSE", image);
+                byte[] data = new byte[0];
+                try {
+                    data = image.getBytes("UTF-8");
+                    data = Base64.decode(data, Base64.DEFAULT);
+                    image = new String(data, "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseFormat> call, Throwable t) {
+                Log.d("FAILURE", "try again!");
+                speaker("Request failed!");
+            }
+        });
+        while (!call.isExecuted())
+        {
+            Log.d("SERVER CALL", "Awaiting response");
+        }
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                pingsPlayer(R.raw.image_results_arrived);
+                findViewById(R.id.ones).setEnabled(true);
+            }
+        }, 3000);
+
+        return image;
     }
 
     //similar to getFile. To be used when TTS read out of file name is required. Could possibly replace getFile entirely
@@ -519,6 +609,16 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         brailleServiceObj.display(data);
         return;
     }
+
+    public static String getMimeType(String url) {
+        String type = null;
+        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+        if (extension != null) {
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        }
+        return type;
+    }
+
     // get fresh copy of the file void of previously made changes
     public Document getfreshDoc() throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
