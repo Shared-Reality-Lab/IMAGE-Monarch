@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+// Format in which photo requests are made to the server
 public class PhotoRequestFormat {
     @SerializedName("request_uuid")
     private String Uuid= UUID.randomUUID().toString();

@@ -7,6 +7,7 @@ import retrofit2.http.Body;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
 
+// Defines functions to be called to make photo or map requests
 public interface MakeRequest {
     @Headers("Content-Type: application/json")
     @POST("render/")

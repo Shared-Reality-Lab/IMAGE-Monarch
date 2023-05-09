@@ -109,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     static TextToSpeech tts;
     private GestureDetectorCompat mDetector;
 
+    private Call<ResponseFormat> ongoingCall;
 
 
 
@@ -552,13 +553,19 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 .build();
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makeMapRequest(req);
-        speaker("Opening map");
+        //speaker("Opening map");
         brailleServiceObj.display(data);
         image= makeServerCall(call);
         return image;
     }
 
     public String makeServerCall(Call<ResponseFormat> call){
+        // Cancelling any ongoing requests that haven't been completed
+        if (ongoingCall!=null){
+            ongoingCall.cancel();
+        }
+        pingsPlayer(R.raw.image_request_sent);
+        // Disabling the up button when request is in progress to prevent catastrophic fails
         findViewById(R.id.ones).setEnabled(false);
         call.enqueue(new Callback<ResponseFormat>() {
             @Override
@@ -572,44 +579,43 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     data = image.getBytes("UTF-8");
                     data = Base64.decode(data, Base64.DEFAULT);
                     image = new String(data, "UTF-8");
+                    pingsPlayer(R.raw.image_results_arrived);
+                    // Enabling the up button again when the response has been received.
+                    findViewById(R.id.ones).setEnabled(true);
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
             }
 
+            //onFailure is called both when a request is cancelled (i.e. interrupted with another request)
+            // AND when it fails to give a valid response
             @Override
             public void onFailure(Call<ResponseFormat> call, Throwable t) {
-                Log.d("FAILURE", "try again!");
-                speaker("Request failed!");
+                // Ensure that a request was cancelled before reading out 'Request failed' TTS
+                // This text is not read out when a request is cancelled as there is expected to be
+                // an ongoing request and can be confused as a result of that request.
+                // Causes interrupted requests to die silently!
+                if (!call.isCanceled()){
+                    speaker("Request failed!");
+                }
             }
         });
-        while (!call.isExecuted())
-        {
-            Log.d("SERVER CALL", "Awaiting response");
-        }
-
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                pingsPlayer(R.raw.image_results_arrived);
-                findViewById(R.id.ones).setEnabled(true);
-            }
-        }, 3000);
-
+        // Saving the in progress call to allow interruption if needed
+        ongoingCall=call;
         return image;
     }
 
     //similar to getFile. To be used when TTS read out of file name is required. Could possibly replace getFile entirely
     public void changeFile(int fileNumber) throws JSONException, IOException {
         presentLayer=0;
+        brailleServiceObj.display(data);
         String[] output=getFile(fileNumber);
         image=output[0];
-        speaker("Opening file "+ output[1]);
-        brailleServiceObj.display(data);
+        //speaker("Opening file "+ output[1]);
         return;
     }
 
+    // get file mime type for photos
     public static String getMimeType(String url) {
         String type = null;
         String extension = MimeTypeMap.getFileExtensionFromUrl(url);

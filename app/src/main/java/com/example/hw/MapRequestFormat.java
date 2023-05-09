@@ -8,6 +8,7 @@ import org.json.JSONObject;
 
 import java.util.UUID;
 
+// Format in which map requests are made to the server
 public class MapRequestFormat {
     @SerializedName("request_uuid")
     private String Uuid= UUID.randomUUID().toString();
@@ -28,16 +29,11 @@ public class MapRequestFormat {
     @SerializedName("preprocessors")
     private JsonObject preps= new JsonObject();
 
-
-
-
     public class Coordinates{
         @SerializedName("latitude")
         Double lat;
         @SerializedName("longitude")
         Double lon;
-
-
     }
     public void setValues(Double lat, Double lon) throws JSONException {
 
