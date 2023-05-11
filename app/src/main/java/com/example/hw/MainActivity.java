@@ -109,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     static TextToSpeech tts;
     private GestureDetectorCompat mDetector;
 
+    // ongoing server request
     private Call<ResponseFormat> ongoingCall;
 
 
@@ -187,11 +188,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         }
                     });
                 }
-
-
             }});
-
-
 
         brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
@@ -266,6 +263,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(421, "UP");
                 put(420, "DOWN");
+                // this is included temporarily to test map server requests
                 put (503, "MAP");
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
@@ -279,6 +277,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         Log.d(TAG, event.toString());
                         changeFile(--fileSelected);
                         return true;
+                // this is included temporarily to test map server requests
                 case "MAP":
                         Log.d(TAG, event.toString());
                         getMap(45.54646, -73.49546);
@@ -381,7 +380,26 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         // get bitmap of present layer
         byte[] byteArray= docToBitmap(doc);
         //Log.d("BITMAP", Arrays.toString(byteArray));
-        getDescriptions(doc);
+
+        // the TTS tags are fetched in a separate thread.
+        final Handler handler = new Handler();
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getDescriptions(doc);
+                    //Log.d("DESCRIPTIONS", "Description loaded");
+                    // This ping plays when the descriptions (i.e. TTS labels) are laoded.
+                    // Generally occurs with a little delay following the tactile rendering
+                    pingsPlayer(R.raw.ping);
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
         // reshape byte array into 2D array to match pin array dimensions
         byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
@@ -509,9 +527,11 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             fileSelected=filecount-1;
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
+        //BitmapFactory.Options options = new BitmapFactory.Options();
+        //options.inJustDecodeBounds = true;
+        Log.d("FILES", files[fileSelected].getName());
         Bitmap bitmap = BitmapFactory.decodeFile("/sdcard/IMAGE/client/"+files[fileSelected].getName());
+        // This works for other file types (png, avif) as well despite being specified as jpeg
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
         byte[] imageBytes = byteArrayOutputStream.toByteArray();
         String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
@@ -519,7 +539,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         PhotoRequestFormat req= new PhotoRequestFormat();
         req.setValues(base64, dims);
 
-
+        // Uncomment the following lines for logging http requests
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
@@ -531,7 +551,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 .client(httpClient.build())
                 .build();
 
-
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makePhotoRequest(req);
         image= makeServerCall(call);
@@ -542,6 +561,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         presentLayer=0;
         MapRequestFormat req= new MapRequestFormat();
         req.setValues(lat, lon);
+        // Uncomment the following lines for logging http requests
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
@@ -570,12 +590,12 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         call.enqueue(new Callback<ResponseFormat>() {
             @Override
             public void onResponse(Call<ResponseFormat> call, Response<ResponseFormat> response) {
-                ResponseFormat resource= response.body();
-                ResponseFormat.Rendering[] renderings = resource.renderings;
-                image= (renderings[0].data.graphic).substring(26);
-                //Log.d("RESPONSE", image);
-                byte[] data = new byte[0];
                 try {
+                    ResponseFormat resource= response.body();
+                    ResponseFormat.Rendering[] renderings = resource.renderings;
+                    image= (renderings[0].data.graphic).substring(26);
+                    //Log.d("RESPONSE", image);
+                    byte[] data = new byte[0];
                     data = image.getBytes("UTF-8");
                     data = Base64.decode(data, Base64.DEFAULT);
                     image = new String(data, "UTF-8");
@@ -584,6 +604,10 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     findViewById(R.id.ones).setEnabled(true);
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
+                }
+                // This occurs when there is no rendering returned
+                catch (ArrayIndexOutOfBoundsException e){
+                    speaker("Request failed!");
                 }
             }
 
@@ -600,7 +624,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 }
             }
         });
-        // Saving the in progress call to allow interruption if needed
+        // Saving the in-progress call to allow interruption if needed
         ongoingCall=call;
         return image;
     }
