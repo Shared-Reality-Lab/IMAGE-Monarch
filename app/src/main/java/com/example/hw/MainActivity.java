@@ -24,6 +24,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -243,6 +244,19 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 //Log.d("LAYER!", String.valueOf(presentLayer));
                 if (presentLayer==layercount+1)
                     presentLayer=0;
+            }
+        });
+
+        ((Button) findViewById(R.id.getMap)).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                try {
+                    Double latitude= Double.parseDouble(((EditText) findViewById(R.id.latitude)).getText().toString());
+                    Double longitude= Double.parseDouble(((EditText) findViewById(R.id.longitude)).getText().toString());
+                    getMap(latitude, longitude);
+
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
