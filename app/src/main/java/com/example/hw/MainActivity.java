@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -542,7 +543,11 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         // Uncomment the following lines for logging http requests
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
+        //Needed when server response is slow
+                .readTimeout(60, TimeUnit.SECONDS)
+                .connectTimeout(60, TimeUnit.SECONDS);
+
         //httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -554,7 +559,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makePhotoRequest(req);
         image= makeServerCall(call);
-        return new String[]{image, files[fileSelected].getName().substring(0, files[fileSelected].getName().length()-5)};
+        // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
+        return new String[]{image, files[fileSelected].getName().replaceFirst("\\.[^.]*$", "")};
     }
 
     public String getMap(Double lat, Double lon) throws JSONException {
@@ -593,7 +599,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 try {
                     ResponseFormat resource= response.body();
                     ResponseFormat.Rendering[] renderings = resource.renderings;
-                    image= (renderings[0].data.graphic).substring(26);
+                    image= (renderings[0].data.graphic).replaceFirst("data:.+,", "");
                     //Log.d("RESPONSE", image);
                     byte[] data = new byte[0];
                     data = image.getBytes("UTF-8");
@@ -636,6 +642,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         String[] output=getFile(fileNumber);
         image=output[0];
         //speaker("Opening file "+ output[1]);
+        //Log.d("FILENAME", output[1]);
         return;
     }
 
