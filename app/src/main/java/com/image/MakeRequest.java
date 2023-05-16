@@ -1,4 +1,8 @@
-package com.example.hw;
+package com.image;
+
+import com.image.MapRequestFormat;
+import com.image.PhotoRequestFormat;
+import com.image.ResponseFormat;
 
 import org.json.JSONObject;
 
