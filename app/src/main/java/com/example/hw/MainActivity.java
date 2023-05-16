@@ -43,6 +43,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -518,7 +520,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
     // fetching the file to read from; returns file contents as String and also the file name
     public String[] getFile(int fileNumber) throws IOException, JSONException {
-        File directory = new File("/sdcard/IMAGE/client/");
+        String folderName= "/sdcard/IMAGE/client/";
+        File directory = new File(folderName);
         File[] files = directory.listFiles();
 
         int filecount=files.length;
@@ -527,6 +530,10 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
+        Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
+        byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
+
+        /*
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         //BitmapFactory.Options options = new BitmapFactory.Options();
         //options.inJustDecodeBounds = true;
@@ -535,6 +542,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         // This works for other file types (png, avif) as well despite being specified as jpeg
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
         byte[] imageBytes = byteArrayOutputStream.toByteArray();
+         */
+
         String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
         Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
         PhotoRequestFormat req= new PhotoRequestFormat();
@@ -544,7 +553,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
-        //Needed when server response is slow
+        //Need next 2 lines when server response is slow
                 .readTimeout(60, TimeUnit.SECONDS)
                 .connectTimeout(60, TimeUnit.SECONDS);
 
