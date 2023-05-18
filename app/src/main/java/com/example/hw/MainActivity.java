@@ -284,8 +284,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(421, "UP");
                 put(420, "DOWN");
-                // this is included temporarily to test map server requests
-                put (503, "MAP");
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
                 // Navigating between files
@@ -297,11 +295,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 case "DOWN":
                         Log.d(TAG, event.toString());
                         changeFile(--fileSelected);
-                        return true;
-                // this is included temporarily to test map server requests
-                case "MAP":
-                        Log.d(TAG, event.toString());
-                        getMap(45.54646, -73.49546);
                         return true;
                 default:
                     Log.d(TAG, event.toString());
