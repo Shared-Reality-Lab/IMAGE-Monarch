@@ -44,15 +44,22 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.image.MakeRequest;
+import com.image.MapRequestFormat;
+import com.image.PhotoRequestFormat;
+import com.image.ResponseFormat;
 import com.scand.svg.SVGHelper;
 
 import org.json.JSONException;
@@ -531,7 +538,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     }
     // fetching the file to read from; returns file contents as String and also the file name
     public String[] getFile(int fileNumber) throws IOException, JSONException {
-        File directory = new File("/sdcard/IMAGE/client/");
+        String folderName= "/sdcard/IMAGE/client/";
+        File directory = new File(folderName);
         File[] files = directory.listFiles();
 
         int filecount=files.length;
@@ -540,6 +548,10 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
+        Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
+        byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
+
+        /*
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         //BitmapFactory.Options options = new BitmapFactory.Options();
         //options.inJustDecodeBounds = true;
@@ -548,6 +560,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         // This works for other file types (png, avif) as well despite being specified as jpeg
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
         byte[] imageBytes = byteArrayOutputStream.toByteArray();
+         */
+
         String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
         Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
         PhotoRequestFormat req= new PhotoRequestFormat();
@@ -556,7 +570,11 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         // Uncomment the following lines for logging http requests
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
+        //Need next 2 lines when server response is slow
+                .readTimeout(60, TimeUnit.SECONDS)
+                .connectTimeout(60, TimeUnit.SECONDS);
+
         //httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -568,7 +586,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makePhotoRequest(req);
         image= makeServerCall(call);
-        return new String[]{image, files[fileSelected].getName().substring(0, files[fileSelected].getName().length()-5)};
+        // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
+        return new String[]{image, files[fileSelected].getName().replaceFirst("\\.[^.]*$", "")};
     }
 
     public String getMap(Double lat, Double lon) throws JSONException {
@@ -607,7 +626,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 try {
                     ResponseFormat resource= response.body();
                     ResponseFormat.Rendering[] renderings = resource.renderings;
-                    image= (renderings[0].data.graphic).substring(26);
+                    image= (renderings[0].data.graphic).replaceFirst("data:.+,", "");
                     //Log.d("RESPONSE", image);
                     byte[] data = new byte[0];
                     data = image.getBytes("UTF-8");
@@ -650,6 +669,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         String[] output=getFile(fileNumber);
         image=output[0];
         //speaker("Opening file "+ output[1]);
+        //Log.d("FILENAME", output[1]);
         return;
     }
 

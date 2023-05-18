@@ -1,13 +1,7 @@
-package com.example.hw;
+package com.image;
 
 import com.google.gson.annotations.SerializedName;
 
-import org.json.JSONObject;
-
-import java.util.List;
-import java.util.UUID;
-
-// Format of response from the server
 public class ResponseFormat {
     @SerializedName("request_uuid")
     public String Uuid;
