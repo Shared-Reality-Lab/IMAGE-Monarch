@@ -24,6 +24,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -253,6 +254,22 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             }
         });
 
+        ((Button) findViewById(R.id.getMap)).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                try {
+                    Double latitude= Double.parseDouble(((EditText) findViewById(R.id.latitude)).getText().toString());
+                    Double longitude= Double.parseDouble(((EditText) findViewById(R.id.longitude)).getText().toString());
+                    getMap(latitude, longitude);
+
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+                catch (NumberFormatException e){
+                    speaker("Invalid coordinates");
+                }
+            }
+        });
+
         Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
         debugSwitch.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -270,8 +287,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(421, "UP");
                 put(420, "DOWN");
-                // this is included temporarily to test map server requests
-                put (503, "MAP");
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
                 // Navigating between files
@@ -283,11 +298,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 case "DOWN":
                         Log.d(TAG, event.toString());
                         changeFile(--fileSelected);
-                        return true;
-                // this is included temporarily to test map server requests
-                case "MAP":
-                        Log.d(TAG, event.toString());
-                        getMap(45.54646, -73.49546);
                         return true;
                 default:
                     Log.d(TAG, event.toString());
@@ -621,11 +631,12 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     pingsPlayer(R.raw.image_results_arrived);
                     // Enabling the up button again when the response has been received.
                     findViewById(R.id.ones).setEnabled(true);
-                } catch (UnsupportedEncodingException e) {
+                }
+                catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
                 // This occurs when there is no rendering returned
-                catch (ArrayIndexOutOfBoundsException e){
+                catch (ArrayIndexOutOfBoundsException| NullPointerException e){
                     speaker("Request failed!");
                 }
             }
