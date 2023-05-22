@@ -264,6 +264,9 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
+                catch (NumberFormatException e){
+                    speaker("Invalid coordinates");
+                }
             }
         });
 
@@ -628,11 +631,12 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     pingsPlayer(R.raw.image_results_arrived);
                     // Enabling the up button again when the response has been received.
                     findViewById(R.id.ones).setEnabled(true);
-                } catch (UnsupportedEncodingException e) {
+                }
+                catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
                 // This occurs when there is no rendering returned
-                catch (ArrayIndexOutOfBoundsException e){
+                catch (ArrayIndexOutOfBoundsException| NullPointerException e){
                     speaker("Request failed!");
                 }
             }
