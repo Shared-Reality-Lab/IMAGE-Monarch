@@ -287,6 +287,13 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(421, "UP");
                 put(420, "DOWN");
+                // shortcut access for demo
+                put (503, "MAP1");
+                put (504, "MAP2");
+                put (505, "MAP3");
+                put (506, "MAP4");
+                put (507, "MAP5");
+
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
                 // Navigating between files
@@ -298,6 +305,31 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 case "DOWN":
                         Log.d(TAG, event.toString());
                         changeFile(--fileSelected);
+                        return true;
+                case "MAP1":
+                        Log.d(TAG, event.toString());
+                        speaker("Technologie HumanWare, Longueuil");
+                        getMap(45.54646, -73.49546);
+                        return true;
+                case "MAP2":
+                        Log.d(TAG, event.toString());
+                        speaker("Technologie HumanWare, Drummondville");
+                        getMap(45.887950, -72.539620);
+                        return true;
+                case "MAP3":
+                        Log.d(TAG, event.toString());
+                        speaker("Technologies HumanWare, Europe");
+                        getMap(52.29810,  -0.62327);
+                        return true;
+                case "MAP4":
+                        Log.d(TAG, event.toString());
+                        speaker("McGill Metro Station");
+                        getMap( 45.504111, -73.5715456);
+                        return true;
+                case "MAP5":
+                        Log.d(TAG, event.toString());
+                        speaker("Hilton Americas-Houston");
+                        getMap(29.75155505, -95.36065968437319);
                         return true;
                 default:
                     Log.d(TAG, event.toString());
