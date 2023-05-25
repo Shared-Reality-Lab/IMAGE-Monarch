@@ -289,10 +289,10 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 put(420, "DOWN");
                 // shortcut access for demo
                 put (503, "MAP1");
-                put (504, "MAP2");
-                put (505, "MAP3");
-                put (506, "MAP4");
-                put (507, "MAP5");
+                put (499, "MAP2");
+                put (498, "MAP3");
+                put (497, "MAP4");
+                put (500, "MAP5");
 
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
