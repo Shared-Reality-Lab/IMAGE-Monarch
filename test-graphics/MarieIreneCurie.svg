@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="220" height="252" viewBox="0 -252 220 252">
+<g data-image-layer="Layer 1"
+     aria-label="person "
+     id="g8"><rect
+       x="101.0"
+       y="-169.0"
+       width="118.0"
+       height="169.0"
+       stroke="#ff4477"
+       stroke-width="2.5"
+       fill="none"
+       aria-label="Marie Curie"
+       aria-description="Marie Curie seated at a desk, appearing to be watching an equipment that rests on the desk as Irene works on it"
+       id="rect4" /><rect
+       x="18.0"
+       y="-238.0"
+       width="115.0"
+       height="181.0"
+       stroke="blue"
+       stroke-width="2.5"
+       fill="none"
+       aria-label="Irene Curie"
+       aria-description="Irene Curie handling a piece of scientific equipment"
+       id="rect6" />
+</g>
+<rect
+     id="rect5"
+     width="79.298508"
+     height="164.2388"
+     x="0.62686563"
+     y="-194.95522"
+     stroke="#ff4477"
+     stroke-width="2.5"
+     fill="none"
+     data-image-layer="Layer 2"
+     aria-label="Scientific equipment"
+     aria-description="A piece of scientific equipment at the Radium Institue in Paris, France" />
+</svg>
