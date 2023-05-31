@@ -225,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 //return true;
             }
         });
-
+/*
         ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 brailleServiceObj.display(data);
@@ -277,9 +277,89 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
             }
         });
+*/
+    ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
+        @Override
+        public boolean onKey(View view, int i, KeyEvent keyEvent) {
+            if (((Button) findViewById(R.id.zeros)).hasFocus() &&
+                    keyEvent.getKeyCode()==504 &&
+                    keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                brailleServiceObj.display(data);
+            }
+            return false;
+        }
+    });
 
+        ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.ones)).hasFocus() &&
+                        keyEvent.getKeyCode()==504 &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                try {
+                    // Display current layer
+                    brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (ParserConfigurationException e) {
+                    throw new RuntimeException(e);
+                } catch (SAXException e) {
+                    throw new RuntimeException(e);
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException(e);
+                }
+                //Log.d("LAYER!", String.valueOf(presentLayer));
+                if (presentLayer==layercount+1)
+                    presentLayer=0;
+            }
+                return false;
+            }
+        });
+
+        ((Button) findViewById(R.id.getMap)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.getMap)).hasFocus() &&
+                        keyEvent.getKeyCode()==504 &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                try {
+                    Double latitude= Double.parseDouble(((EditText) findViewById(R.id.latitude)).getText().toString());
+                    Double longitude= Double.parseDouble(((EditText) findViewById(R.id.longitude)).getText().toString());
+                    getMap(latitude, longitude);
+
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+                catch (NumberFormatException e){
+                    speaker("Invalid coordinates");
+                }
+            }
+                return false;
+            }
+        });
+
+        Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
+        debugSwitch.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (debugSwitch.hasFocus() &&
+                        keyEvent.getKeyCode()==504 &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                if (debugSwitch.isChecked()){
+                    debugSwitch.setChecked(false);
+                }
+                else{
+                    debugSwitch.setChecked(true);
+                }
+                brailleServiceObj.setDebugView(debugSwitch.isChecked());
+                //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
+            }
+                return false;
+            }
+        });
 
     }
+
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
