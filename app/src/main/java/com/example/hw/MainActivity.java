@@ -109,6 +109,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //fileSelected: file index from the list of files in specified target directory.
     int presentLayer=0, fileSelected=0;
 
+    // keyCode of confirm button as per current standard
+    int confirmButton = 504;
 
     // short and long descriptions of objects in the present layer
     private ArrayList<String[][]> tags;
@@ -282,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         @Override
         public boolean onKey(View view, int i, KeyEvent keyEvent) {
             if (((Button) findViewById(R.id.zeros)).hasFocus() &&
-                    keyEvent.getKeyCode()==504 &&
+                    keyEvent.getKeyCode()==confirmButton &&
                     keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 brailleServiceObj.display(data);
             }
@@ -294,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
                 if (((Button) findViewById(R.id.ones)).hasFocus() &&
-                        keyEvent.getKeyCode()==504 &&
+                        keyEvent.getKeyCode()== confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 try {
                     // Display current layer
@@ -320,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
                 if (((Button) findViewById(R.id.getMap)).hasFocus() &&
-                        keyEvent.getKeyCode()==504 &&
+                        keyEvent.getKeyCode()== confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 try {
                     Double latitude= Double.parseDouble(((EditText) findViewById(R.id.latitude)).getText().toString());
@@ -343,7 +345,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
                 if (debugSwitch.hasFocus() &&
-                        keyEvent.getKeyCode()==504 &&
+                        keyEvent.getKeyCode()== confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 if (debugSwitch.isChecked()){
                     debugSwitch.setChecked(false);
