@@ -227,70 +227,18 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 //return true;
             }
         });
-/*
-        ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                brailleServiceObj.display(data);
-            }
-        });
 
-
-        ((Button) findViewById(R.id.ones)).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
-                try {
-                    // Display current layer
-                    brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
-                    throw new RuntimeException(e);
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
+        ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.zeros)).hasFocus() &&
+                        keyEvent.getKeyCode()==confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                    brailleServiceObj.display(data);
                 }
-                //Log.d("LAYER!", String.valueOf(presentLayer));
-                if (presentLayer==layercount+1)
-                    presentLayer=0;
+                return false;
             }
         });
-
-        ((Button) findViewById(R.id.getMap)).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                try {
-                    Double latitude= Double.parseDouble(((EditText) findViewById(R.id.latitude)).getText().toString());
-                    Double longitude= Double.parseDouble(((EditText) findViewById(R.id.longitude)).getText().toString());
-                    getMap(latitude, longitude);
-
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
-                catch (NumberFormatException e){
-                    speaker("Invalid coordinates");
-                }
-            }
-        });
-
-        Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
-        debugSwitch.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                brailleServiceObj.setDebugView(debugSwitch.isChecked());
-                //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
-            }
-        });
-*/
-    ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
-        @Override
-        public boolean onKey(View view, int i, KeyEvent keyEvent) {
-            if (((Button) findViewById(R.id.zeros)).hasFocus() &&
-                    keyEvent.getKeyCode()==confirmButton &&
-                    keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                brailleServiceObj.display(data);
-            }
-            return false;
-        }
-    });
 
         ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
             @Override
