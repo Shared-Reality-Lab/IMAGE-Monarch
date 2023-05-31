@@ -307,7 +307,12 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 return false;
             }
         });
-
+        debugSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                debugSwitch.setChecked(!debugSwitch.isChecked());
+            }
+        });
     }
 
 
