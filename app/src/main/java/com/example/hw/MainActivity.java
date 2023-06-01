@@ -109,6 +109,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //fileSelected: file index from the list of files in specified target directory.
     int presentLayer=0, fileSelected=0;
 
+    // keyCode of confirm button as per current standard
+    int confirmButton = 504;
 
     // short and long descriptions of objects in the present layer
     private ArrayList<String[][]> tags;
@@ -226,16 +228,24 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             }
         });
 
-        ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                brailleServiceObj.display(data);
+        ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.zeros)).hasFocus() &&
+                        keyEvent.getKeyCode()==confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                    brailleServiceObj.display(data);
+                }
+                return false;
             }
         });
 
-
-        ((Button) findViewById(R.id.ones)).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
+        ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.ones)).hasFocus() &&
+                        keyEvent.getKeyCode()== confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 try {
                     // Display current layer
                     brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
@@ -252,10 +262,16 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 if (presentLayer==layercount+1)
                     presentLayer=0;
             }
+                return false;
+            }
         });
 
-        ((Button) findViewById(R.id.getMap)).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
+        ((Button) findViewById(R.id.getMap)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.getMap)).hasFocus() &&
+                        keyEvent.getKeyCode()== confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 try {
                     Double latitude= Double.parseDouble(((EditText) findViewById(R.id.latitude)).getText().toString());
                     Double longitude= Double.parseDouble(((EditText) findViewById(R.id.longitude)).getText().toString());
@@ -268,18 +284,37 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     speaker("Invalid coordinates");
                 }
             }
-        });
-
-        Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
-        debugSwitch.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                brailleServiceObj.setDebugView(debugSwitch.isChecked());
-                //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
+                return false;
             }
         });
 
-
+        Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
+        debugSwitch.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (debugSwitch.hasFocus() &&
+                        keyEvent.getKeyCode()== confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                if (debugSwitch.isChecked()){
+                    debugSwitch.setChecked(false);
+                }
+                else{
+                    debugSwitch.setChecked(true);
+                }
+                brailleServiceObj.setDebugView(debugSwitch.isChecked());
+                //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
+            }
+                return false;
+            }
+        });
+        debugSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                debugSwitch.setChecked(!debugSwitch.isChecked());
+            }
+        });
     }
+
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
