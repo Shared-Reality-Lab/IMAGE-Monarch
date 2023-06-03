@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     private byte[][] data = null; // byte array used to reset pins
 
     //variable to change whether TTS tags fill the object or are assigned only to the raised edges.
-    boolean labelFill=true;
+    boolean labelFill=true, touchEnabled=true;
     int layercount; // number of layers found in svg
     String image;// used to store svg in string format
 
@@ -213,13 +213,14 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 int pinY= (int) Math.ceil((e.getY()-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
                 //Log.d(TAG, String.valueOf(e.getX())+","+String.valueOf(e.getY())+ " ; "+ pinX+","+pinY);
                 */
+               if(touchEnabled){
                 try{
                     // This works! Gesture control can now be used along with the handler.
                     onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
                     Log.d(TAG, String.valueOf(ex));
-                }
+                }}
 
 
 
@@ -234,6 +235,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 if (((Button) findViewById(R.id.zeros)).hasFocus() &&
                         keyEvent.getKeyCode()==confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                    touchEnabled=false;
                     brailleServiceObj.display(data);
                 }
                 return false;
@@ -248,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 try {
                     // Display current layer
+                    touchEnabled=true;
                     brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
