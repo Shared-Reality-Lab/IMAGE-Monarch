@@ -86,6 +86,9 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //fileSelected: file index from the list of files in specified target directory.
     int presentLayer=0, fileSelected=0;
 
+    // keyCode of confirm button as per current standard
+    int confirmButton = 504;
+    
     boolean labelFill=true, shapeFill=false, touchEnabled=true;
 
     // short and long descriptions of objects in the present layer
@@ -203,17 +206,26 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             }
         });
 
-        ((Button) findViewById(R.id.zeros)).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                touchEnabled=false;
-                brailleServiceObj.display(data);
+        ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.zeros)).hasFocus() &&
+                        keyEvent.getKeyCode()==confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                    touchEnabled=false;
+                    brailleServiceObj.display(data);
+                }
+                return false;
             }
         });
 
 
-        ((Button) findViewById(R.id.ones)).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
+        ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.ones)).hasFocus() &&
+                        keyEvent.getKeyCode()== confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 try {
                     // Display current layer
                     touchEnabled=true;
@@ -231,13 +243,27 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 if (presentLayer==layercount+1)
                     presentLayer=0;
             }
+                return false;
+            }
         });
 
         Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
-        debugSwitch.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
+        debugSwitch.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (debugSwitch.hasFocus() &&
+                        keyEvent.getKeyCode()== confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                if (debugSwitch.isChecked()){
+                    debugSwitch.setChecked(false);
+                }
+                else{
+                    debugSwitch.setChecked(true);
+                }
                 brailleServiceObj.setDebugView(debugSwitch.isChecked());
                 //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
+            }
+                return false;
             }
         });
 
