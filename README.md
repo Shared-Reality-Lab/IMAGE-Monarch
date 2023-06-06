@@ -34,7 +34,7 @@ You might will also need to do some (or all) of the following (especially for a 
 
 ### How do I use the application?
 The application UI visually appears as shown below:
-
+![Monarch_screen](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/f4baa686-5167-4213-8b30-82a6b9744095)
 **DOWN**: Lowers all the raised pins \
 **UP**: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
 **DebugView**: Shows/hides the debug view i.e. the visual display of the pins. \
