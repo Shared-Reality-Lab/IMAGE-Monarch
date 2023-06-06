@@ -6,9 +6,9 @@
   - [How do I install it on my Monarch?](how-do-i-install-it-on-my-monarch-from-the-repo)
   - [How do I use the application?](how-do-i-use-the-application)
 
-- [Details...]
-  - [Tactile graphics]()
-  - [Develop, debug, improve!]()
+- [Details...](#details)
+  - [Tactile graphics](#tactile-graphics)
+  - [Develop, debug, improve!](#develop-debug-improve)
 
 
 ## Introduction
@@ -35,11 +35,11 @@ You might will also need to do some (or all) of the following (especially for a 
 ### How do I use the application?
 The application UI visually appears as shown below:
 
-DOWN: Lowers all the raised pins
-UP: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.)
-DebugView: Shows/hides the debug view i.e. the visual display of the pins.
-Text Fields: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the POI in the first and second text fields respectively. 
-GET MAP!: Sends a request to the server for the latitude and longitude coordinates of the POI entered in the text fields. 
+**DOWN**: Lowers all the raised pins \
+**UP**: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
+**DebugView**: Shows/hides the debug view i.e. the visual display of the pins. \
+**Text Fields**: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the POI in the first and second text fields respectively. \
+**GET MAP!**: Sends a request to the server for the latitude and longitude coordinates of the POI entered in the text fields. 
 
 Use the directional buttons on the Monarch to navigate through the buttons and fields on the UI. Press the 'confirm' button to click on a button.
 Use the Up and Down arrows on the device to navigate between the files in the target directory.
@@ -47,8 +47,22 @@ Use the Up and Down arrows on the device to navigate between the files in the ta
 ## Details...
 ### Tactile graphics
 The tactile graphic to be rendered on the device is received in SVG format. Using SVGs makes the renderings independent of the form factor of the pin array. It also allows for the tags/descriptions associated with each object or region in the graphic to be defined within the SVG and simple implementation of features like layering and zooming (not supported yet!).
-Further, schemas have been defined for the format of the tactile graphic rendering SVGs. This ensures that as long as the schema is followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. 
+Further, schemas have been defined for the tactile graphic rendering SVGs. This ensures that as long as the schema is followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. This schema was defined by taking inspiration from the [DAISY Accessible Publishing Knowledge Base](http://kb.daisy.org/publishing/docs/html/svg.html)
 
+The SVG format must comply with the following guidelines:
+- Layers must be indicated by extending the data-* attribute to include data-image-layer.
+- Elements that have the data-image-layer attribute must be treated as part of the specified layer.
+- Elements that do not have the data-image-layer attribute but are descendants of an element or elements with the attribute must be treated as part of the layer of specified in their closest ancestor.
+- If this attribute is specified but certain visible elements do not have this attribute and are not a descendant of an element with this attribute, they must only appear in a "full picture" overview showing all layers.
+- If this attribute is not specified on any elements within the SVG, the graphic should be treated as not containing layers.
+- Elements that are in the same layer should be grouped under a g tag.
+- Labels for a layer/ element within a layer should be indicated using an aria-label attribute.
+- Labels may be specified using a desc attribute that is referenced from elements in the layer using aria-labelledby.
+- The names of layers must be space-separated tokens as defined in the [HTML spec](https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#set-of-space-separated-tokens).
+- Long descriptions for an element should be indicated using an aria-description attribute.
+- Long descriptions may be specified using a desc attribute that is referenced from elements in the layer using aria-describedby
+
+Should/must/may used here are as per [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ### Develop, debug, improve!
 Refer this section for an overview of the program flow to get you started... 
