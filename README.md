@@ -47,9 +47,9 @@ Use the Up and Down arrows on the device to navigate between the files in the ta
 ## Details...
 ### Tactile graphics
 The tactile graphic to be rendered on the device is received in SVG format. Using SVGs makes the renderings independent of the form factor of the pin array. It also allows for the tags/descriptions associated with each object or region in the graphic to be defined within the SVG and simple implementation of features like layering and zooming (not supported yet!).
-Further, schemas have been defined for the tactile graphic rendering SVGs. This ensures that as long as the schema is followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. This schema was defined by taking inspiration from the [DAISY Accessible Publishing Knowledge Base](http://kb.daisy.org/publishing/docs/html/svg.html)
+Further, a format has been defined for the tactile graphic rendering SVGs. This ensures that as long as the format guidelines are followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. These guidelines were defined by taking inspiration from the [DAISY Accessible Publishing Knowledge Base](http://kb.daisy.org/publishing/docs/html/svg.html)
 
-The SVG format must comply with the following guidelines:
+The rendering SVGs must comply with the following guidelines:
 - Layers must be indicated by extending the data-* attribute to include data-image-layer.
 - Elements that have the data-image-layer attribute must be treated as part of the specified layer.
 - Elements that do not have the data-image-layer attribute but are descendants of an element or elements with the attribute must be treated as part of the layer of specified in their closest ancestor.
