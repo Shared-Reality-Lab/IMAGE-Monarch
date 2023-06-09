@@ -67,5 +67,10 @@ Should/must/may used here are as per [RFC 2119](https://www.rfc-editor.org/rfc/r
 
 ### Develop, debug, improve!
 Refer this section for an overview of the program flow to get you started... 
+
+The flowcharts indicate the sequence of functions called when you interact with the elements of the UI. The list beside each block provide the sequential order of various actions executed by each function. Function calls/ important code segments within each function are indicated by a cascade of blocks from the calling function. 
+
+While the functions called return values in most cases, this has not been made explicit by the arrows.  
+
 ![Server request flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/e1b88a4c-22af-4e60-b1d6-1108a334a11e)
 ![Load layer flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/8c62d103-1f3a-4f43-a6a6-1606a82e06e4)
