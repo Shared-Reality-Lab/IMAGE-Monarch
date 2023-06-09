@@ -56,10 +56,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.image.MakeRequest;
-import com.image.MapRequestFormat;
-import com.image.PhotoRequestFormat;
-import com.image.ResponseFormat;
+import ca.a11y.mcgill.image.MakeRequest;
+import ca.a11y.mcgill.image.MapRequestFormat;
+import ca.a11y.mcgill.image.PhotoRequestFormat;
+import ca.a11y.mcgill.image.ResponseFormat;
 import com.scand.svg.SVGHelper;
 
 import org.json.JSONException;

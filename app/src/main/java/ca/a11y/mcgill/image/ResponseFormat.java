@@ -1,4 +1,4 @@
-package com.image;
+package ca.a11y.mcgill.image;
 
 import com.google.gson.annotations.SerializedName;
 

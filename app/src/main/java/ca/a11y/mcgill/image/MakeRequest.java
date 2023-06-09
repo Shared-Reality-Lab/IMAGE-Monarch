@@ -1,8 +1,8 @@
-package com.image;
+package ca.a11y.mcgill.image;
 
-import com.image.MapRequestFormat;
-import com.image.PhotoRequestFormat;
-import com.image.ResponseFormat;
+import ca.a11y.mcgill.image.MapRequestFormat;
+import ca.a11y.mcgill.image.PhotoRequestFormat;
+import ca.a11y.mcgill.image.ResponseFormat;
 
 import org.json.JSONObject;
 
