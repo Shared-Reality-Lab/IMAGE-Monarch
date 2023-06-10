@@ -74,3 +74,5 @@ While the functions called return values in most cases, this has not been made e
 
 ![Server request flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/e1b88a4c-22af-4e60-b1d6-1108a334a11e)
 ![Load layer flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/8c62d103-1f3a-4f43-a6a6-1606a82e06e4)
+
+Details of the XPath queries can be found in [here](XPathQueries.md).
