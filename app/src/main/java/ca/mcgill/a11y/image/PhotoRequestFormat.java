@@ -1,10 +1,10 @@
-package ca.a11y.mcgill.image;
+package ca.mcgill.a11y.image;
 
 import com.google.gson.annotations.SerializedName;
 
 import org.json.JSONException;
 
-public class PhotoRequestFormat extends BaseRequestFormat{
+public class PhotoRequestFormat extends ca.mcgill.a11y.image.BaseRequestFormat {
     @SerializedName("graphic")
     private String graphic;
     @SerializedName("dimensions")
