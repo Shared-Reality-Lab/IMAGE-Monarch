@@ -353,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         return true;
                 case "MAP3":
                         Log.d(TAG, event.toString());
-                        speaker("Technologies HumanWare, Europe");
+                        speaker("Technologie HumanWare, Europe");
                         getMap(52.29810,  -0.62327);
                         return true;
                 case "MAP4":
@@ -613,7 +613,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
         Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
         byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
-
+        Log.d("LOG", "Opening file: "+files[fileSelected].getName());
         /*
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         //BitmapFactory.Options options = new BitmapFactory.Options();
@@ -641,7 +641,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         //httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                .baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
@@ -663,7 +663,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         //httpClient.addInterceptor(logging);
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                .baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
