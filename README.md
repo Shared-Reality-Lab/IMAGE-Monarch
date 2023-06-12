@@ -29,7 +29,7 @@ Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources
 **NOTE:**
 You might will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
 - Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
-- Grant permission to the application to read from storage. Do this by running the adb command `adb shell appops set --uid com.example.hw MANAGE_EXTERNAL_STORAGE allow`
+- Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant com.example.hw android.permission.READ_EXTERNAL_STORAGE`
 - Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
 
 ### How do I use the application?
@@ -39,7 +39,7 @@ The application UI visually appears as shown below:
 **DOWN**: Lowers all the raised pins \
 **UP**: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
 **DebugView**: Shows/hides the debug view i.e. the visual display of the pins. \
-**Text Fields**: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the POI in the first and second text fields respectively. \
+**Text Fields**: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the point of interest (POI) in the first and second text fields respectively. \
 **GET MAP!**: Sends a request to the server for the latitude and longitude coordinates of the POI entered in the text fields. 
 
 Use the directional buttons on the Monarch to navigate through the buttons and fields on the UI. Press the 'confirm' button to click on a button.
@@ -72,7 +72,10 @@ The flowcharts indicate the sequence of functions called when you interact with 
 
 While the functions called return values in most cases, this has not been made explicit by the arrows.  
 
+1. Functions executed when a file is read from storage
 ![Server request flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/e1b88a4c-22af-4e60-b1d6-1108a334a11e)
+
+2. Functions executed to render the next layer
 ![Load layer flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/8c62d103-1f3a-4f43-a6a6-1606a82e06e4)
 
 Details of the XPath queries can be found in [here](XPathQueries.md).
