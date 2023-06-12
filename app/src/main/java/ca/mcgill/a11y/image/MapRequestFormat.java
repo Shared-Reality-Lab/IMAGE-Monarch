@@ -1,10 +1,10 @@
-package com.image;
+package ca.mcgill.a11y.image;
 
 import com.google.gson.annotations.SerializedName;
 
 import org.json.JSONException;
 
-public class MapRequestFormat extends BaseRequestFormat{
+public class MapRequestFormat extends BaseRequestFormat {
     @SerializedName("coordinates")
     private Coordinates coords=new Coordinates();
     @SerializedName("url")
