@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 import org.json.JSONException;
 
-public class PhotoRequestFormat extends ca.mcgill.a11y.image.BaseRequestFormat {
+public class PhotoRequestFormat extends BaseRequestFormat {
     @SerializedName("graphic")
     private String graphic;
     @SerializedName("dimensions")

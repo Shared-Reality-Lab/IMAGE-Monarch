@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 import org.json.JSONException;
 
-public class MapRequestFormat extends ca.mcgill.a11y.image.BaseRequestFormat {
+public class MapRequestFormat extends BaseRequestFormat {
     @SerializedName("coordinates")
     private Coordinates coords=new Coordinates();
     @SerializedName("url")
