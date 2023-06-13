@@ -37,12 +37,12 @@ The application UI visually appears as shown below:
 ![Monarch application GUI](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/c3b4327e-e1f8-404a-9470-79b48ff87476)
 
 **DOWN**: Lowers all the raised pins \
-**UP**: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
+<a name="UpButton"> **UP** </a>: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
 **DebugView**: Shows/hides the debug view i.e. the visual display of the pins. \
 **Text Fields**: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the point of interest (POI) in the first and second text fields respectively. \
 **GET MAP!**: Sends a request to the server for the latitude and longitude coordinates of the POI entered in the text fields. 
 
-Use the directional buttons on the Monarch to navigate through the buttons and fields on the UI. Press the 'confirm' button to click on a button.
+Use the directional buttons on the Monarch to navigate through the buttons and fields on the UI. Press the 'confirm' button (i.e. the Enter/ dot 8 in a Perkins style keyboard) to click on a button.
 Use the Up and Down arrows on the device to navigate between the files in the target directory.
 
 ## Details...
@@ -72,10 +72,10 @@ The flowcharts indicate the sequence of functions called when you interact with 
 
 While the functions called return values in most cases, this has not been made explicit by the arrows.  
 
-1. Functions executed when a file is read from storage
+1. Functions executed when a file is read from storage (by pressing the Up and Down arrow buttons on the device )
 ![Server request flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/e1b88a4c-22af-4e60-b1d6-1108a334a11e)
 
-2. Functions executed to render the next layer
+2. Functions executed to render the next layer (when the [UP button](#UpButton) is pressed)
 ![Load layer flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/8c62d103-1f3a-4f43-a6a6-1606a82e06e4)
 
 Details of the XPath queries can be found in [here](XPathQueries.md).
