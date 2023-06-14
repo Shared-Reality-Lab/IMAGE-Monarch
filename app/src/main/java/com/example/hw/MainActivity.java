@@ -288,6 +288,10 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             }
         });
 
+        findViewById(R.id.getMap).setEnabled(false);
+        findViewById(R.id.longitude).setEnabled(false);
+        findViewById(R.id.latitude).setEnabled(false);
+
         Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
         debugSwitch.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -674,6 +678,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         image= makeServerCall(call);
         return image;
     }
+
 
     public String makeServerCall(Call<ResponseFormat> call){
         // Cancelling any ongoing requests that haven't been completed
