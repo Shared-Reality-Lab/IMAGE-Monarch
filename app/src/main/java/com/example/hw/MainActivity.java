@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                             //Log.d("CHECKING!", s);
                             // plays ping when TTS readout is completed based on utteranceId
                             if (s.equals("ping")){
-                                pingsPlayer(R.raw.ping);
+                                pingsPlayer(R.raw.start);
                             }
                         }
 
@@ -281,7 +281,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     throw new RuntimeException(e);
                 }
                 catch (NumberFormatException e){
-                    speaker("Invalid coordinates");
+                    //speaker("Invalid coordinates");
                 }
             }
                 return false;
@@ -343,27 +343,27 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         return true;
                 case "MAP1":
                         Log.d(TAG, event.toString());
-                        speaker("Technologie HumanWare, Longueuil");
+                        //speaker("Technologie HumanWare, Longueuil");
                         getMap(45.54646, -73.49546);
                         return true;
                 case "MAP2":
                         Log.d(TAG, event.toString());
-                        speaker("Technologie HumanWare, Drummondville");
+                        //speaker("Technologie HumanWare, Drummondville");
                         getMap(45.887950, -72.539620);
                         return true;
                 case "MAP3":
                         Log.d(TAG, event.toString());
-                        speaker("Technologie HumanWare, Europe");
+                        //speaker("Technologie HumanWare, Europe");
                         getMap(52.29810,  -0.62327);
                         return true;
                 case "MAP4":
                         Log.d(TAG, event.toString());
-                        speaker("McGill Metro Station");
+                        //speaker("McGill Metro Station");
                         getMap( 45.504111, -73.5715456);
                         return true;
                 case "MAP5":
                         Log.d(TAG, event.toString());
-                        speaker("Hilton Americas-Houston");
+                        //speaker("Hilton Americas-Houston");
                         getMap(29.75155505, -95.36065968437319);
                         return true;
                 default:
