@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         public void onDone(String s) {
                             //Log.d("CHECKING!", s);
                             if (s.equals("ping")){
-                                pingsPlayer(R.raw.ping);
+                                pingsPlayer(R.raw.start);
                             }
                         }
 
@@ -559,7 +559,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         presentLayer=0;
         String[] output=getFile(fileNumber);
         image=output[0];
-        speaker("Opening file "+ output[1]);
+        //speaker("Opening file "+ output[1]);
         brailleServiceObj.display(data);
         return;
     }
