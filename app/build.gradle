@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.hw'
+    namespace 'ca.mcgill.a11y.image'
     compileSdkVersion 29
 
     defaultConfig {
-        applicationId "com.example.hw"
+        applicationId "ca.mcgill.a11y.image"
         minSdkVersion 29
         targetSdkVersion 29
         compileSdkVersion 31

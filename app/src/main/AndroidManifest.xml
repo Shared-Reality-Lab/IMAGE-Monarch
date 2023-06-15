@@ -24,7 +24,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BrailleDisplay">
         <activity
-            android:name=".MainActivity"
+            android:name="ca.mcgill.a11y.image.MainActivity"
             android:exported="true"
             android:configChanges="touchscreen">
 
