@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                             //Log.d("CHECKING!", s);
                             // plays ping when TTS readout is completed based on utteranceId
                             if (s.equals("ping")){
-                                pingsPlayer(R.raw.ping);
+                                pingsPlayer(R.raw.blip);
                             }
                         }
 
