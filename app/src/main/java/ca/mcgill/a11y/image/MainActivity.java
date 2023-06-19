@@ -183,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                             //Log.d("CHECKING!", s);
                             // plays ping when TTS readout is completed based on utteranceId
                             if (s.equals("ping")){
-                                pingsPlayer(R.raw.ping);
+                                pingsPlayer(R.raw.blip);
                             }
                         }
 
@@ -607,7 +607,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         //httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                .baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
@@ -629,7 +629,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         //httpClient.addInterceptor(logging);
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                .baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();

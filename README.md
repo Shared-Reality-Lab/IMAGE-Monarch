@@ -29,7 +29,7 @@ Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources
 **NOTE:**
 You might will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
 - Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
-- Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant com.example.hw android.permission.READ_EXTERNAL_STORAGE`
+- Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
 - Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
 
 ### How do I use the application?
