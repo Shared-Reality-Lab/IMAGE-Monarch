@@ -19,6 +19,9 @@ package ca.mcgill.a11y.image;
 import com.google.gson.annotations.SerializedName;
 
 public class ResponseFormat {
+    @SerializedName("data")
+    public String graphic;
+    /*
     @SerializedName("request_uuid")
     public String Uuid;
     @SerializedName("timestamp")
@@ -38,4 +41,5 @@ public class ResponseFormat {
         @SerializedName("graphic")
         public String graphic;
     }
+    */
 }

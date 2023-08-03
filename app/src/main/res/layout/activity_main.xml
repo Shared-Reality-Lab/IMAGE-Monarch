@@ -48,30 +48,6 @@
                 android:text="DebugView" />
         </TableRow>
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" >
-
-            <EditText
-                android:id="@+id/latitude"
-                android:layout_width="144dp"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="numberDecimal|numberSigned" />
-
-            <EditText
-                android:id="@+id/longitude"
-                android:layout_width="162dp"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="numberDecimal|numberSigned" />
-
-            <Button
-                android:id="@+id/getMap"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Get MAP!" />
-        </TableRow>
     </TableLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
