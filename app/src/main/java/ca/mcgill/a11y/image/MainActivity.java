@@ -692,9 +692,9 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 .connectTimeout(60, TimeUnit.SECONDS);
 
         //httpClient.addInterceptor(logging);
-
+        Log.d("URL", getString(R.string.server_url));
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(R.string.server_url)
+                .baseUrl(getString(R.string.server_url))
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
