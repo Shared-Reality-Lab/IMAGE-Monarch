@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //variable to change whether TTS tags fill the object or are assigned only to the raised edges.
     boolean labelFill=true, ttsEnabled=true;
     int layercount; // number of layers found in svg
-    String image;// used to store svg in string format
+    String image, caption;// used to store svg in string format
 
     //presentLayer: The layer to be displayed when pins are raised;
     //fileSelected: file index from the list of files in specified target directory.
@@ -410,7 +410,12 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         tag=((Element)node).getAttribute("aria-label");
                         //Log.d("GETTING TAGS", "Otherwise here!");
                         }
-                    speaker("Layer: "+tag);
+                    if(layer==0){
+                        speaker(caption+". Layer: "+tag);
+                    }
+                    else{
+                        speaker("Layer: "+tag);
+                    }
                     }
         }
         //If there is no tag as a layer, hide elements unless the full image is to be shown
@@ -656,6 +661,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     ResponseFormat resource= response.body();
                     ResponseFormat.Rendering[] renderings = resource.renderings;
                     image= (renderings[0].data.graphic).replaceFirst("data:.+,", "");
+                    caption= renderings[0].desc;
                     //Log.d("RESPONSE", image);
                     byte[] data = new byte[0];
                     data = image.getBytes("UTF-8");
