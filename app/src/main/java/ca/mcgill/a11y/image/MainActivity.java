@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //variable to change whether TTS tags fill the object or are assigned only to the raised edges.
     boolean labelFill=true, ttsEnabled=true;
     int layercount; // number of layers found in svg
-    String image, caption;// image: used to store svg in string format; caption: short description of rendering
+    String image;//used to store svg in string format
 
     //presentLayer: The layer to be displayed when pins are raised;
     //fileSelected: file index from the list of files in specified target directory.
@@ -387,6 +387,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         int layer=0;
         //Log.d("LAYER!", String.valueOf(presentLayer));
         XPath xPath = XPathFactory.newInstance().newXPath();
+        String caption = ((Element)((NodeList)xPath.evaluate("//*[@title]", doc, XPathConstants.NODESET)).item(0)).getTextContent();
         // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
@@ -410,7 +411,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         tag=((Element)node).getAttribute("aria-label");
                         //Log.d("GETTING TAGS", "Otherwise here!");
                         }
-                    if(layer==0){
+                    if(i==0){
                         // Read the caption along with layer tag for the first layer
                         speaker(caption+". Layer: "+tag);
                     }
@@ -429,7 +430,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             }
         }
         else{
-            speaker("Full image");
+            speaker("All layers");
         }
         // fetch TTS tags for elements within present layer
         //getDescriptions(doc);
@@ -662,7 +663,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                     ResponseFormat resource= response.body();
                     ResponseFormat.Rendering[] renderings = resource.renderings;
                     image= (renderings[0].data.graphic).replaceFirst("data:.+,", "");
-                    caption= renderings[0].desc;
                     //Log.d("RESPONSE", image);
                     byte[] data = new byte[0];
                     data = image.getBytes("UTF-8");
