@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     //variable to change whether TTS tags fill the object or are assigned only to the raised edges.
     boolean labelFill=true, ttsEnabled=true;
     int layercount; // number of layers found in svg
-    String image;//used to store svg in string format
+    String image;// used to store svg in string format
 
     //presentLayer: The layer to be displayed when pins are raised;
     //fileSelected: file index from the list of files in specified target directory.
