@@ -387,7 +387,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         int layer=0;
         //Log.d("LAYER!", String.valueOf(presentLayer));
         XPath xPath = XPathFactory.newInstance().newXPath();
-        String caption = ((Element)((NodeList)xPath.evaluate("//*[@title]", doc, XPathConstants.NODESET)).item(0)).getTextContent();
+        // get the caption from the title node
+        String caption = ((Element)((NodeList)xPath.evaluate("//title", doc, XPathConstants.NODESET)).item(0)).getTextContent();
         // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
@@ -614,7 +615,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         //httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://image.a11y.mcgill.ca/")
+                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                //.baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
@@ -636,7 +638,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         //httpClient.addInterceptor(logging);
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://image.a11y.mcgill.ca/")
+                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                //.baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
