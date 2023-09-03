@@ -76,6 +76,6 @@ While the functions called return values in most cases, this has not been made e
 ![Server request flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/e1b88a4c-22af-4e60-b1d6-1108a334a11e)
 
 2. Functions executed to render the next layer (when the [UP button](#UpButton) is pressed)
-![Load layer flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/0456d44b-c86d-4e40-82d0-c9c020b82ff3)
+![Load layer flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/fba1d9bb-fb1e-4094-86ab-74ee7a1e61d2)
 
 Details of the XPath queries can be found in [here](XPathQueries.md).
