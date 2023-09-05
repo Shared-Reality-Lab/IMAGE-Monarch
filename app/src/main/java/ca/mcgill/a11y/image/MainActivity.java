@@ -615,8 +615,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         //httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
-                //.baseUrl("https://image.a11y.mcgill.ca/")
+                //.baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                .baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
@@ -638,8 +638,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         //httpClient.addInterceptor(logging);
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://unicorn.cim.mcgill.ca/image/")
-                //.baseUrl("https://image.a11y.mcgill.ca/")
+                //.baseUrl("https://unicorn.cim.mcgill.ca/image/")
+                .baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
