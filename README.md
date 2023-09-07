@@ -34,7 +34,7 @@ You might will also need to do some (or all) of the following (especially for a 
 
 ### How do I use the application?
 The application UI visually appears as shown below:
-![Monarch application GUI](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/c3b4327e-e1f8-404a-9470-79b48ff87476)
+![Monarch application GUI](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/5223165a-6b75-4595-b403-e8b9fe176d51)
 
 **DOWN**: Lowers all the raised pins \
 <a name="UpButton"> **UP** </a>: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
@@ -51,6 +51,7 @@ The tactile graphic to be rendered on the device is received in SVG format. Usin
 Further, a format has been defined for the tactile graphic rendering SVGs. This ensures that as long as the format guidelines are followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. These guidelines were defined by taking inspiration from the [DAISY Accessible Publishing Knowledge Base](http://kb.daisy.org/publishing/docs/html/svg.html)
 
 The rendering SVGs must comply with the following guidelines:
+- The SVG must have a single title node providing an overview of the graphic within the SVG.
 - Layers must be indicated by extending the data-* attribute to include data-image-layer.
 - Elements that have the data-image-layer attribute must be treated as part of the specified layer.
 - Elements that do not have the data-image-layer attribute but are descendants of an element or elements with the attribute must be treated as part of the layer of specified in their closest ancestor.
