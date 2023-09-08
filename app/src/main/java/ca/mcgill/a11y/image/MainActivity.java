@@ -384,11 +384,13 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
     // get present layer and the description tags from the doc
     public byte[][] getBitmaps(Document doc, int presentLayer) throws IOException, XPathExpressionException {
-        int layer=0;
-        //Log.d("LAYER!", String.valueOf(presentLayer));
+        String caption = null;
         XPath xPath = XPathFactory.newInstance().newXPath();
         // get the caption from the title node
-        String caption = ((Element)((NodeList)xPath.evaluate("//title", doc, XPathConstants.NODESET)).item(0)).getTextContent();
+        Element title = ((Element) ((NodeList) xPath.evaluate("//title", doc, XPathConstants.NODESET)).item(0));
+        if (title!=null){
+            caption = title.getTextContent();
+        }
         // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
@@ -412,9 +414,9 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         tag=((Element)node).getAttribute("aria-label");
                         //Log.d("GETTING TAGS", "Otherwise here!");
                         }
-                    if(i==0){
-                        // Read the caption along with layer tag for the first layer
-                        speaker(caption+". Layer: "+tag);
+                    if(i==0 && caption!=null){
+                            // Read the caption along with layer tag for the first layer
+                            speaker(caption + ". Layer: " + tag);
                     }
                     else{
                         speaker("Layer: "+tag);

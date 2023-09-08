@@ -51,7 +51,7 @@ The tactile graphic to be rendered on the device is received in SVG format. Usin
 Further, a format has been defined for the tactile graphic rendering SVGs. This ensures that as long as the format guidelines are followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. These guidelines were defined by taking inspiration from the [DAISY Accessible Publishing Knowledge Base](http://kb.daisy.org/publishing/docs/html/svg.html)
 
 The rendering SVGs must comply with the following guidelines:
-- The SVG must have a single title node providing an overview of the graphic within the SVG.
+- The SVG should have a single title node providing an overview of the graphic within the SVG.
 - Layers must be indicated by extending the data-* attribute to include data-image-layer.
 - Elements that have the data-image-layer attribute must be treated as part of the specified layer.
 - Elements that do not have the data-image-layer attribute but are descendants of an element or elements with the attribute must be treated as part of the layer of specified in their closest ancestor.
