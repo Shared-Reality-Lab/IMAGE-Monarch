@@ -415,8 +415,8 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         //Log.d("GETTING TAGS", "Otherwise here!");
                         }
                     if(i==0 && caption!=null){
-                            // Read the caption along with layer tag for the first layer
-                            speaker(caption + ". Layer: " + tag);
+                        // Read the caption along with layer tag for the first layer
+                        speaker(caption + ". Layer: " + tag);
                     }
                     else{
                         speaker("Layer: "+tag);
