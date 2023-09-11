@@ -18,6 +18,7 @@ package ca.mcgill.a11y.image;
 
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -58,7 +59,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import ca.mcgill.a11y.image.R;
 import com.scand.svg.SVGHelper;
 
 import org.json.JSONException;
@@ -89,8 +89,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
-    static final String TAG = MainActivity.class.getSimpleName();
+public class Annotation extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+    static final String TAG = Exploration.class.getSimpleName();
     private BrailleDisplay brailleServiceObj = null;
     //final private Handler mHandler = new Handler();
     private byte[][] data = null; // byte array used to reset pins
@@ -123,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //Intent intent = getIntent();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -160,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-            
+
         // Setting up TTS
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
 
@@ -198,29 +199,16 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
             @Override
             public boolean handleMotionEvent(MotionEvent e) {
-                /*// Observed limits of IR outputs for the pin array. Might need tweaking for more accurate mapping of finger location to pin...
-                float xMin= 0;
-                float xMax= 1920;
-                float yMin=23;
-                float yMax=1080;
-                // Calculating pin based on position
-                int pinX= (int) (Math.ceil((e.getX()-xMin+0.000001)/((xMax-xMin)/brailleServiceObj.getDotPerLineCount()))-1);
-                int pinY= (int) Math.ceil((e.getY()-yMin+0.000001)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
-                //Log.d(TAG, String.valueOf(e.getX())+","+String.valueOf(e.getY())+ " ; "+ pinX+","+pinY);
-                */
-               if(ttsEnabled){
-                try{
-                    // This works! Gesture control can now be used along with the handler.
-                    onTouchEvent(e);
-                }
-                catch(RuntimeException ex){
-                    Log.d(TAG, String.valueOf(ex));
-                }}
-
-
+                if(ttsEnabled){
+                    try{
+                        // This works! Gesture control can now be used along with the handler.
+                        onTouchEvent(e);
+                    }
+                    catch(RuntimeException ex){
+                        Log.d(TAG, String.valueOf(ex));
+                    }}
 
                 return false;
-                //return true;
             }
         });
 
@@ -237,51 +225,43 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             }
         });
 
+        ((Button) findViewById(R.id.mode)).setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (((Button) findViewById(R.id.mode)).hasFocus() &&
+                        keyEvent.getKeyCode()== confirmButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                    Intent myIntent = new Intent(Annotation.this, Guidance.class);
+                    //myIntent.putExtra("key", value); //Optional parameters
+                    Annotation.this.startActivity(myIntent);
+                }
+                return false;
+            }
+        });
+
         ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
                 if (((Button) findViewById(R.id.ones)).hasFocus() &&
                         keyEvent.getKeyCode()== confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                try {
-                    // Display current layer
-                    ttsEnabled=true;
-                    brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
-                    throw new RuntimeException(e);
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
+                    try {
+                        // Display current layer
+                        ttsEnabled=true;
+                        brailleServiceObj.display(getBitmaps(getfreshDoc(), presentLayer++));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (ParserConfigurationException e) {
+                        throw new RuntimeException(e);
+                    } catch (SAXException e) {
+                        throw new RuntimeException(e);
+                    } catch (XPathExpressionException e) {
+                        throw new RuntimeException(e);
+                    }
+                    //Log.d("LAYER!", String.valueOf(presentLayer));
+                    if (presentLayer==layercount+1)
+                        presentLayer=0;
                 }
-                //Log.d("LAYER!", String.valueOf(presentLayer));
-                if (presentLayer==layercount+1)
-                    presentLayer=0;
-            }
-                return false;
-            }
-        });
-
-        ((Button) findViewById(R.id.getMap)).setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (((Button) findViewById(R.id.getMap)).hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                try {
-                    Double latitude= Double.parseDouble(((EditText) findViewById(R.id.latitude)).getText().toString());
-                    Double longitude= Double.parseDouble(((EditText) findViewById(R.id.longitude)).getText().toString());
-                    getMap(latitude, longitude);
-
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
-                catch (NumberFormatException e){
-                    speaker("Invalid coordinates");
-                }
-            }
                 return false;
             }
         });
@@ -293,15 +273,15 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 if (debugSwitch.hasFocus() &&
                         keyEvent.getKeyCode()== confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                if (debugSwitch.isChecked()){
-                    debugSwitch.setChecked(false);
+                    if (debugSwitch.isChecked()){
+                        debugSwitch.setChecked(false);
+                    }
+                    else{
+                        debugSwitch.setChecked(true);
+                    }
+                    brailleServiceObj.setDebugView(debugSwitch.isChecked());
+                    //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
                 }
-                else{
-                    debugSwitch.setChecked(true);
-                }
-                brailleServiceObj.setDebugView(debugSwitch.isChecked());
-                //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
-            }
                 return false;
             }
         });
@@ -324,18 +304,18 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             switch (keyMapping.getOrDefault(keyCode, "default")) {
                 // Navigating between files
                 case "UP":
-                        Log.d(TAG, event.toString());
-                        changeFile(++fileSelected);
-                        return true;
+                    Log.d(TAG, event.toString());
+                    changeFile(++fileSelected);
+                    return true;
                 // Navigating between files
                 case "DOWN":
-                        Log.d(TAG, event.toString());
-                        changeFile(--fileSelected);
-                        return true;
+                    Log.d(TAG, event.toString());
+                    changeFile(--fileSelected);
+                    return true;
                 default:
                     Log.d(TAG, event.toString());
                     return false;
-        }
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (JSONException e) {
@@ -400,22 +380,22 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             // TTS output of layer description
             if (i==presentLayer){
                 //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
-                    String tag;
-                    //Log.d("GETTING TAGS", node.getNodeName());
-                    if (((Element)node).hasAttribute("aria-labelledby")) {
-                        tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
-                        //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
-                        }
-                    else{
-                        tag=((Element)node).getAttribute("aria-label");
-                        //Log.d("GETTING TAGS", "Otherwise here!");
-                        }
-                    speaker("Layer: "+tag);
-                    }
+                String tag;
+                //Log.d("GETTING TAGS", node.getNodeName());
+                if (((Element)node).hasAttribute("aria-labelledby")) {
+                    tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+                    //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
+                }
+                else{
+                    tag=((Element)node).getAttribute("aria-label");
+                    //Log.d("GETTING TAGS", "Otherwise here!");
+                }
+                speaker("Layer: "+tag);
+            }
         }
         //If there is no tag as a layer, hide elements unless the full image is to be shown
         if (presentLayer!=layercount){
-            
+
             nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])] ", doc, XPathConstants.NODESET);
             for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
                 Node node = nodeslist.item(i);
@@ -539,13 +519,13 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             ((Element)node).setAttribute("display", "none");
         }
 
-            // converting string array into 2D array that maps to the pins
-            for (int i = 0; i < data.length; ++i) {
-                tags.get(0)[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
-                tags.get(1)[i]=Arrays.copyOfRange(layerDesc, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
-            }
-            return;
+        // converting string array into 2D array that maps to the pins
+        for (int i = 0; i < data.length; ++i) {
+            tags.get(0)[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+            tags.get(1)[i]=Arrays.copyOfRange(layerDesc, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
         }
+        return;
+    }
     // converts the xml doc to bitmap
     public byte[] docToBitmap(Document doc) throws IOException {
         String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
@@ -579,18 +559,6 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
         Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
         byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
-
-        /*
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        //BitmapFactory.Options options = new BitmapFactory.Options();
-        //options.inJustDecodeBounds = true;
-        Log.d("FILES", files[fileSelected].getName());
-        Bitmap bitmap = BitmapFactory.decodeFile("/sdcard/IMAGE/client/"+files[fileSelected].getName());
-        // This works for other file types (png, avif) as well despite being specified as jpeg
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-        byte[] imageBytes = byteArrayOutputStream.toByteArray();
-         */
-
         String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
         Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
         PhotoRequestFormat req= new PhotoRequestFormat();
@@ -600,7 +568,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
-        //Need next 2 lines when server response is slow
+                //Need next 2 lines when server response is slow
                 .readTimeout(60, TimeUnit.SECONDS)
                 .connectTimeout(60, TimeUnit.SECONDS);
 

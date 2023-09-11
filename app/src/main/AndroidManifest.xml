@@ -24,15 +24,24 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BrailleDisplay">
         <activity
-            android:name="ca.mcgill.a11y.image.MainActivity"
+            android:name="ca.mcgill.a11y.image.Guidance"
             android:exported="true"
             android:configChanges="touchscreen">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-
             </intent-filter>
+        </activity>
+        <activity
+            android:name="ca.mcgill.a11y.image.Annotation"
+            android:exported="true"
+            android:configChanges="touchscreen">
+        </activity>
+        <activity
+            android:name="ca.mcgill.a11y.image.Exploration"
+            android:exported="true"
+            android:configChanges="touchscreen">
         </activity>
     </application>
 
