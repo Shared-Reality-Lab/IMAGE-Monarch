@@ -682,7 +682,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 }
                 // This occurs when there is no rendering returned
                 catch (ArrayIndexOutOfBoundsException| NullPointerException e){
-                    speaker("Request failed!");
+                    pingsPlayer(R.raw.image_error);
                 }
             }
 
@@ -695,7 +695,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 // an ongoing request and can be confused as a result of that request.
                 // Causes interrupted requests to die silently!
                 if (!call.isCanceled()){
-                    speaker("Request failed!");
+                    pingsPlayer(R.raw.image_error);
                 }
             }
         });
