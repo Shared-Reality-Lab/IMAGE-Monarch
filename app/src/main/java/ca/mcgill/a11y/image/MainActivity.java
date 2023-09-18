@@ -384,9 +384,13 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
 
     // get present layer and the description tags from the doc
     public byte[][] getBitmaps(Document doc, int presentLayer) throws IOException, XPathExpressionException {
-        int layer=0;
-        //Log.d("LAYER!", String.valueOf(presentLayer));
+        String caption = null;
         XPath xPath = XPathFactory.newInstance().newXPath();
+        // get the caption from the title node
+        Element title = ((Element) ((NodeList) xPath.evaluate("//title", doc, XPathConstants.NODESET)).item(0));
+        if (title!=null){
+            caption = title.getTextContent();
+        }
         // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
@@ -410,7 +414,13 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                         tag=((Element)node).getAttribute("aria-label");
                         //Log.d("GETTING TAGS", "Otherwise here!");
                         }
-                    speaker("Layer: "+tag);
+                    if(i==0 && caption!=null){
+                        // Read the caption along with layer tag for the first layer
+                        speaker(caption + ". Layer: " + tag);
+                    }
+                    else{
+                        speaker("Layer: "+tag);
+                    }
                     }
         }
         //If there is no tag as a layer, hide elements unless the full image is to be shown
@@ -423,7 +433,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
             }
         }
         else{
-            speaker("Full image");
+            speaker("All layers");
         }
         // fetch TTS tags for elements within present layer
         //getDescriptions(doc);
@@ -607,6 +617,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         //httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
+                //.baseUrl("https://unicorn.cim.mcgill.ca/image/")
                 .baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
@@ -629,6 +640,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         //httpClient.addInterceptor(logging);
         Retrofit retrofit = new Retrofit.Builder()
+                //.baseUrl("https://unicorn.cim.mcgill.ca/image/")
                 .baseUrl("https://image.a11y.mcgill.ca/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
@@ -670,7 +682,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 }
                 // This occurs when there is no rendering returned
                 catch (ArrayIndexOutOfBoundsException| NullPointerException e){
-                    speaker("Request failed!");
+                    pingsPlayer(R.raw.image_error);
                 }
             }
 
@@ -683,7 +695,7 @@ public class MainActivity extends AppCompatActivity implements GestureDetector.O
                 // an ongoing request and can be confused as a result of that request.
                 // Causes interrupted requests to die silently!
                 if (!call.isCanceled()){
-                    speaker("Request failed!");
+                    pingsPlayer(R.raw.image_error);
                 }
             }
         });
