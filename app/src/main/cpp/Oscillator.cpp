@@ -20,6 +20,10 @@ void Oscillator::setFrequency(float freq) {
     if (sampleRate_!=NULL) phaseIncrement_ = (TWO_PI * frequency_) / (double) sampleRate_;
 }
 
+void Oscillator::setAngle(float angle) {
+    angle_=angle;
+}
+
 
 void Oscillator::setBeat(int sqr){
     squareWave_= sqr;
@@ -65,10 +69,10 @@ void Oscillator::render(float *audioData, int32_t numFrames) {
         }
     }
     int kChannelCountStereo = 2;
+    float leftMult=sin(angle_)*sin(angle_), rightMult= cos(angle_)*cos(angle_);
     for (int i = numFrames - 1; i >= 0; --i) {
-
-        audioData[i * kChannelCountStereo] = 0;
-        audioData[i * kChannelCountStereo + 1] = audioData[i];
+        audioData[i * kChannelCountStereo] = audioData[i] *leftMult; //left
+        audioData[i * kChannelCountStereo + 1] = audioData[i] * rightMult ; //right
     }
 }
 

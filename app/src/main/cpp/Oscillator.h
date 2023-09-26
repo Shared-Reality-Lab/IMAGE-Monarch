@@ -1,5 +1,6 @@
 #include <atomic>
 #include <stdint.h>
+#include <math.h>
 
 class Oscillator {
 public:
@@ -9,6 +10,7 @@ public:
     void render(float *audioData, int32_t numFrames);
     void setFrequency(float freq);
     void setBeat(int sqr);
+    void setAngle(float angle);
 
 private:
     std::atomic<bool> isWaveOn_{false};
@@ -19,4 +21,5 @@ private:
     double phase_ = 0.0;
     double phaseIncrement_ = 0.0;
     uint32_t count_ =0;
+    float angle_=0.785398; //45 degrees; dead centre
 };

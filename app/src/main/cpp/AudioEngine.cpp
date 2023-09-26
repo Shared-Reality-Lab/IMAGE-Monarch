@@ -84,9 +84,10 @@ void AudioEngine::setToneOn(bool isToneOn) {
     oscillator_.setWaveOn(isToneOn);
 }
 
-void AudioEngine::guide(bool isToneOn, float amplitude, float dist, int beat) {
+void AudioEngine::guide(bool isToneOn, float amplitude, float dist, int beat, float angle) {
     oscillator_.setFrequency(dist);
     oscillator_.setBeat(beat);
+    oscillator_.setAngle(angle);
     // __android_log_print(ANDROID_LOG_ERROR, "TRACKERS", "%d", beat);
     oscillator_.sonar(isToneOn, amplitude);
 }

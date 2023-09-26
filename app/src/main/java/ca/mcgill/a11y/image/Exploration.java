@@ -17,6 +17,13 @@
 package ca.mcgill.a11y.image;
 
 
+import static android.view.KeyEvent.KEYCODE_DPAD_DOWN;
+import static android.view.KeyEvent.KEYCODE_DPAD_LEFT;
+import static android.view.KeyEvent.KEYCODE_DPAD_RIGHT;
+import static android.view.KeyEvent.KEYCODE_DPAD_UP;
+import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
+import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -94,6 +101,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
 
     // keyCode of confirm button as per current standard
     int confirmButton = 504;
+    int backButton = 503;
 
     private GestureDetectorCompat mDetector;
 
@@ -105,30 +113,13 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mDetector = new GestureDetectorCompat(this,this);
+        mDetector = new GestureDetectorCompat(getApplicationContext(),this);
         // Set the gesture detector as the double tap
         // listener.
         mDetector.setOnDoubleTapListener(this);
 
-        InputManager im = (InputManager) getSystemService(INPUT_SERVICE);
-        brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
+        brailleServiceObj = DataAndMethods.brailleServiceObj;
         DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
-
-        brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
-            @Override
-            public boolean handleMotionEvent(MotionEvent e) {
-                if(DataAndMethods.ttsEnabled){
-                    try{
-                        // This works! Gesture control can now be used along with the handler.
-                        onTouchEvent(e);
-                    }
-                    catch(RuntimeException ex){
-                        Log.d("MOTION EVENT", String.valueOf(ex));
-                    }}
-
-                return false;
-            }
-        });
 
         ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -168,7 +159,10 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                     try {
                         // Display current layer
                         DataAndMethods.ttsEnabled=true;
-                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer++));
+                        DataAndMethods.presentLayer++;
+                        if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
+                            DataAndMethods.presentLayer=0;
+                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } catch (ParserConfigurationException e) {
@@ -178,10 +172,29 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                     } catch (XPathExpressionException e) {
                         throw new RuntimeException(e);
                     }
-                    //Log.d("LAYER!", String.valueOf(presentLayer));
-                    if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
-                        DataAndMethods.presentLayer=0;
                 }
+
+                if (((Button) findViewById(R.id.ones)).hasFocus() &&
+                        keyEvent.getKeyCode()== backButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                    try {
+                        // Display current layer
+                        DataAndMethods.ttsEnabled=true;
+                        DataAndMethods.presentLayer--;
+                        if (DataAndMethods.presentLayer<0)
+                            DataAndMethods.presentLayer= DataAndMethods.layerCount;
+                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (ParserConfigurationException e) {
+                        throw new RuntimeException(e);
+                    } catch (SAXException e) {
+                        throw new RuntimeException(e);
+                    } catch (XPathExpressionException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
                 return false;
             }
         });
@@ -219,6 +232,12 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(421, "UP");
                 put(420, "DOWN");
+                put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
+                put(KEYCODE_ZOOM_IN, "ZOOM IN");
+                put(KEYCODE_DPAD_UP, "DPAD UP");
+                put(KEYCODE_DPAD_DOWN, "DPAD DOWN");
+                put(KEYCODE_DPAD_LEFT, "DPAD LEFT");
+                put(KEYCODE_DPAD_RIGHT, "DPAD RIGHT");
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
                 // Navigating between files
@@ -231,6 +250,36 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                     Log.d("KEY EVENT", event.toString());
                     DataAndMethods.changeFile(--DataAndMethods.fileSelected);
                     return true;
+                case "ZOOM OUT":
+                    Log.d("KEY EVENT", event.toString());
+                    if(!DataAndMethods.zoomingOut) {
+                        DataAndMethods.speaker("Zoom mode enabled");
+                        DataAndMethods.zoomingOut = true;
+                        DataAndMethods.zoomingIn=false;
+                    }
+                    else {
+                        DataAndMethods.zoomingOut=false;
+                    }
+                    return true;
+                case "ZOOM IN":
+                    Log.d("KEY EVENT", event.toString());
+                    if(!DataAndMethods.zoomingIn) {
+                        DataAndMethods.speaker("Zoom mode enabled");
+                        DataAndMethods.zoomingIn = true;
+                        DataAndMethods.zoomingOut=false;
+                    }
+                    else {
+                        DataAndMethods.zoomingIn=false;
+                    }
+                    return true;
+                case "DPAD UP":
+                case "DPAD DOWN":
+                case "DPAD LEFT":
+                case "DPAD RIGHT":
+                    if (DataAndMethods.zoomVal>100){
+                        Log.d("DPAD", String.valueOf(keyCode));
+                        DataAndMethods.pan(keyCode);
+                    }
                 default:
                     Log.d("KEY EVENT", event.toString());
                     return false;
@@ -239,12 +288,18 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
             throw new RuntimeException(e);
         } catch (JSONException e) {
             throw new RuntimeException(e);
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
         }
     }
 
 
     @Override
-    public boolean onTouchEvent(MotionEvent event){
+    public boolean dispatchTouchEvent(MotionEvent event){
         if (this.mDetector.onTouchEvent(event)) {
             int action = event.getActionMasked();
             if (action==MotionEvent.ACTION_UP)
@@ -252,18 +307,30 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                 ArrayList<String[][]> tags = DataAndMethods.tags;
                 Integer [] pins=DataAndMethods.pinCheck(event.getX(), event.getY());
                 try{
-                    // Speak out label tags based on finger location and ping when detailed description is available
-                    if ((tags.get(1)[pins[1]][pins[0]]!=null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0))
-                    {
-                        //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
-                        DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                    // Check if zooming mode is enabled
+                    if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
+                        DataAndMethods.zoom(pins);
                     }
-                    else{
-                        DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
+                    else {
+                        // Speak out label tags based on finger location and ping when detailed description is available
+                        if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
+                            //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                        } else {
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
+                        }
                     }
                 }
                 catch(RuntimeException ex){
                     Log.d("TTS ERROR", String.valueOf(ex));
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException(e);
+                } catch (ParserConfigurationException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (SAXException e) {
+                    throw new RuntimeException(e);
                 }
             }
             return true;
@@ -314,14 +381,6 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
         Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
-        /*Integer [] pins=pinCheck(event.getX(), event.getY());
-        try{
-            // Speak out label tags based on finger location
-            speaker(tags.get(0)[pins[1]][pins[0]]);
-        }
-        catch(RuntimeException ex){
-            Log.d(TAG, String.valueOf(ex));
-        }*/
         return true;
     }
 
@@ -346,6 +405,37 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
         mediaPlayer.release();
+    }
+
+
+    @Override
+    protected void onResume() {
+        Log.d("ACTIVITY", "Annotation Resumed");
+
+        mDetector = new GestureDetectorCompat(this,this);
+        mDetector.setOnDoubleTapListener(this);
+
+        DataAndMethods.handler = e -> {
+            if(DataAndMethods.ttsEnabled){
+                try{
+                    //Log.d("ACTIVITY", "Running registration on Annotation");
+                    // This works! Gesture control can now be used along with the handler.
+                    dispatchTouchEvent(e);
+                }
+                catch(RuntimeException ex){
+                    Log.d("MOTION EVENT", String.valueOf(ex));
+                }}
+
+            return false;
+        };
+        brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+        super.onResume();
+    }
+    @Override
+    protected void onPause() {
+        Log.d("ACTIVITY", "Annotation Paused");
+        brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
+        super.onPause();
     }
 
 }

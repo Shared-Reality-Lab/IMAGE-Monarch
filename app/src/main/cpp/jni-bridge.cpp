@@ -49,15 +49,15 @@ Java_ca_mcgill_a11y_image_Guidance_stopEngine(JNIEnv *env, jobject /* this */) {
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_ca_mcgill_a11y_image_Guidance_guidance(JNIEnv *env, jobject thiz, jint action, jfloat amplitude, jfloat dist) {
+Java_ca_mcgill_a11y_image_Guidance_guidance(JNIEnv *env, jobject thiz, jint action, jfloat amplitude, jfloat dist, jfloat angle) {
     // TODO: implement guidance()
     switch (action) {
         case AMOTION_EVENT_ACTION_DOWN:
-            audioEngine->guide(true, amplitude, 440.0- dist, dist);
+            audioEngine->guide(true, amplitude, 440.0- dist, dist, angle);
             break;
 
         case AMOTION_EVENT_ACTION_UP:
-            audioEngine->guide(false, amplitude, 440.0- dist,  dist);
+            audioEngine->guide(false, amplitude, 440.0- dist,  dist, angle);
             break;
         default:
             break;

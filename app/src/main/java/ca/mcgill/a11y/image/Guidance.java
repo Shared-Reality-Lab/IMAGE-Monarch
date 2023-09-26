@@ -17,83 +17,42 @@
 package ca.mcgill.a11y.image;
 
 
+import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
+import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.hardware.input.InputManager;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
-import android.os.Handler;
-import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
-import android.util.Base64;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Switch;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GestureDetectorCompat;
 
-import com.scand.svg.SVGHelper;
-
 import org.json.JSONException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import okhttp3.OkHttpClient;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Guidance extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
-
     // keyCode of confirm button as per current standard
     int confirmButton = 504;
+    int backButton = 503;
 
     private GestureDetectorCompat mDetector;
 
@@ -102,7 +61,7 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
     }
 
     // private native void touchEvent(int action);
-    private native void guidance(int action, float amplitude, float dist);
+    private native void guidance(int action, float amplitude, float dist, float angle);
 
     private native void startEngine();
 
@@ -111,6 +70,7 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("ACTIVITY", "Guidance Created");
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -121,25 +81,31 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
         // listener.
         mDetector.setOnDoubleTapListener(this);
 
-        InputManager im = (InputManager) getSystemService(INPUT_SERVICE);
-        brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
-        DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        //InputManager im = (InputManager) getSystemService(INPUT_SERVICE);
+        if (DataAndMethods.brailleServiceObj==null) {
+            brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
+            DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        }
+        else{
+            brailleServiceObj = DataAndMethods.brailleServiceObj;
+            DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        }
+        /*
+        DataAndMethods.handler = e -> {
+            if(DataAndMethods.ttsEnabled){
+                try{
+                    Log.d("ACTIVITY", "Running registration on Guidance");
+                    // This works! Gesture control can now be used along with the handler.
+                    dispatchTouchEvent(e);
+                }
+                catch(RuntimeException ex){
+                    Log.d("MOTION EVENT", String.valueOf(ex));
+                }}
 
-        brailleServiceObj.registerMotionEventHandler(new BrailleDisplay.MotionEventHandler() {
-            @Override
-            public boolean handleMotionEvent(MotionEvent e) {
-                if(DataAndMethods.ttsEnabled){
-                    try{
-                        // This works! Gesture control can now be used along with the handler.
-                        onTouchEvent(e);
-                    }
-                    catch(RuntimeException ex){
-                        Log.d("MOTION EVENT", String.valueOf(ex));
-                    }}
-
-                return false;
-            }
-        });
+            return false;
+        };
+        brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+        */
 
         ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -149,6 +115,7 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                     DataAndMethods.ttsEnabled=false;
                     brailleServiceObj.display(DataAndMethods.data);
+                    DataAndMethods.displayOn=false;
                 }
                 return false;
             }
@@ -179,7 +146,11 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                     try {
                         // Display current layer
                         DataAndMethods.ttsEnabled=true;
-                        brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer++));
+                        DataAndMethods.presentLayer++;
+                        if (DataAndMethods.presentLayer== DataAndMethods.layerCount+1)
+                            DataAndMethods.presentLayer=0;
+                        brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer));
+                        DataAndMethods.displayOn= true;
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } catch (ParserConfigurationException e) {
@@ -189,10 +160,29 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                     } catch (XPathExpressionException e) {
                         throw new RuntimeException(e);
                     }
-                    //Log.d("LAYER!", String.valueOf(presentLayer));
-                    //if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
-                    //    DataAndMethods.presentLayer=0;
                 }
+
+                if (((Button) findViewById(R.id.ones)).hasFocus() &&
+                        keyEvent.getKeyCode()== backButton &&
+                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                    try {
+                        // Display current layer
+                        DataAndMethods.ttsEnabled=true;
+                        DataAndMethods.presentLayer--;
+                        if (DataAndMethods.presentLayer<0)
+                            DataAndMethods.presentLayer= DataAndMethods.layerCount;
+                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (ParserConfigurationException e) {
+                        throw new RuntimeException(e);
+                    } catch (SAXException e) {
+                        throw new RuntimeException(e);
+                    } catch (XPathExpressionException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
                 return false;
             }
         });
@@ -254,19 +244,39 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
     }
 
 
+
     @Override
-    public boolean onTouchEvent(MotionEvent event){
+    public boolean dispatchTouchEvent(MotionEvent event){
         if (this.mDetector.onTouchEvent(event)) {
-            // int action = event.getActionMasked();
-            guidance(event.getAction(), 0.5F, 10);
-            /*
-            if (action==MotionEvent.ACTION_DOWN)
+            int action = event.getActionMasked();
+            //guidance(event.getAction(), 0.5F, 10);
+
+            if (DataAndMethods.target!=null)
             {
-                Integer [] pins=DataAndMethods.pinCheck(event.getX(), event.getY());
-            }*/
+                Log.d("TOUCH EVENT", "HERE!");
+                Integer [] pins= DataAndMethods.pinCheck(event.getX(), event.getY());
+                //Log.d("GUIDANCE PINS", pins[0]+ ","+ pins[1]);
+                //Log.d("GUIDANCE TARGET", DataAndMethods.target[0]+ ","+ DataAndMethods.target[1]);
+                float dist = DataAndMethods.calcDistance(pins, DataAndMethods.target);
+                float angle = DataAndMethods.calcAngle(pins, DataAndMethods.target);
+                float amplitude = (float)Math.pow(1.1, 5*((11000-dist)/10000));
+                // Log.d("DISTANCE", String.valueOf(Math.pow(dist, 0.5)));
+                // Log.d("DISTANCE", String.valueOf(amplitude));
+                // Log.d("ACTION", String.valueOf(event.getAction()));
+                //Log.d("GUIDANCE", amplitude + ","+ (float) Math.pow(dist, 0.5));
+                if ((float)Math.pow(dist, 0.5)>DataAndMethods.target[2]) {
+                    guidance(event.getAction(), amplitude, (float) Math.pow(dist, 0.5), angle);
+                    //guidance(event.getAction(), 0.5F, 10);
+                }
+                else{
+                    guidance(KeyEvent.ACTION_UP, amplitude, (float)Math.pow(dist, 0.5), angle);
+                    DataAndMethods.pingsPlayer(R.raw.success);
+                }
+
+            }
             return true;
         }
-        return super.onTouchEvent(event);
+        return super.dispatchTouchEvent(event);
     }
 
     @Override
@@ -329,4 +339,37 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
         mediaPlayer.release();
     }
 
+
+    @SuppressLint("WrongConstant")
+    @Override
+    protected void onResume() {
+        Log.d("ACTIVITY", "Guidance Resumed");
+
+        mDetector = new GestureDetectorCompat(this,this);
+        mDetector.setOnDoubleTapListener(this);
+
+        DataAndMethods.handler = e -> {
+            if(DataAndMethods.ttsEnabled){
+                try{
+                    //Log.d("ACTIVITY", "Running registration on Guidance");
+                    // This works! Gesture control can now be used along with the handler.
+                    dispatchTouchEvent(e);
+                }
+                catch(RuntimeException ex){
+                    Log.d("MOTION EVENT", String.valueOf(ex));
+                }}
+
+            return false;
+        };
+        brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+
+        super.onResume();
+    }
+    @Override
+    protected void onPause() {
+        Log.d("ACTIVITY", "Guidance Paused");
+        stopEngine();
+        brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
+        super.onPause();
+    }
 }

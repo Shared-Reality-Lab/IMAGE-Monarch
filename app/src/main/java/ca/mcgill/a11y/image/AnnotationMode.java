@@ -99,7 +99,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class Annotation extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+public class AnnotationMode extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
 
     // keyCode of confirm button as per current standard
@@ -193,113 +193,6 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
             @Override
             public void onEvent(int i, Bundle bundle) {
 
-            }
-        });
-        ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (((Button) findViewById(R.id.zeros)).hasFocus() &&
-                        keyEvent.getKeyCode()==confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    DataAndMethods.ttsEnabled=false;
-                    brailleServiceObj.display(DataAndMethods.data);
-                }
-                return false;
-            }
-        });
-
-        ((Button) findViewById(R.id.mode)).setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (((Button) findViewById(R.id.mode)).hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    Intent myIntent = new Intent(Annotation.this, Guidance.class);
-                    //myIntent.putExtra("key", value); //Optional parameters
-                    DataAndMethods.speaker("Switching to Guidance mode");
-                    Annotation.this.startActivity(myIntent);
-
-                }
-                return false;
-            }
-        });
-
-        ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (((Button) findViewById(R.id.ones)).hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    try {
-                        // Display current layer
-                        DataAndMethods.ttsEnabled=true;
-                        DataAndMethods.presentLayer++;
-                        if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
-                            DataAndMethods.presentLayer=0;
-                        brailleServiceObj.display(DataAndMethods.getAnnotationBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (ParserConfigurationException e) {
-                        throw new RuntimeException(e);
-                    } catch (SAXException e) {
-                        throw new RuntimeException(e);
-                    } catch (XPathExpressionException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                if (((Button) findViewById(R.id.ones)).hasFocus() &&
-                        keyEvent.getKeyCode()== backButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    try {
-                        // Display current layer
-                        DataAndMethods.ttsEnabled=true;
-                        DataAndMethods.presentLayer--;
-                        if (DataAndMethods.presentLayer<0)
-                            DataAndMethods.presentLayer= DataAndMethods.layerCount;
-                        brailleServiceObj.display(DataAndMethods.getAnnotationBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (ParserConfigurationException e) {
-                        throw new RuntimeException(e);
-                    } catch (SAXException e) {
-                        throw new RuntimeException(e);
-                    } catch (XPathExpressionException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                return false;
-            }
-        });
-
-
-
-
-
-        Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
-        debugSwitch.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (debugSwitch.hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    if (debugSwitch.isChecked()){
-                        debugSwitch.setChecked(false);
-                    }
-                    else{
-                        debugSwitch.setChecked(true);
-                    }
-                    brailleServiceObj.setDebugView(debugSwitch.isChecked());
-                    //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
-                }
-                return false;
-            }
-        });
-        debugSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                debugSwitch.setChecked(!debugSwitch.isChecked());
             }
         });
     }
@@ -444,8 +337,8 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
             @Override
             public void run() {
                 */
-                //speechRecognizer.startListening(speechRecognizerIntent);
-                //findViewById(android.R.id.content).post(new Runnable(){ public void run(){  }});
+        //speechRecognizer.startListening(speechRecognizerIntent);
+        //findViewById(android.R.id.content).post(new Runnable(){ public void run(){  }});
             /*} // This is your code
         };
         mainHandler.post(myRunnable);

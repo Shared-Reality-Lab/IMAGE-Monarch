@@ -7,7 +7,7 @@ public:
     void stop();
     void restart();
     void setToneOn(bool isToneOn);
-    void guide(bool isToneOn, float amplitude, float dist, int beat);
+    void guide(bool isToneOn, float amplitude, float dist, int beat, float angle);
 
 private:
     Oscillator oscillator_;
