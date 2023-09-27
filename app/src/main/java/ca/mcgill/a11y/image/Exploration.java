@@ -128,6 +128,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                         keyEvent.getKeyCode()==confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                     DataAndMethods.ttsEnabled=false;
+                    DataAndMethods.displayOn = false;
                     brailleServiceObj.display(DataAndMethods.data);
                 }
                 return false;
@@ -162,6 +163,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                         DataAndMethods.presentLayer++;
                         if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
                             DataAndMethods.presentLayer=0;
+                        DataAndMethods.displayOn = true;
                         brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -183,6 +185,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                         DataAndMethods.presentLayer--;
                         if (DataAndMethods.presentLayer<0)
                             DataAndMethods.presentLayer= DataAndMethods.layerCount;
+                        DataAndMethods.displayOn = true;
                         brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -410,7 +413,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "Annotation Resumed");
+        Log.d("ACTIVITY", "Exploration Resumed");
 
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
@@ -429,11 +432,24 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
             return false;
         };
         brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+        if (DataAndMethods.displayOn){
+            try {
+                brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException(e);
+            } catch (ParserConfigurationException e) {
+                throw new RuntimeException(e);
+            } catch (SAXException e) {
+                throw new RuntimeException(e);
+            }
+        }
         super.onResume();
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "Annotation Paused");
+        Log.d("ACTIVITY", "Exploration Paused");
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }

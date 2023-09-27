@@ -202,6 +202,7 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
                         keyEvent.getKeyCode()==confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                     DataAndMethods.ttsEnabled=false;
+                    DataAndMethods.displayOn = false;
                     brailleServiceObj.display(DataAndMethods.data);
                 }
                 return false;
@@ -236,6 +237,7 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
                         DataAndMethods.presentLayer++;
                         if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
                             DataAndMethods.presentLayer=0;
+                        DataAndMethods.displayOn = true;
                         brailleServiceObj.display(DataAndMethods.getAnnotationBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -257,6 +259,7 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
                         DataAndMethods.presentLayer--;
                         if (DataAndMethods.presentLayer<0)
                             DataAndMethods.presentLayer= DataAndMethods.layerCount;
+                        DataAndMethods.displayOn = true;
                         brailleServiceObj.display(DataAndMethods.getAnnotationBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -348,8 +351,12 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
                         DataAndMethods.zoom(pins);
                     }
                     else {
-
                         DataAndMethods.fetchObjects(pins);
+                        if (DataAndMethods.selectedIds!= null){
+                            Intent myIntent = new Intent(Annotation.this, AnnotationMode.class);
+                            DataAndMethods.speaker("Annotating");
+                            Annotation.this.startActivity(myIntent);
+                        }
                     }
                 }
                 catch(RuntimeException ex){

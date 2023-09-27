@@ -17,6 +17,11 @@
 package ca.mcgill.a11y.image;
 
 
+import static android.view.KeyEvent.KEYCODE_DPAD_DOWN;
+import static android.view.KeyEvent.KEYCODE_DPAD_LEFT;
+import static android.view.KeyEvent.KEYCODE_DPAD_RIGHT;
+import static android.view.KeyEvent.KEYCODE_DPAD_UP;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -180,7 +185,9 @@ public class AnnotationMode extends AppCompatActivity implements GestureDetector
             @Override
             public void onResults(Bundle bundle) {
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                Log.d("SPEECHREC", data.get(0));
+                //Log.d("SPEECHREC", data.get(0));
+                DataAndMethods.speaker("Acquired tag: "+ data.get(0));
+                DataAndMethods.speechTag = data.get(0);
                 Toast toast = Toast.makeText(getApplicationContext() , data.get(0), Toast.LENGTH_SHORT);
                 toast.show();
             }
@@ -203,9 +210,15 @@ public class AnnotationMode extends AppCompatActivity implements GestureDetector
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(421, "UP");
                 put(420, "DOWN");
+                put(KEYCODE_DPAD_LEFT, "DPAD LEFT");
+                put(KEYCODE_DPAD_RIGHT, "DPAD RIGHT");
+                put(KEYCODE_DPAD_UP, "DPAD UP");
+                put(KEYCODE_DPAD_DOWN, "DPAD DOWN");
+                put(confirmButton, "SAVE");
+                put(backButton, "CANCEL");
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
-                // Navigating between files
+                /*// Navigating between files
                 case "UP":
                     Log.d("KEY EVENT", event.toString());
                     DataAndMethods.changeFile(++DataAndMethods.fileSelected);
@@ -215,17 +228,47 @@ public class AnnotationMode extends AppCompatActivity implements GestureDetector
                     Log.d("KEY EVENT", event.toString());
                     DataAndMethods.changeFile(--DataAndMethods.fileSelected);
                     return true;
+                 */
+                case "DPAD LEFT":
+                    Log.d("KEY EVENT", event.toString());
+                    DataAndMethods.selectObj--;
+                    DataAndMethods.dispSelectedObjs();
+                    return true;
+                case "DPAD RIGHT":
+                    DataAndMethods.selectObj++;
+                    DataAndMethods.dispSelectedObjs();
+                    return true;
+                case "DPAD UP":
+                    DataAndMethods.tagType++;
+                    DataAndMethods.setTagType();
+                    return true;
+                case "DPAD DOWN":
+                    DataAndMethods.tagType--;
+                    DataAndMethods.setTagType();
+                    return true;
+                case "CANCEL":
+                    DataAndMethods.selectObj = -1;
+                    DataAndMethods.displayOn = true;
+                    Intent myIntent = new Intent(AnnotationMode.this, Annotation.class);
+                    AnnotationMode.this.startActivity(myIntent);
+                    return true;
+                case "SAVE":
+                    DataAndMethods.saveTag();
+                    return true;
                 default:
                     Log.d("KEY EVENT", event.toString());
                     return false;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (JSONException e) {
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
             throw new RuntimeException(e);
         }
     }
-
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event){
@@ -233,29 +276,7 @@ public class AnnotationMode extends AppCompatActivity implements GestureDetector
             int action = event.getActionMasked();
             if (action==MotionEvent.ACTION_UP)
             {
-                ArrayList<String[][]> tags = DataAndMethods.occupancy;
-                Integer [] pins=DataAndMethods.pinCheck(event.getX(), event.getY());
-                try{
-                    // Check if zooming mode is enabled
-                    if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
-                        DataAndMethods.zoom(pins);
-                    }
-                    else {
 
-                        DataAndMethods.fetchObjects(pins);
-                    }
-                }
-                catch(RuntimeException ex){
-                    Log.d("TTS ERROR", String.valueOf(ex));
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
-                    throw new RuntimeException(e);
-                }
             }
             return true;
         }
@@ -393,18 +414,18 @@ public class AnnotationMode extends AppCompatActivity implements GestureDetector
             return false;
         };
         brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
-        if (DataAndMethods.displayOn){
-            try {
-                brailleServiceObj.display(DataAndMethods.getAnnotationBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (XPathExpressionException e) {
-                throw new RuntimeException(e);
-            } catch (ParserConfigurationException e) {
-                throw new RuntimeException(e);
-            } catch (SAXException e) {
-                throw new RuntimeException(e);
-            }
+        DataAndMethods.selectObj++;
+        try {
+            Log.d("ANNOTATION", "Here!");
+            DataAndMethods.dispSelectedObjs();
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
         }
         super.onResume();
     }

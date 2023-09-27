@@ -46,6 +46,11 @@
             android:configChanges="touchscreen">
         </activity>
         <activity
+            android:name="ca.mcgill.a11y.image.AnnotationMode"
+            android:exported="true"
+            android:configChanges="touchscreen">
+        </activity>
+        <activity
             android:name="ca.mcgill.a11y.image.Exploration"
             android:exported="true"
             android:configChanges="touchscreen">

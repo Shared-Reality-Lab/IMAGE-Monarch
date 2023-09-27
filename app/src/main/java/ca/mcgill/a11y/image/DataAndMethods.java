@@ -30,14 +30,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
@@ -70,6 +67,10 @@ public class DataAndMethods {
     static ArrayList<String[][]> tags;
     static ArrayList<String[][]> occupancy;
     static int selectObj=-1;
+    static String[] selectedIds = null;
+    static int tagType = 0;
+    static String[] tagTypes = new String[]{"aria-label", "aria-description"};
+    static String speechTag = null;
     static float[] target=null;
 
     static Integer zoomVal=100;
@@ -808,29 +809,70 @@ public class DataAndMethods {
 
     public static void fetchObjects(Integer[] pins) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         if (occupancy.get(0)[pins[1]][pins[0]]!=null){
-            Document doc = getfreshDoc();
-            String[] ids= (occupancy.get(0)[pins[1]][pins[0]]).split(", ");
-            selectObj++;
-            if (selectObj>=ids.length){
-                selectObj =0;
-            }
-            String id = ids[selectObj];
-            XPath xPath = XPathFactory.newInstance().newXPath();
-            NodeList nodeslist = ((NodeList)xPath.evaluate("//*[not(self::*[@id='"+id+"']) and not(descendant::*[@id='"+id+"']) and not(descendant::*[@data-image-layer])]", doc, XPathConstants.NODESET));
-            for(int i=0;i<nodeslist.getLength(); i++){
-                Node node = nodeslist.item(i);
-                ((Element)node).setAttribute("display","none");
-            }
-            Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
-            if (node.hasAttribute("viewBox")) {
-                Float[] dim = new Float[]{dims[0], dims[1], dims[2] - dims[0], dims[3] - dims[1]};
-                String dimensions = Arrays.toString(dim).replaceAll(",", "");
-                node.setAttribute("viewBox", dimensions.substring(1, dimensions.length() - 1));
-            }
-            brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+            selectedIds= (occupancy.get(0)[pins[1]][pins[0]]).split(", ");
         }
         else{
+            selectedIds=null;
             speaker("Nothing to annotate");
+        }
+    }
+
+    public static void dispSelectedObjs() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+
+        Document doc = getfreshDoc();
+        if (selectObj>=selectedIds.length){
+            selectObj =0;
+        } else if (selectObj<0) {
+            selectObj = selectedIds.length-1;
+        }
+        String id = selectedIds[selectObj];
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        NodeList nodeslist = ((NodeList)xPath.evaluate("//*[not(self::*[@id='"+id+"']) and not(descendant::*[@id='"+id+"']) and not(descendant::*[@data-image-layer])]", doc, XPathConstants.NODESET));
+        for(int i=0;i<nodeslist.getLength(); i++){
+            Node node = nodeslist.item(i);
+            ((Element)node).setAttribute("display","none");
+        }
+        Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
+        if (node.hasAttribute("viewBox")) {
+            Float[] dim = new Float[]{dims[0], dims[1], dims[2] - dims[0], dims[3] - dims[1]};
+            String dimensions = Arrays.toString(dim).replaceAll(",", "");
+            node.setAttribute("viewBox", dimensions.substring(1, dimensions.length() - 1));
+        }
+        brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+    }
+
+    public static void setTagType(){
+        if (DataAndMethods.tagType< 0){
+            DataAndMethods.tagType = DataAndMethods.tagTypes.length - 1;
+        }
+        else if (DataAndMethods.tagType>=DataAndMethods.tagTypes.length) {
+            DataAndMethods.tagType = 0;
+        }
+        switch (DataAndMethods.tagTypes[DataAndMethods.tagType]){
+            case "aria-label":
+                DataAndMethods.speaker("Editing label");
+                break;
+            case "aria-description":
+                DataAndMethods.speaker("Editing description");
+                break;
+            default:
+                DataAndMethods.speaker("Error");
+                break;
+        }
+    }
+
+    public static void saveTag() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+        Document doc = getfreshDoc();
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        Element node = (Element)((NodeList)xPath.evaluate("//*[@id='"+selectedIds[selectObj]+"']", doc, XPathConstants.NODESET)).item(0);
+        if (speechTag != null) {
+            node.setAttribute(tagTypes[tagType], speechTag);
+            image = getStringFromDocument(doc);
+            Log.d("IMAGE", image);
+            speaker("Tag saved!");
+        }
+        else{
+            speaker("No tag available");
         }
     }
 

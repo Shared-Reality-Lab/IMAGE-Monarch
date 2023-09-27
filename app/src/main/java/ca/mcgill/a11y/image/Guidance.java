@@ -114,8 +114,8 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                         keyEvent.getKeyCode()==confirmButton &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                     DataAndMethods.ttsEnabled=false;
-                    brailleServiceObj.display(DataAndMethods.data);
                     DataAndMethods.displayOn=false;
+                    brailleServiceObj.display(DataAndMethods.data);
                 }
                 return false;
             }
@@ -149,8 +149,8 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                         DataAndMethods.presentLayer++;
                         if (DataAndMethods.presentLayer== DataAndMethods.layerCount+1)
                             DataAndMethods.presentLayer=0;
-                        brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer));
                         DataAndMethods.displayOn= true;
+                        brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } catch (ParserConfigurationException e) {
@@ -171,6 +171,7 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                         DataAndMethods.presentLayer--;
                         if (DataAndMethods.presentLayer<0)
                             DataAndMethods.presentLayer= DataAndMethods.layerCount;
+                        DataAndMethods.displayOn= true;
                         brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -362,7 +363,19 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
             return false;
         };
         brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
-
+        if (DataAndMethods.displayOn){
+            try {
+                brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException(e);
+            } catch (ParserConfigurationException e) {
+                throw new RuntimeException(e);
+            } catch (SAXException e) {
+                throw new RuntimeException(e);
+            }
+        }
         super.onResume();
     }
     @Override
