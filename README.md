@@ -12,7 +12,7 @@
 
 
 ## Introduction
-This is the source code for an Android application to render tactile graphics on the Monarch. The application works by reading graphic files from the device file system (or using the coordinates entered for maps), making requests to the [IMAGE server](https://github.com/Shared-Reality-Lab/IMAGE-server) and rendering the responses as tactile graphics on the pin array.
+This is the source code for an Android application to render tactile graphics on the [Monarch](https://www.humanware.com/en-usa/monarch). The application works by reading graphic files from the device file system (or using the coordinates entered for maps), making requests to the [IMAGE server](https://github.com/Shared-Reality-Lab/IMAGE-server) and rendering the responses as tactile graphics on the pin array.
 
 ## Getting started
 ### How do I install it on my Monarch (from the repo!)?
