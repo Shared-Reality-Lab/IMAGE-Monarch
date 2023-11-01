@@ -581,7 +581,7 @@ public class DataAndMethods {
         XPath xPath = XPathFactory.newInstance().newXPath();
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
         // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*)) and (self::*[@aria-labelledby] or self::*[@aria-label])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
         String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
         // temporary var for objects long descriptions
         String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
@@ -595,6 +595,9 @@ public class DataAndMethods {
             String tag, detailTag = null;
             Node node = nodeslist.item(i);
             // fetching the tag for each element
+            if (!((Element)node).hasAttribute("aria-label") && !((Element)node).hasAttribute("aria-labelledby")){
+                continue;
+            }
             if (((Element)node).hasAttribute("aria-labelledby")) {
                 tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
             }
@@ -789,7 +792,7 @@ public class DataAndMethods {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         InputSource is = new InputSource(new StringReader(image));
-        //Log.d("STRING", image);
+        Log.d("STRING", image);
         Document doc = builder.parse(is);
         return doc;
     }
