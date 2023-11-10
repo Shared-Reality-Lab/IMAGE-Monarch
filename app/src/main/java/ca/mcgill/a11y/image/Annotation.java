@@ -99,7 +99,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class Annotation extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+public class Annotation extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
 
     // keyCode of confirm button as per current standard
@@ -307,6 +307,7 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
         });
     }
 
+    /*
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         try {
@@ -335,7 +336,7 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
             throw new RuntimeException(e);
         }
     }
-
+    */
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event){
@@ -343,18 +344,24 @@ public class Annotation extends AppCompatActivity implements GestureDetector.OnG
             int action = event.getActionMasked();
             if (action==MotionEvent.ACTION_UP)
             {
-                ArrayList<String[][]> tags = DataAndMethods.occupancy;
+                //ArrayList<String[][]> tags = DataAndMethods.occupancy;
                 Integer [] pins=DataAndMethods.pinCheck(event.getX(), event.getY());
                 try{
                     // Check if zooming mode is enabled
                     if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
-                        DataAndMethods.zoom(pins);
+                        DataAndMethods.zoom(pins, "Annotation");
                     }
                     else {
                         DataAndMethods.fetchObjects(pins);
                         if (DataAndMethods.selectedIds!= null){
                             Intent myIntent = new Intent(Annotation.this, AnnotationMode.class);
-                            DataAndMethods.speaker("Annotating");
+                            if (DataAndMethods.selectedIds.length>1){
+                                //Log.d("ANNOTATION MODE", "Here!");
+                                DataAndMethods.speaker("Annotating. " + DataAndMethods.selectedIds.length + " objects selected");
+                            }
+                            else {
+                                DataAndMethods.speaker("Annotating");
+                            }
                             Annotation.this.startActivity(myIntent);
                         }
                     }

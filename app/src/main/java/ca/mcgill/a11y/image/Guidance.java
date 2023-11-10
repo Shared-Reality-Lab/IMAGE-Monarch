@@ -42,13 +42,14 @@ import org.json.JSONException;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
-public class Guidance extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+public class Guidance extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
     // keyCode of confirm button as per current standard
     int confirmButton = 504;
@@ -85,6 +86,13 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
         if (DataAndMethods.brailleServiceObj==null) {
             brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+            try {
+                DataAndMethods.changeFile(++DataAndMethods.fileSelected);
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
         else{
             brailleServiceObj = DataAndMethods.brailleServiceObj;
@@ -146,10 +154,9 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                     try {
                         // Display current layer
                         DataAndMethods.ttsEnabled=true;
-                        DataAndMethods.presentLayer++;
-                        if (DataAndMethods.presentLayer== DataAndMethods.layerCount+1)
-                            DataAndMethods.presentLayer=0;
+                        DataAndMethods.presentTarget++;
                         DataAndMethods.displayOn= true;
+                        //Log.d("PRESENT TARGET", String.valueOf(DataAndMethods.presentTarget));
                         brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -168,11 +175,9 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                     try {
                         // Display current layer
                         DataAndMethods.ttsEnabled=true;
-                        DataAndMethods.presentLayer--;
-                        if (DataAndMethods.presentLayer<0)
-                            DataAndMethods.presentLayer= DataAndMethods.layerCount;
+                        DataAndMethods.presentTarget--;
                         DataAndMethods.displayOn= true;
-                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                        brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     } catch (ParserConfigurationException e) {
@@ -215,6 +220,7 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
         });
     }
 
+    /*
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         try {
@@ -243,14 +249,15 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
             throw new RuntimeException(e);
         }
     }
-
+*/
 
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event){
-        if (this.mDetector.onTouchEvent(event)) {
+        /*if (this.mDetector.onTouchEvent(event)) {
             int action = event.getActionMasked();
             //guidance(event.getAction(), 0.5F, 10);
+
 
             if (DataAndMethods.target!=null)
             {
@@ -274,6 +281,42 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
                     DataAndMethods.pingsPlayer(R.raw.success);
                 }
 
+            }
+            return true;
+        return super.dispatchTouchEvent(event);        }*/
+
+        if (this.mDetector.onTouchEvent(event)) {
+            int action = event.getActionMasked();
+            if (action==MotionEvent.ACTION_UP)
+            {
+                //ArrayList<String[][]> tags = DataAndMethods.tags;
+                Integer [] pins=DataAndMethods.pinCheck(event.getX(), event.getY());
+                try{
+                    // Check if zooming mode is enabled
+                    if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
+                        DataAndMethods.zoom(pins, "Guidance");
+                    }
+                    /*else {
+                        // Speak out label tags based on finger location and ping when detailed description is available
+                        if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
+                            //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                        } else {
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
+                        }
+                    }*/
+                }
+                catch(RuntimeException ex){
+                    Log.d("TTS ERROR", String.valueOf(ex));
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException(e);
+                } catch (ParserConfigurationException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (SAXException e) {
+                    throw new RuntimeException(e);
+                }
             }
             return true;
         }
@@ -326,6 +369,17 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
     @Override
     public boolean onDoubleTapEvent(MotionEvent event) {
         Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
+        try {
+            brailleServiceObj.display(DataAndMethods.displayTargetLayer(DataAndMethods.getfreshDoc()));
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        }
         return true;
     }
 
@@ -385,4 +439,5 @@ public class Guidance extends AppCompatActivity implements GestureDetector.OnGes
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }
+
 }

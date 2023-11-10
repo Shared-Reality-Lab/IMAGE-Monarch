@@ -96,7 +96,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class Exploration extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
 
     // keyCode of confirm button as per current standard
@@ -228,7 +228,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
             }
         });
     }
-
+/*
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         try {
@@ -281,7 +281,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                 case "DPAD RIGHT":
                     if (DataAndMethods.zoomVal>100){
                         Log.d("DPAD", String.valueOf(keyCode));
-                        DataAndMethods.pan(keyCode);
+                        DataAndMethods.pan(keyCode, getLocalClassName());
                     }
                 default:
                     Log.d("KEY EVENT", event.toString());
@@ -299,7 +299,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
             throw new RuntimeException(e);
         }
     }
-
+*/
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event){
@@ -312,7 +312,7 @@ public class Exploration extends AppCompatActivity implements GestureDetector.On
                 try{
                     // Check if zooming mode is enabled
                     if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
-                        DataAndMethods.zoom(pins);
+                        DataAndMethods.zoom(pins, "Exploration");
                     }
                     else {
                         // Speak out label tags based on finger location and ping when detailed description is available
