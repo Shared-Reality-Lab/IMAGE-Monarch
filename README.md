@@ -69,14 +69,14 @@ Should/must/may used here are as per [RFC 2119](https://www.rfc-editor.org/rfc/r
 ### Develop, debug, improve!
 Refer this section for an overview of the program flow to get you started... 
 
-The flowcharts indicate the sequence of functions called when you interact with the elements of the UI. The list beside each block provide the sequential order of various actions executed by each function. Function calls/ important code segments within each function are indicated by a cascade of blocks from the calling function. 
+The flowcharts indicate the sequence of functions called when you interact with the elements of the UI. The list beside each block provides the sequential order of various actions executed by each function. Function calls/ important code segments within each function are indicated by a cascade of blocks from the calling function. 
 
 While the functions called return values in most cases, this has not been made explicit by the arrows.  
 
 1. Functions executed when a file is read from storage (by pressing the Up and Down arrow buttons on the device )
-![Server request flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/e1b88a4c-22af-4e60-b1d6-1108a334a11e)
+![Server_request_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/51b0b946-025f-4d9d-b01a-d5ddcda5e1bd)
 
 2. Functions executed to render the next layer (when the [UP button](#UpButton) is pressed)
-![Load layer flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/fba1d9bb-fb1e-4094-86ab-74ee7a1e61d2)
+![Layer_load_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/c340412c-8ccb-45b8-a3f8-1ab1d12dfe65)
 
 Details of the XPath queries can be found in [here](XPathQueries.md).
