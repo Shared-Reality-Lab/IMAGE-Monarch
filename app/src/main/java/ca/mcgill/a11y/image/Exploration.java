@@ -111,7 +111,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     protected void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
 
         mDetector = new GestureDetectorCompat(getApplicationContext(),this);
         // Set the gesture detector as the double tap
@@ -119,8 +119,9 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
         mDetector.setOnDoubleTapListener(this);
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
-        DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
 
+        /*
         ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -133,24 +134,34 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                 }
                 return false;
             }
-        });
-
+        });*/
+/*
         ((Button) findViewById(R.id.mode)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
                 if (((Button) findViewById(R.id.mode)).hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    Intent myIntent = new Intent(Exploration.this, Annotation.class);
-                    //myIntent.putExtra("key", value); //Optional parameters
-                    DataAndMethods.speaker("Switching to Annotation mode");
-                    Exploration.this.startActivity(myIntent);
+                        (keyEvent.getKeyCode() == confirmButton ||
+                                keyEvent.getKeyCode() == backButton) &&
+                        keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
 
+                    Intent myIntent;
+                    if (keyEvent.getKeyCode() == confirmButton) {
+                        myIntent = new Intent(Exploration.this, Annotation.class);
+                        //myIntent.putExtra("key", value); //Optional parameters
+                        DataAndMethods.speaker("Switching to Annotation mode");
+                    } else {
+                        myIntent = new Intent(Exploration.this, Guidance.class);
+                        //myIntent.putExtra("key", value); //Optional parameters
+                        DataAndMethods.speaker("Switching to Guidance mode");
+                    }
+
+                Exploration.this.startActivity(myIntent);
                 }
                 return false;
             }
         });
-
+*/
+        /*
         ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -202,6 +213,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
             }
         });
 
+
         Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
         debugSwitch.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -227,6 +239,8 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                 debugSwitch.setChecked(!debugSwitch.isChecked());
             }
         });
+
+         */
     }
 /*
     @Override
@@ -302,7 +316,8 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 */
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent event){
+    public boolean onTouchEvent(MotionEvent event){
+        if (!super.onTouchEvent(event)){
         if (this.mDetector.onTouchEvent(event)) {
             int action = event.getActionMasked();
             if (action==MotionEvent.ACTION_UP)
@@ -336,9 +351,8 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                     throw new RuntimeException(e);
                 }
             }
-            return true;
-        }
-        return super.onTouchEvent(event);
+        }}
+        return true;
     }
 
     @Override
@@ -423,7 +437,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                 try{
                     //Log.d("ACTIVITY", "Running registration on Annotation");
                     // This works! Gesture control can now be used along with the handler.
-                    dispatchTouchEvent(e);
+                    onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
                     Log.d("MOTION EVENT", String.valueOf(ex));

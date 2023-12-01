@@ -57,32 +57,25 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
     private GestureDetectorCompat mDetector;
 
-    static {
-        System.loadLibrary("native-lib");
-    }
-
-    // private native void touchEvent(int action);
-    private native void guidance(int action, float amplitude, float dist, float angle);
-
-    private native void startEngine();
-
-    private native void stopEngine();
-
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d("ACTIVITY", "Guidance Created");
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        startEngine();
+        //setContentView(R.layout.activity_main);
+        //startEngine();
 
         mDetector = new GestureDetectorCompat(this,this);
         // Set the gesture detector as the double tap
         // listener.
         mDetector.setOnDoubleTapListener(this);
 
+        brailleServiceObj = DataAndMethods.brailleServiceObj;
+        // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+
         //InputManager im = (InputManager) getSystemService(INPUT_SERVICE);
+        /*
         if (DataAndMethods.brailleServiceObj==null) {
             brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
@@ -98,7 +91,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
             brailleServiceObj = DataAndMethods.brailleServiceObj;
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
         }
-        /*
+
         DataAndMethods.handler = e -> {
             if(DataAndMethods.ttsEnabled){
                 try{
@@ -114,7 +107,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
         };
         brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
         */
-
+/*
         ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -128,23 +121,9 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                 return false;
             }
         });
+*/
 
-        ((Button) findViewById(R.id.mode)).setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (((Button) findViewById(R.id.mode)).hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    Intent myIntent = new Intent(Guidance.this, Exploration.class);
-                    //myIntent.putExtra("key", value); //Optional parameters
-                    DataAndMethods.speaker("Switching to Exploration mode");
-                    Guidance.this.startActivity(myIntent);
-
-                }
-                return false;
-            }
-        });
-
+/*
         ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -217,7 +196,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
             public void onClick(View view) {
                 debugSwitch.setChecked(!debugSwitch.isChecked());
             }
-        });
+        });*/
     }
 
     /*
@@ -253,7 +232,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent event){
+    public boolean onTouchEvent(MotionEvent event){
         /*if (this.mDetector.onTouchEvent(event)) {
             int action = event.getActionMasked();
             //guidance(event.getAction(), 0.5F, 10);
@@ -284,7 +263,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
             }
             return true;
         return super.dispatchTouchEvent(event);        }*/
-
+        super.onTouchEvent(event);
         if (this.mDetector.onTouchEvent(event)) {
             int action = event.getActionMasked();
             if (action==MotionEvent.ACTION_UP)
@@ -318,9 +297,9 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                     throw new RuntimeException(e);
                 }
             }
-            return true;
+
         }
-        return super.dispatchTouchEvent(event);
+        return true;
     }
 
     @Override
@@ -408,7 +387,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                 try{
                     //Log.d("ACTIVITY", "Running registration on Guidance");
                     // This works! Gesture control can now be used along with the handler.
-                    dispatchTouchEvent(e);
+                    onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
                     Log.d("MOTION EVENT", String.valueOf(ex));
@@ -435,7 +414,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
     @Override
     protected void onPause() {
         Log.d("ACTIVITY", "Guidance Paused");
-        stopEngine();
+        //stopEngine();
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }

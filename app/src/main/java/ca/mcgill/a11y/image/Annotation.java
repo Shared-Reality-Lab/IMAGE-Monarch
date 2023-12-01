@@ -117,7 +117,7 @@ public class Annotation extends BaseActivity implements GestureDetector.OnGestur
         Log.d("ACTIVITY", "Annotation Created");
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
 
         mDetector = new GestureDetectorCompat(getApplicationContext(),this);
         // Set the gesture detector as the double tap
@@ -125,7 +125,7 @@ public class Annotation extends BaseActivity implements GestureDetector.OnGestur
         mDetector.setOnDoubleTapListener(this);
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
-        DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
         speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -195,6 +195,7 @@ public class Annotation extends BaseActivity implements GestureDetector.OnGestur
 
             }
         });
+        /*
         ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -209,22 +210,34 @@ public class Annotation extends BaseActivity implements GestureDetector.OnGestur
             }
         });
 
+         */
+/*
         ((Button) findViewById(R.id.mode)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
                 if (((Button) findViewById(R.id.mode)).hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
+                        (keyEvent.getKeyCode() == confirmButton ||
+                                keyEvent.getKeyCode() == backButton) &&
                         keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    Intent myIntent = new Intent(Annotation.this, Guidance.class);
-                    //myIntent.putExtra("key", value); //Optional parameters
-                    DataAndMethods.speaker("Switching to Guidance mode");
+                    Intent myIntent;
+                    if(keyEvent.getKeyCode() == confirmButton) {
+                        myIntent = new Intent(Annotation.this, Guidance.class);
+                        //myIntent.putExtra("key", value); //Optional parameters
+                        DataAndMethods.speaker("Switching to Guidance mode");
+                    }
+                    else{
+                        myIntent = new Intent(Annotation.this, Exploration.class);
+                        //myIntent.putExtra("key", value); //Optional parameters
+                        DataAndMethods.speaker("Switching to Exploration mode");
+                    }
                     Annotation.this.startActivity(myIntent);
 
                 }
                 return false;
             }
         });
-
+*/
+        /*
         ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -304,7 +317,8 @@ public class Annotation extends BaseActivity implements GestureDetector.OnGestur
             public void onClick(View view) {
                 debugSwitch.setChecked(!debugSwitch.isChecked());
             }
-        });
+        });*/
+
     }
 
     /*
@@ -339,7 +353,8 @@ public class Annotation extends BaseActivity implements GestureDetector.OnGestur
     */
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent event){
+    public boolean onTouchEvent(MotionEvent event){
+        super.onTouchEvent(event);
         if (this.mDetector.onTouchEvent(event)) {
             int action = event.getActionMasked();
             if (action==MotionEvent.ACTION_UP)
@@ -378,9 +393,8 @@ public class Annotation extends BaseActivity implements GestureDetector.OnGestur
                     throw new RuntimeException(e);
                 }
             }
-            return true;
         }
-        return super.onTouchEvent(event);
+        return true;
     }
 
     @Override
@@ -505,7 +519,7 @@ public class Annotation extends BaseActivity implements GestureDetector.OnGestur
                 try{
                     //Log.d("ACTIVITY", "Running registration on Annotation");
                     // This works! Gesture control can now be used along with the handler.
-                    dispatchTouchEvent(e);
+                    onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
                     Log.d("MOTION EVENT", String.valueOf(ex));

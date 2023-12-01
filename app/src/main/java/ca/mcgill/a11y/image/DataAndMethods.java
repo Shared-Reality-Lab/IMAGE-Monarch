@@ -81,7 +81,6 @@ public class DataAndMethods {
 
     static Integer presentLayer = -1, presentTarget = 0;
     static Integer fileSelected = 0;
-    Integer presentGuidance=0;
     static boolean labelFill=true;
     static boolean ttsEnabled=true;
 
@@ -95,6 +94,8 @@ public class DataAndMethods {
     static View view;
 
     static String zoomBox = "";
+
+
 
     public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
         DataAndMethods.brailleServiceObj = brailleServiceObj;
@@ -358,8 +359,8 @@ public class DataAndMethods {
     }
 
     public static byte[][] getGuidanceBitmaps(Document doc, int presentGuidance) throws XPathExpressionException, IOException, ParserConfigurationException, SAXException {
+        String tag = "";
         XPath xPath = XPathFactory.newInstance().newXPath();
-
         /*NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-target]", doc, XPathConstants.NODESET);
         targetCount=nodeslist.getLength();
         */
@@ -389,9 +390,18 @@ public class DataAndMethods {
         nodeslist = (NodeList) xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none'] and ancestor::metadata)]", doc, XPathConstants.NODESET);
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i).cloneNode(true);
-            doc.getElementsByTagName("svg").item(0).appendChild((Element)node);
+            doc.getElementsByTagName("svg").item(0).appendChild(node);
+            if (((Element) node).hasAttribute("aria-labelledby")) {
+                tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+                //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
+            }
+                else if(((Element) node).hasAttribute("aria-label")){
+                tag=((Element)node).getAttribute("aria-label");
+                //Log.d("GETTING TAGS", "Otherwise here!");
+            }
         }
 
+        speaker(tag);
         byte[] mask = docToBitmap(doc);
         doc = getTargetLayer(getfreshDoc());
         /*
@@ -1012,12 +1022,13 @@ public class DataAndMethods {
         if (zoomingIn){
             zoomVal+= 25;
             node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
-            if (mode.equals("EXPLORATION"))
+            if (mode.equals("Exploration"))
                 brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
-            else if (mode.equals("GUIDANCE"))
+            else if (mode.equals("Guidance"))
                 brailleServiceObj.display(getGuidanceBitmaps(doc, presentLayer));
             else
                 brailleServiceObj.display(getAnnotationBitmaps(doc, presentLayer, false));
+
         }
         else{
             if (zoomVal>=125) {
@@ -1036,6 +1047,28 @@ public class DataAndMethods {
         return;
     }
 
+    public static void zoomTo(Integer[] pins, Integer zoomValue, String mode) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+        Document doc = getfreshDoc();
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
+        Float width= Float.valueOf(node.getAttribute("width"));
+        Float height= Float.valueOf(node.getAttribute("height"));
+
+        if (zoomVal >= 100){
+            zoomVal = zoomValue;
+            node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
+            if (mode.equals("Exploration"))
+                brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+            else if (mode.equals("Guidance"))
+                brailleServiceObj.display(getGuidanceBitmaps(doc, presentLayer));
+            else
+                brailleServiceObj.display(getAnnotationBitmaps(doc, presentLayer, false));
+        }
+        else{
+            speaker("Oops! Cannot zoom out further");
+        }
+        return;
+    }
     public static String zoomer(float width, float height, int zoomVal, Integer[] pins){
         float[] press=new float[]{0, 0};
         float sWidth=0, sHeight=0, fWidth=width, fHeight=height;
