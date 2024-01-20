@@ -769,7 +769,8 @@ public class DataAndMethods {
     }
 
     // fetching the file to read from; returns file contents as String and also the file name
-    public static String[] getFile(int fileNumber) throws IOException, JSONException {
+    //public static String[] getFile(int fileNumber) throws IOException, JSONException {
+    public static String[] getFile() throws IOException, JSONException {
         /*String folderName= "/sdcard/IMAGE/client/";
         File directory = new File(folderName);
         File[] files = directory.listFiles();
@@ -897,7 +898,7 @@ public class DataAndMethods {
     }
 
     //similar to getFile. To be used when TTS read out of file name is required. Could possibly replace getFile entirely
-    public static void changeFile(int fileNumber) throws JSONException, IOException {
+/*    public static void changeFile(int fileNumber) throws JSONException, IOException {
         presentLayer=0;
         brailleServiceObj.display(data);
         String[] output=getFile(fileNumber);
@@ -906,7 +907,7 @@ public class DataAndMethods {
         //Log.d("FILENAME", output[1]);
         return;
     }
-
+*/
     // get file mime type for photos
     public static String getMimeType(String url) {
         String type = null;
@@ -1031,8 +1032,12 @@ public class DataAndMethods {
 
         }
         else{
-            if (zoomVal>=125) {
+            if (zoomVal <= 100){
+                speaker("Oops! Cannot zoom out further");
+            }
+            else {
                 zoomVal-= 25;
+                if (zoomVal < 100) zoomVal = 100;
                 node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
                 if (mode.equals("Exploration"))
                     brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
@@ -1041,8 +1046,6 @@ public class DataAndMethods {
                 else
                     brailleServiceObj.display(getAnnotationBitmaps(doc, presentLayer, false));
             }
-            else
-                speaker("Oops! Cannot zoom out further");
         }
         return;
     }

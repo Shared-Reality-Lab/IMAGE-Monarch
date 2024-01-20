@@ -74,7 +74,7 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
             brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
             try {
-                DataAndMethods.changeFile(++DataAndMethods.fileSelected);
+                DataAndMethods.getFile();
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             } catch (IOException e) {
@@ -333,14 +333,11 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
             switch (keyMapping.getOrDefault(keyCode, "default")) {
                 // Navigating between files
                 case "UP":
-                    Log.d("KEY EVENT", event.toString());
-                    DataAndMethods.changeFile(++DataAndMethods.fileSelected);
-                    return true;
-                // Navigating between files
                 case "DOWN":
                     Log.d("KEY EVENT", event.toString());
-                    DataAndMethods.changeFile(--DataAndMethods.fileSelected);
+                    DataAndMethods.getFile();
                     return true;
+
                 case "ZOOM OUT":
                     Log.d("KEY EVENT", event.toString());
                     if(!DataAndMethods.zoomingOut) {
@@ -439,7 +436,7 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
         return false;
     }
 
-    private void executeCommand(String cmd) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+    public void executeCommand(String cmd) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
         Log.d("COMMAND", cmd);
         if (cmd.contains("zoom") && cmd.matches(".*\\d.*")) {
             cmd=cmd.replace("zoom", "").replaceAll("\\s", "");
