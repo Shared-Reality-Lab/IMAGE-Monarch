@@ -126,7 +126,7 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
                         else{
                             if(keyEvent.getKeyCode()==confirmButton){
                                 DataAndMethods.presentLayer++;
-                                if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
+                                if (DataAndMethods.presentLayer>=DataAndMethods.layerCount+1)
                                     DataAndMethods.presentLayer=0;
                             }
                             else{

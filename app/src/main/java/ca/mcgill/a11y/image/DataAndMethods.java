@@ -94,7 +94,7 @@ public class DataAndMethods {
     static View view;
 
     static String zoomBox = "";
-
+    static Boolean newLayer = true;
 
 
     public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
@@ -378,8 +378,6 @@ public class DataAndMethods {
             presentTarget = 1;
         }
 
-        //Log.d("TARGET", String.valueOf(presentTarget)+" "+targetCount);
-
         NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(descendant-or-self::*[@data-image-target = '"+presentTarget+"'])]", doc, XPathConstants.NODESET);
 
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
@@ -391,17 +389,17 @@ public class DataAndMethods {
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i).cloneNode(true);
             doc.getElementsByTagName("svg").item(0).appendChild(node);
-            if (((Element) node).hasAttribute("aria-labelledby")) {
+            /*if (((Element) node).hasAttribute("aria-labelledby")) {
                 tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
                 //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
             }
                 else if(((Element) node).hasAttribute("aria-label")){
                 tag=((Element)node).getAttribute("aria-label");
                 //Log.d("GETTING TAGS", "Otherwise here!");
-            }
+            }*/
         }
 
-        speaker(tag);
+        //speaker(tag);
         byte[] mask = docToBitmap(doc);
         doc = getTargetLayer(getfreshDoc());
         /*
@@ -413,6 +411,26 @@ public class DataAndMethods {
             Node node = nodeslist.item(i);
             ((Element)node).setAttribute("display","none");
         }*/
+        Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
+        if (((Element)targetLayer).hasAttribute("aria-labelledby")) {
+            tag= doc.getElementById(((Element) targetLayer).getAttribute("aria-labelledby")).getTextContent();
+            //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
+        }
+        else{
+            tag=((Element)targetLayer).getAttribute("aria-label");
+            //Log.d("GETTING TAGS", "Otherwise here!");
+        }
+        Node node = ((NodeList) xPath.evaluate("//*[ancestor-or-self::*[@data-image-target = '"+presentTarget+"']]", doc, XPathConstants.NODESET)).item(0);
+        if (((Element)node).hasAttribute("aria-labelledby")) {
+            tag += "\n" + doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+            //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent()));
+        }
+        else{
+            tag += "\n" + ((Element)node).getAttribute("aria-label");
+            //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
+        }
+        speaker("Layer: " + tag);
+
         byte[] target = docToBitmap(doc);
 
         byte[] byteArray = new byte[mask.length];
@@ -504,6 +522,8 @@ public class DataAndMethods {
 
         //byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
 
+
+
         byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
             dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
@@ -527,6 +547,7 @@ public class DataAndMethods {
         XPath xPath = XPathFactory.newInstance().newXPath();
         Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
         //Log.d("TARGET Layer", String.valueOf(((Element) targetLayer).getAttribute("data-image-layer")));
+
         String layerName = ((Element) targetLayer).getAttribute("data-image-layer");
         NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(descendant-or-self::*[@data-image-layer = '"+layerName+"']) and not(ancestor::*[@data-image-layer = '"+layerName+"'])]", doc, XPathConstants.NODESET);
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
@@ -753,11 +774,32 @@ public class DataAndMethods {
 
         String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
         //Log.d("SVG",img);
+        //Log.d("DIMS", dims[0]+","+ dims[1]+","+dims[2]+","+dims[3]);
+        //Bitmap svg;
+        //if (dims[2]==0 || dims[3]==0)
         Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
+        /*else {
+            int x, y;
+            float width = dims[2]- dims[0];
+            float height = dims[3] - dims[1];
+
+            if (width/height > brailleServiceObj.getDotPerLineCount()/ brailleServiceObj.getDotLineCount()) {
+                x = brailleServiceObj.getDotPerLineCount();
+                y = (int) (height / (width / brailleServiceObj.getDotPerLineCount()));
+            }
+            else {
+                y = brailleServiceObj.getDotLineCount();
+                x = (int) (width / (height / brailleServiceObj.getDotLineCount()));
+            }
+            Log.d("DIMS", x+", "+y);
+            svg = SVGHelper.noContext().open(img).setRequestBounds(x, y).getBitmap();
+        }*/
         int x = svg.getWidth();
         int y = svg.getHeight();
+        //Log.d("SVG",x+", "+ y);
         // padding bitmap to fit to pin array size
-        Bitmap svgScaled=padBitmap(svg, brailleServiceObj.getDotPerLineCount()-x, brailleServiceObj.getDotLineCount()-y);
+        Bitmap svgScaled=padBitmap(svg, (brailleServiceObj.getDotPerLineCount()-x>0)?(brailleServiceObj.getDotPerLineCount()-x):0,
+                (brailleServiceObj.getDotLineCount()-y)>0?(brailleServiceObj.getDotLineCount()-y):0);
         svg.recycle();
         // extracting only the alpha value of bitmap to convert it into a byte array
         Bitmap alphas=svgScaled.extractAlpha();
@@ -830,8 +872,9 @@ public class DataAndMethods {
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
         Float width= Float.valueOf(node.getAttribute("width"));
         Float height= Float.valueOf(node.getAttribute("height"));
+        dims[2] = width;
+        dims[3] =height;
         zoomBox = dims[0]+" "+ dims[1] +" "+ width+ " "+ height;
-
         //Log.d("TARGETS", String.valueOf(targetCount));
     }
 
@@ -927,6 +970,47 @@ public class DataAndMethods {
         Document doc = builder.parse(is);
         XPath xPath = XPathFactory.newInstance().newXPath();
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
+        Float width= Float.valueOf(node.getAttribute("width"));
+        Float height= Float.valueOf(node.getAttribute("height"));
+        float x=0 ,y=0;
+        float[] translations = new float[]{0 , 0};
+        if (width/height > (float) brailleServiceObj.getDotPerLineCount()/ (float) brailleServiceObj.getDotLineCount()) {
+            //padding along height
+            x = width;
+            y = width * brailleServiceObj.getDotLineCount()/brailleServiceObj.getDotPerLineCount();
+            translations[1] = (y - height)/2;
+        }
+        else {
+            //padding along width
+            y = height;
+            x= height * brailleServiceObj.getDotPerLineCount()/brailleServiceObj.getDotLineCount();
+            translations[0] = (x- width)/2;
+        }
+        //Log.d("DIMS", width+ ", "+ height+ ";"+ x+ ", "+ y);
+        if((width/height- (float)brailleServiceObj.getDotPerLineCount()/ (float)brailleServiceObj.getDotLineCount())<0.01){
+            node.setAttribute("width", String.valueOf(x));
+            node.setAttribute("height", String.valueOf(y));
+            NodeList nodeslist = (NodeList)xPath.evaluate("//*[self::*[@data-image-layer] and not(ancestor::metadata)]", doc, XPathConstants.NODESET);
+            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+                Node n = nodeslist.item(i);
+                ((Element)n).setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
+            }
+            nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])and not(ancestor::metadata)] ", doc, XPathConstants.NODESET);
+            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+                Node n = nodeslist.item(i);
+                ((Element)n).setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
+            }
+            nodeslist = (NodeList) xPath.evaluate("//*[ancestor::metadata]", doc, XPathConstants.NODESET);
+            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+                Node n = nodeslist.item(i);
+                ((Element)n).setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
+            }
+        }
+
+            //node.setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
+            //Log.d("TRANS", "translate("+translations[0]+" "+translations[1]+")");
+
+
         node.setAttribute("viewBox", zoomBox );
         return doc;
     }
@@ -1074,20 +1158,39 @@ public class DataAndMethods {
     }
     public static String zoomer(float width, float height, int zoomVal, Integer[] pins){
         float[] press=new float[]{0, 0};
-        float sWidth=0, sHeight=0, fWidth=width, fHeight=height;
-        if (dims[2]!=0 & dims[3]!=0){
+        float sWidth=dims[0], sHeight=dims[1], fWidth=dims[2], fHeight=dims[3];
+        //float sWidth=0, sHeight=0, fWidth=width, fHeight=height;
+        /*if (dims[2]!=0 & dims[3]!=0){
             sWidth=dims[0];
             sHeight=dims[1];
             fWidth=dims[2];
             fHeight=dims[3];
-        }
+        }*/
+
         float scalingFactor, widthNew= fWidth - sWidth, heightNew= fHeight- sHeight;
-        int bufferPins;
-        if (Math.abs(widthNew- brailleServiceObj.getDotPerLineCount())<Math.abs(heightNew- brailleServiceObj.getDotLineCount())){
+        //int bufferPins;
+
+
+        scalingFactor= brailleServiceObj.getDotPerLineCount()/widthNew;
+        //Log.d("SCALE", String.valueOf(scalingFactor));
+        press[0] = (pins[0]/scalingFactor) + dims[0];
+        scalingFactor = brailleServiceObj.getDotLineCount()/heightNew;
+        press[1] = (pins[1]/scalingFactor) + dims[1];
+        //Log.d("SCALE", String.valueOf(scalingFactor));
+        //Log.d("DIMS", String.valueOf(widthNew)+", "+(dims[2]-dims[0]));
+
+        // Checking whether the padding is done along the height or the width
+        /*
+        Log.d("DIMS", String.valueOf(widthNew));
+        if ((widthNew/heightNew) > (float)(brailleServiceObj.getDotPerLineCount()/ brailleServiceObj.getDotLineCount())){
+        //if (Math.abs(widthNew- brailleServiceObj.getDotPerLineCount())<Math.abs(heightNew- brailleServiceObj.getDotLineCount())){
+            // Padding is done along the height
             scalingFactor= brailleServiceObj.getDotPerLineCount()/widthNew;
             // Log.d("ZOOM", String.valueOf(scalingFactor));
             press[0]= pins[0]/scalingFactor;
+            Log.d("SCALING", String.valueOf(scalingFactor));
             bufferPins = brailleServiceObj.getDotLineCount()- (int) Math.ceil(heightNew*scalingFactor);
+            Log.d("BUFFER", String.valueOf(bufferPins));
             if (pins[1]<=((bufferPins/2)-1)){
                 press[1]= sHeight;
             }
@@ -1095,14 +1198,18 @@ public class DataAndMethods {
                 press[1]= fHeight;
             }
             else{
-                press[1]= pins[1]/scalingFactor;
+                press[1]= (pins[1]-((bufferPins/2)-1))/scalingFactor;
             }
         }
         else{
+            //Log.d("SCALING", widthNew+", "+heightNew);
+            //Log.d("SCALING", pins[0]+", "+pins[1]);
+
             scalingFactor= brailleServiceObj.getDotLineCount()/heightNew;
-            // Log.d("ZOOM", String.valueOf(scalingFactor));
             press[1]=pins[1]/scalingFactor;
-            bufferPins = brailleServiceObj.getDotPerLineCount()- (int) Math.ceil(width*scalingFactor);
+            //Log.d("SCALING", String.valueOf(scalingFactor));
+            bufferPins = brailleServiceObj.getDotPerLineCount()- (int) Math.ceil(widthNew*scalingFactor);
+            //Log.d("BUFFER", String.valueOf(bufferPins));
             if (pins[0]<=((bufferPins/2)-1)){
                 press[0]= sWidth;
             }
@@ -1110,39 +1217,95 @@ public class DataAndMethods {
                 press[0]= fWidth;
             }
             else{
-                press[0]= pins[0]/scalingFactor;
+                press[0]= (pins[0]-((bufferPins/2)-1))/scalingFactor;
             }
-        }
+        }*/
 
+        Log.d("PINS", pins[0]+", "+pins[1]);
+        Log.d("PRESS", press[0]+","+press[1]);
         float zoomWidth= width/((float)zoomVal/100);
         float zoomHeight= height/((float)zoomVal/100);
 
+        /*
+        Log.d("PINS", pins[0]+", "+pins[1]);
         dims[0]= press[0]-zoomWidth/2;
         dims[1]= press[1]-zoomHeight/2;
         dims[2]= press[0]+zoomWidth/2;
         dims[3]= press[1]+zoomHeight/2;
 
+        //Log.d("POSN", (dims[2]-dims[0])/2+", "+(dims[3]-dims[1])/2);
+        //Log.d("DIms", dims[0]+", "+dims[1]+", "+dims[2]+", "+dims[3]);
         if (dims[0]<0.001){
-            dims[2]=press[0]+zoomWidth/2-dims[0];
             dims[0]=0;
+            //dims[2]=press[0]+zoomWidth/2-dims[0];
+            dims[2]= zoomWidth;
         }
         else if (dims[2]>width){
-            dims[0]=press[0]-zoomWidth/2- (dims[2]-width);
-            dims[2]=width;
+            dims[2]= width;
+            //dims[0]=press[0]-zoomWidth/2- (dims[2]-width);
+            dims[0] = dims[2] - zoomWidth;
         }
         if (dims[1]<0.001){
-            dims[3]=press[1]+zoomHeight/2-dims[1];
             dims[1]=0;
+            //dims[3]=press[1]+zoomHeight/2-dims[1];
+            dims[3] = zoomHeight;
         }
         else if (dims[3]>height){
-            dims[1]=press[1]-zoomHeight/2- (dims[3]-height);
             dims[3]=height;
+            //dims[1]=press[1]-zoomHeight/2- (dims[3]-height);
+            dims[1] = dims[3] - zoomHeight;
+        }
+
+        /*
+        // This bit helps make more optimized used of available pins while zooming
+        if ((widthNew/heightNew) > (float)(brailleServiceObj.getDotPerLineCount()/ brailleServiceObj.getDotLineCount())){
+            //Padding is done along the height
+            dims[1]=0;
+            dims[3] = height;
+            zoomHeight = height;
+        }
+        else{
+            //Padding is along the width
+            Log.d("ZOOM_MOD", "Here");
+            dims[0]=0;
+            dims[2] = width;
+            zoomWidth = width;
+        }
+        */
+        Log.d("DIMS", dims[0] +", "+dims[1]+", "+dims[2]+", "+dims[3] );
+        Log.d("SCALE", zoomWidth+","+zoomHeight);
+        scalingFactor = zoomWidth/brailleServiceObj.getDotPerLineCount();
+        dims[0] = press[0] - (scalingFactor * (pins[0]));
+        dims[2] = dims[0] + zoomWidth;
+        scalingFactor = zoomHeight / brailleServiceObj.getDotLineCount();
+        dims [1] = press[1] - (scalingFactor * (pins[1]));
+        dims[3] = dims[1] + zoomHeight;
+        //Log.d("SCALE", String.valueOf(brailleServiceObj.getDotPerLineCount()));
+
+        if (dims[0]<0 || dims[1]<0 || dims[2]> width || dims[3] >height){
+            dims[0] =0;
+            dims[2] = dims[0] + zoomWidth;
+
+        }
+        else if (dims[2]>width){
+            dims[2] = width;
+            dims[0] = dims[2] -zoomWidth;
+        }
+        if (dims[1]<0){
+            dims[1] =0;
+            dims[3] = dims[1] + zoomHeight;
+        }
+        else if (dims[3]>height){
+            dims[3] = height;
+            dims[1] = dims[3] - zoomHeight;
         }
         Float[] zooming= new Float[]{dims[0], dims[1], zoomWidth, zoomHeight};
+        //Float[] zooming= new Float[]{0.0f, 0.0f, zoomWidth, zoomHeight};
         String zoomDims= Arrays.toString(zooming).replaceAll(",", "");
         //Log.d("ZOOM",Arrays.toString(press));
-        // Log.d("ZOOM",zoomDims);
         zoomBox = zoomDims.substring(1,zoomDims.length() - 1);
+        //Log.d("DIMS", dims[0] +", "+dims[1]+", "+dims[2]+", "+dims[3] );
+        //Log.d("ZOOM",zoomBox);
         return zoomBox;
     }
 
