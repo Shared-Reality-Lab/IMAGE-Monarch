@@ -16,6 +16,7 @@
  */
 package ca.mcgill.a11y.image;
 
+
 import ca.mcgill.a11y.image.MapRequestFormat;
 import ca.mcgill.a11y.image.PhotoRequestFormat;
 import ca.mcgill.a11y.image.ResponseFormat;
@@ -27,11 +28,12 @@ import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
+import retrofit2.http.Url;
 
 // Defines functions to be called to make photo or map requests
 public interface MakeRequest {
+    //String url = "display/"+channelSubscribed;
     @Headers("Content-Type: application/json")
-    @GET("display")
-
-    Call<ResponseFormat> checkForUpdates();
+    @GET
+    Call<ResponseFormat> checkForUpdates(@Url String url);;
 }

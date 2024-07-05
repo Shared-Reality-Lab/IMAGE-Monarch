@@ -8,6 +8,10 @@ import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
 import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
+import static ca.mcgill.a11y.image.DataAndMethods.backButton;
+import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
+import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -47,12 +51,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
 public class BaseActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener{
-    SpeechRecognizer speechRecognizer;
-    Intent speechRecognizerIntent;
 
     static BrailleDisplay brailleServiceObj = null;
-    int confirmButton = 504;
-    int backButton = 503;
+
     String voiceCommand = null;
 
     private GestureDetectorCompat mDetector;
@@ -60,6 +61,7 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
     boolean zoom = false;
     int zoomVal = 100;
 
+    static String channelSubscribed = "263773";
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,18 +75,21 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
         if (DataAndMethods.brailleServiceObj==null) {
             brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
-            try {
+            startService(new Intent(getApplicationContext(), PollingService.class));
+            /*try {
                 DataAndMethods.getFile();
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             } catch (IOException e) {
                 throw new RuntimeException(e);
-            }
+            }*/
         }
         else{
             brailleServiceObj = DataAndMethods.brailleServiceObj;
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
         }
+
+        /*
 
         ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -307,7 +312,13 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
             public void onEvent(int i, Bundle bundle) {
 
             }
-        });
+        });*/
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopService(new Intent(getApplicationContext(), PollingService.class));
     }
 
     @Override
@@ -334,8 +345,16 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
                 // Navigating between files
                 case "UP":
                 case "DOWN":
+                    // make force refresh
                     Log.d("KEY EVENT", event.toString());
-                    DataAndMethods.getFile();
+                    try {
+                        DataAndMethods.getFile();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                    //DataAndMethods.getFile();
                     return true;
 
                 case "ZOOM OUT":
@@ -371,10 +390,20 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
                         DataAndMethods.pan(keyCode, getLocalClassName());
                     }
                     return false;
-                case "MENU":
+
+                case "OK":
+                    DataAndMethods.displayGraphic(confirmButton, "Exploration");
+                    return false;
+
+                case "CANCEL":
+                    DataAndMethods.displayGraphic(backButton, "Exploration");
+                    return false;
+                /*case "MENU":
                     DataAndMethods.pingsPlayer(R.raw.blip);
                     speechRecognizer.startListening(speechRecognizerIntent);
                     return false;
+
+
                 case "OK":
                     if (voiceCommand!=null)
                         executeCommand(voiceCommand);
@@ -386,13 +415,13 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
                         voiceCommand = null;
                     }
                     return false;
+
+                 */
                 default:
                     Log.d("KEY EVENT", event.toString());
                     return false;
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (JSONException e) {
             throw new RuntimeException(e);
         } catch (XPathExpressionException e) {
             throw new RuntimeException(e);
@@ -409,6 +438,7 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
         }
     }
 
+    /*
     private boolean checkCommandValidity(String cmd){
         cmd = cmd.toLowerCase();
         if (cmd.contains("zoom") && cmd.matches(".*\\d.*")) {
@@ -430,7 +460,7 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
 
         /*else if (cmd.equals("annotate")){
             return true;
-        }*/
+        }
 
         // Layer - title -> Switches to exploration mode
         return false;
@@ -505,7 +535,7 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
             }
         }
         voiceCommand = null;
-    }
+    }*/
 
     @Override
     public boolean onTouchEvent(MotionEvent event){

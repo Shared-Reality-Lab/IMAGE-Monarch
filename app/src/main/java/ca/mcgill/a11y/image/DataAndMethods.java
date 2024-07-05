@@ -5,6 +5,8 @@ import static android.view.KeyEvent.KEYCODE_DPAD_LEFT;
 import static android.view.KeyEvent.KEYCODE_DPAD_RIGHT;
 import static android.view.KeyEvent.KEYCODE_DPAD_UP;
 
+import static ca.mcgill.a11y.image.BaseActivity.channelSubscribed;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -33,10 +35,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +60,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -95,7 +100,10 @@ public class DataAndMethods {
 
     static String zoomBox = "";
     static Boolean newLayer = true;
+    static int confirmButton = 504;
+    static int backButton = 503;
 
+    public static final int DISK_CACHE_SIZE = 10 * 1024 * 1024;
 
     public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
         DataAndMethods.brailleServiceObj = brailleServiceObj;
@@ -147,6 +155,50 @@ public class DataAndMethods {
                     });
                 }
             }});
+    }
+
+    //check mode and display appropriate layer
+    public static void displayGraphic(int keyCode, String mode){
+        try{
+            DataAndMethods.ttsEnabled=true;
+            DataAndMethods.displayOn= true;
+            if(mode.equals("Guidance")){
+                if(keyCode == confirmButton) {
+                    DataAndMethods.presentTarget++;
+                }
+                else{
+                    DataAndMethods.presentTarget--;
+                }
+                brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer));
+            }
+            else{
+                if(keyCode ==confirmButton){
+                    DataAndMethods.presentLayer++;
+                    if (DataAndMethods.presentLayer>=DataAndMethods.layerCount+1)
+                        DataAndMethods.presentLayer=0;
+                }
+                else{
+                    DataAndMethods.presentLayer--;
+                    if (DataAndMethods.presentLayer<0)
+                        DataAndMethods.presentLayer= DataAndMethods.layerCount;
+                }
+                if (mode.equals("Exploration")) {
+                    brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                }
+                else{
+                    brailleServiceObj.display(DataAndMethods.getAnnotationBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                }
+            }
+        }catch(IOException e) {
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public static Bitmap padBitmap(Bitmap bitmap, int padX, int padY)
@@ -839,7 +891,8 @@ public class DataAndMethods {
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
                 //Need next 2 lines when server response is slow
                 .readTimeout(60, TimeUnit.SECONDS)
-                .connectTimeout(60, TimeUnit.SECONDS);
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .cache(getCache());
 
         //httpClient.addInterceptor(logging);
 
@@ -850,8 +903,10 @@ public class DataAndMethods {
                 .build();
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
-        Call<ResponseFormat> call= makereq.checkForUpdates();
+        Call<ResponseFormat> call= makereq.checkForUpdates(context.getString(R.string.server_url)+"display/"+channelSubscribed);
         image= makeServerCall(call);
+        //DataAndMethods.presentLayer--;
+        //DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
         // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
         return new String[]{image, ""};
     }
@@ -878,6 +933,12 @@ public class DataAndMethods {
         //Log.d("TARGETS", String.valueOf(targetCount));
     }
 
+    public static Cache getCache() {
+        File cacheDir = new File(context.getCacheDir(), "cache");
+        Cache cache = new Cache(cacheDir, DISK_CACHE_SIZE);
+        return cache;
+    }
+
     public static String makeServerCall(Call<ResponseFormat> call){
         // Cancelling any ongoing requests that haven't been completed
         if (ongoingCall!=null){
@@ -890,20 +951,29 @@ public class DataAndMethods {
             @Override
             public void onResponse(Call<ResponseFormat> call, Response<ResponseFormat> response) {
                 try {
-                    ResponseFormat resource= response.body();
-                    //ResponseFormat.Rendering[] renderings = resource.renderings;
-                    image= (resource.graphic).replaceFirst("data:.+,", "");
-                    //Log.d("RESPONSE", image);
-                    byte[] data = image.getBytes("UTF-8");
-                    data = Base64.decode(data, Base64.DEFAULT);
-                    image = new String(data, "UTF-8");
-                    pingsPlayer(R.raw.image_results_arrived);
-                    //Reset layer count to 0 before new file is loaded
-                    layerCount = 0;
-                    //count guidance targets
-                    targetCounts();
-                    // Enabling the up button again when the response has been received.
-                    view.findViewById(R.id.ones).setEnabled(true);
+                    if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                        ResponseFormat resource = response.body();
+                        //ResponseFormat.Rendering[] renderings = resource.renderings;
+                        image = (resource.graphic).replaceFirst("data:.+,", "");
+                        //Log.d("RESPONSE", image);
+                        byte[] data = image.getBytes("UTF-8");
+                        data = Base64.decode(data, Base64.DEFAULT);
+                        image = new String(data, "UTF-8");
+                        // currently retained this to set correct zoomBox
+                        targetCounts();
+                        DataAndMethods.presentLayer--;
+                        DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
+                        pingsPlayer(R.raw.image_results_arrived);
+                        //Reset layer count to 0 before new file is loaded
+                        //layerCount = 0;
+                        //count guidance targets
+
+                        // Enabling the up button again when the response has been received.
+                        //view.findViewById(R.id.ones).setEnabled(true);
+                    }
+                    else{
+                        Log.d("CACHE", "Fetching from cache!");
+                    }
                 }
                 catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
@@ -972,6 +1042,7 @@ public class DataAndMethods {
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
         Float width= Float.valueOf(node.getAttribute("width"));
         Float height= Float.valueOf(node.getAttribute("height"));
+        Log.d("NEWDOC", width+", "+height);
         float x=0 ,y=0;
         float[] translations = new float[]{0 , 0};
         if (width/height > (float) brailleServiceObj.getDotPerLineCount()/ (float) brailleServiceObj.getDotLineCount()) {
@@ -1009,7 +1080,6 @@ public class DataAndMethods {
 
             //node.setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
             //Log.d("TRANS", "translate("+translations[0]+" "+translations[1]+")");
-
 
         node.setAttribute("viewBox", zoomBox );
         return doc;
