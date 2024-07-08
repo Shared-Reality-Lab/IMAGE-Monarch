@@ -30,25 +30,7 @@
             android:name=".PollingService"
             android:enabled="true"
             android:exported="true"></service>
-        <!--
-         <activity
-            android:name="ca.mcgill.a11y.image.Guidance"
-            android:exported="true"
-            android:configChanges="touchscreen">
 
-
-        </activity>
-        <activity
-            android:name="ca.mcgill.a11y.image.Annotation"
-            android:exported="true"
-            android:configChanges="touchscreen">
-        </activity>
-        <activity
-            android:name="ca.mcgill.a11y.image.AnnotationMode"
-            android:exported="true"
-            android:configChanges="touchscreen">
-        </activity>
-        -->
         <activity
             android:name=".Exploration"
             android:configChanges="touchscreen"

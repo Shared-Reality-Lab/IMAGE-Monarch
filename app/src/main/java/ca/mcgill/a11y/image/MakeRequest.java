@@ -17,17 +17,9 @@
 package ca.mcgill.a11y.image;
 
 
-import ca.mcgill.a11y.image.MapRequestFormat;
-import ca.mcgill.a11y.image.PhotoRequestFormat;
-import ca.mcgill.a11y.image.ResponseFormat;
-
-import org.json.JSONObject;
-
 import retrofit2.Call;
-import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
-import retrofit2.http.POST;
 import retrofit2.http.Url;
 
 // Defines functions to be called to make photo or map requests

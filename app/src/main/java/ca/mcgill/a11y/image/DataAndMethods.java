@@ -8,13 +8,11 @@ import static android.view.KeyEvent.KEYCODE_DPAD_UP;
 import static ca.mcgill.a11y.image.BaseActivity.channelSubscribed;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.media.MediaPlayer;
+import android.net.http.HttpResponseCache;
 import android.os.BrailleDisplay;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,10 +21,7 @@ import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
-import android.webkit.MimeTypeMap;
-
 import com.scand.svg.SVGHelper;
-
 import org.json.JSONException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,19 +29,18 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.CacheResponse;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -59,7 +53,6 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
@@ -74,35 +67,22 @@ public class DataAndMethods {
     static byte[][] data = null;
     static ArrayList<String[][]> tags;
     static ArrayList<String[][]> occupancy;
-    static int selectObj=-1;
-    static String[] selectedIds = null;
-    static int tagType = 0;
-    static String[] tagTypes = new String[]{"aria-label", "aria-description"};
-    static String speechTag = null;
-    static float[] target=null;
-
     static Integer zoomVal=100;
     static float[] dims=new float[]{0,0, 0, 0};
-
     static Integer presentLayer = -1, presentTarget = 0;
-    static Integer fileSelected = 0;
     static boolean labelFill=true;
     static boolean ttsEnabled=true;
-
     static boolean zoomingIn=false, zoomingOut=false;
-    static Integer layerCount=0, targetCount;
+    static Integer layerCount=0;
     static BrailleDisplay brailleServiceObj = null;
     static BrailleDisplay.MotionEventHandler handler;
     private static Call<ResponseFormat> ongoingCall;
     static TextToSpeech tts;
     static Context context;
     static View view;
-
     static String zoomBox = "";
-    static Boolean newLayer = true;
     static int confirmButton = 504;
     static int backButton = 503;
-
     public static final int DISK_CACHE_SIZE = 10 * 1024 * 1024;
 
     public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
@@ -162,43 +142,21 @@ public class DataAndMethods {
         try{
             DataAndMethods.ttsEnabled=true;
             DataAndMethods.displayOn= true;
-            if(mode.equals("Guidance")){
-                if(keyCode == confirmButton) {
-                    DataAndMethods.presentTarget++;
-                }
-                else{
-                    DataAndMethods.presentTarget--;
-                }
-                brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer));
+            if(keyCode ==confirmButton){
+                DataAndMethods.presentLayer++;
+                if (DataAndMethods.presentLayer>=DataAndMethods.layerCount+1)
+                    DataAndMethods.presentLayer=0;
             }
             else{
-                if(keyCode ==confirmButton){
-                    DataAndMethods.presentLayer++;
-                    if (DataAndMethods.presentLayer>=DataAndMethods.layerCount+1)
-                        DataAndMethods.presentLayer=0;
-                }
-                else{
-                    DataAndMethods.presentLayer--;
-                    if (DataAndMethods.presentLayer<0)
-                        DataAndMethods.presentLayer= DataAndMethods.layerCount;
-                }
-                if (mode.equals("Exploration")) {
-                    brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-                }
-                else{
-                    brailleServiceObj.display(DataAndMethods.getAnnotationBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-                }
+                DataAndMethods.presentLayer--;
+                if (DataAndMethods.presentLayer<0)
+                    DataAndMethods.presentLayer= DataAndMethods.layerCount;
             }
-        }catch(IOException e) {
-            throw new RuntimeException(e);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
-        } catch (XPathExpressionException e) {
+            brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+
+        }catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public static Bitmap padBitmap(Bitmap bitmap, int padX, int padY)
@@ -291,9 +249,6 @@ public class DataAndMethods {
             if (zoomVal<zoomLevel)
                 ((Element)node).setAttribute("display","none");
         }
-
-        // fetch TTS tags for elements within present layer
-        //getDescriptions(doc);
         // get bitmap of present layer
         byte[] byteArray= docToBitmap(doc);
         //Log.d("BITMAP", Arrays.toString(byteArray));
@@ -309,9 +264,7 @@ public class DataAndMethods {
                     // This ping plays when the descriptions (i.e. TTS labels) are loaded.
                     // Generally occurs with a little delay following the tactile rendering
                     pingsPlayer(R.raw.ping);
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
+                } catch (XPathExpressionException | IOException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -324,427 +277,6 @@ public class DataAndMethods {
         }
         return dataRead;
     }
-
-    public static byte[][] getAnnotationBitmaps(Document doc, int presentLayer, boolean readCaption) throws IOException, XPathExpressionException {
-        //Log.d("LAYER!", String.valueOf(presentLayer));
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
-        NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
-        //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
-        layerCount=nodeslist.getLength();
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            // hide layers which are not the present layer
-            if (i!= presentLayer && presentLayer!=layerCount) {
-                ((Element)node).setAttribute("display","none");
-            }
-            // TTS output of layer description
-            if (i==presentLayer){
-                //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
-                String tag;
-                //Log.d("GETTING TAGS", node.getNodeName());
-                if (((Element)node).hasAttribute("aria-labelledby")) {
-                    tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
-                    //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
-                }
-                else{
-                    tag=((Element)node).getAttribute("aria-label");
-                    //Log.d("GETTING TAGS", "Otherwise here!");
-                }
-                if (readCaption) {
-                    speaker("Layer: " + tag);
-                }
-            }
-        }
-        //If there is no tag as a layer, hide elements unless the full image is to be shown
-        if (presentLayer!=layerCount){
-
-            nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])] ", doc, XPathConstants.NODESET);
-            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-                Node node = nodeslist.item(i);
-                ((Element)node).setAttribute("display","none");
-            }
-        }
-        else if (readCaption){
-            speaker("Full image");
-        }
-
-        NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < detail.getLength() ; i ++) {
-            Node node = detail.item(i);
-            Float zoomLevel= Float.valueOf(((Element)node).getAttribute("data-image-zoom"));
-            if (zoomVal<zoomLevel)
-                ((Element)node).setAttribute("display","none");
-        }
-
-        // fetch TTS tags for elements within present layer
-        //getDescriptions(doc);
-        // get bitmap of present layer
-        byte[] byteArray= docToBitmap(doc);
-        //Log.d("BITMAP", Arrays.toString(byteArray));
-
-        // the TTS tags are fetched in a separate thread.
-        final Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    getOccupancy(doc);
-                    //Log.d("DESCRIPTIONS", "Description loaded");
-                    // This ping plays when the descriptions (i.e. TTS labels) are loaded.
-                    // Generally occurs with a little delay following the tactile rendering
-                    pingsPlayer(R.raw.ping);
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
-        // reshape byte array into 2D array to match pin array dimensions
-        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
-        for (int i = 0; i < data.length; ++i) {
-            dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
-        }
-        return dataRead;
-    }
-
-    public static byte[][] getGuidanceBitmaps(Document doc, int presentGuidance) throws XPathExpressionException, IOException, ParserConfigurationException, SAXException {
-        String tag = "";
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        /*NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-target]", doc, XPathConstants.NODESET);
-        targetCount=nodeslist.getLength();
-        */
-        if (targetCount ==0){
-            speaker("No guidance mode available");
-            return data;
-        }
-        else if (presentTarget<=0 ){
-            presentTarget = targetCount;
-        }
-        else if (presentTarget > targetCount){
-            /*nodeslist = (NodeList)xPath.evaluate("//*[@data-image-target='"+presentTarget+"']", doc, XPathConstants.NODESET);
-            Log.d("TARGET", String.valueOf(nodeslist.getLength()));
-            if (nodeslist.getLength() == 0){*/
-            presentTarget = 1;
-        }
-
-        NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(descendant-or-self::*[@data-image-target = '"+presentTarget+"'])]", doc, XPathConstants.NODESET);
-
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            ((Element)node).setAttribute("display","none");
-        }
-
-        nodeslist = (NodeList) xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none'] and ancestor::metadata)]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i).cloneNode(true);
-            doc.getElementsByTagName("svg").item(0).appendChild(node);
-            /*if (((Element) node).hasAttribute("aria-labelledby")) {
-                tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
-                //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
-            }
-                else if(((Element) node).hasAttribute("aria-label")){
-                tag=((Element)node).getAttribute("aria-label");
-                //Log.d("GETTING TAGS", "Otherwise here!");
-            }*/
-        }
-
-        //speaker(tag);
-        byte[] mask = docToBitmap(doc);
-        doc = getTargetLayer(getfreshDoc());
-        /*
-        Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
-        //Log.d("TARGET Layer", String.valueOf(((Element) targetLayer).getAttribute("data-image-layer")));
-        String layerName = ((Element) targetLayer).getAttribute("data-image-layer");
-        nodeslist = (NodeList) xPath.evaluate("//*[not(descendant-or-self::*[@data-image-layer = '"+layerName+"']) and not(ancestor::*[@data-image-layer = '"+layerName+"'])]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            ((Element)node).setAttribute("display","none");
-        }*/
-        Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
-        if (((Element)targetLayer).hasAttribute("aria-labelledby")) {
-            tag= doc.getElementById(((Element) targetLayer).getAttribute("aria-labelledby")).getTextContent();
-            //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
-        }
-        else{
-            tag=((Element)targetLayer).getAttribute("aria-label");
-            //Log.d("GETTING TAGS", "Otherwise here!");
-        }
-        Node node = ((NodeList) xPath.evaluate("//*[ancestor-or-self::*[@data-image-target = '"+presentTarget+"']]", doc, XPathConstants.NODESET)).item(0);
-        if (((Element)node).hasAttribute("aria-labelledby")) {
-            tag += "\n" + doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
-            //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent()));
-        }
-        else{
-            tag += "\n" + ((Element)node).getAttribute("aria-label");
-            //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
-        }
-        speaker("Layer: " + tag);
-
-        byte[] target = docToBitmap(doc);
-
-        byte[] byteArray = new byte[mask.length];
-        for (int i = 0; i < mask.length; i++) {
-            byteArray[i] = (byte) (mask[i] * target[i]);
-        }
-
-        /*
-        nodeslist = (NodeList) xPath.evaluate("//*[((self::*[@data-image-layer]) and not(descendant-or-self::*[@data-image-target='"+ presentGuidance +"'])) or (not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer] ) and not(self::*[@data-image-target='"+ presentGuidance +"']))]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            ((Element)node).setAttribute("display","none");
-        }
-
-        byte[] byteArray= docToBitmap(doc);
-         */
-        /*
-        NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
-        //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
-        layerCount=nodeslist.getLength();
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            // hide layers which are not the present layer
-            if (i!= presentLayer && presentLayer!=layerCount) {
-                ((Element)node).setAttribute("display","none");
-            }
-            // TTS output of layer description
-            if (i==presentLayer){
-                //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
-                String tag;
-                //Log.d("GETTING TAGS", node.getNodeName());
-                if (((Element)node).hasAttribute("aria-labelledby")) {
-                    tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
-                    //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
-                }
-                else{
-                    tag=((Element)node).getAttribute("aria-label");
-                    //Log.d("GETTING TAGS", "Otherwise here!");
-                }
-
-                    speaker("Layer: " + tag);
-
-            }
-        }
-        //If there is no tag as a layer, hide elements unless the full image is to be shown
-        if (presentLayer!=layerCount){
-
-            nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])] ", doc, XPathConstants.NODESET);
-            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-                Node node = nodeslist.item(i);
-                ((Element)node).setAttribute("display","none");
-            }
-        }
-
-            speaker("Full image");
-
-
-        NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < detail.getLength() ; i ++) {
-            Node node = detail.item(i);
-            Float zoomLevel= Float.valueOf(((Element)node).getAttribute("data-image-zoom"));
-            if (zoomVal<zoomLevel)
-                ((Element)node).setAttribute("display","none");
-        }
-        byte[] byteArray= docToBitmap(doc);
-        //getTarget(doc);
-           */
-
-            /*// hide layers which are not the present layer
-            if (i!= presentLayer && presentLayer!=layerCount) {
-                ((Element)node).setAttribute("display","none");
-            }
-            // TTS output of layer description
-            if (i==presentLayer){
-                //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
-                String tag;
-                //Log.d("GETTING TAGS", node.getNodeName());
-                if (((Element)node).hasAttribute("aria-labelledby")) {
-                    tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
-                    //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
-                }
-                else{
-                    tag=((Element)node).getAttribute("aria-label");
-                    //Log.d("GETTING TAGS", "Otherwise here!");
-                }
-                speaker("Layer: "+tag);
-            }*/
-
-
-        //byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
-
-
-
-        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
-        for (int i = 0; i < data.length; ++i) {
-            dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
-        }
-
-        return dataRead;
-        //return data;
-    }
-
-    public static byte[][] displayTargetLayer(Document doc) throws XPathExpressionException, IOException {
-        doc = getTargetLayer(doc);
-        byte[] byteArray = docToBitmap(doc);
-        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
-        for (int i = 0; i < data.length; ++i) {
-            dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
-        }
-        return dataRead;
-    }
-
-    public static Document getTargetLayer(Document doc) throws XPathExpressionException {
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
-        //Log.d("TARGET Layer", String.valueOf(((Element) targetLayer).getAttribute("data-image-layer")));
-
-        String layerName = ((Element) targetLayer).getAttribute("data-image-layer");
-        NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(descendant-or-self::*[@data-image-layer = '"+layerName+"']) and not(ancestor::*[@data-image-layer = '"+layerName+"'])]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            ((Element)node).setAttribute("display","none");
-        }
-        nodeslist= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            Float zoomLevel= Float.valueOf(((Element)node).getAttribute("data-image-zoom"));
-            if (zoomVal<zoomLevel)
-                ((Element)node).setAttribute("display","none");
-        }
-        return doc;
-    }
-
-    public static void getTarget(Document doc) throws XPathExpressionException, IOException {
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        Document doccopy = doc;
-
-        NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and ((self::*[@data-image-target]))]", doccopy, XPathConstants.NODESET);
-        /*for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            ((Element)node).setAttribute("display", "none");
-        }*/
-
-        Element nd = (Element)((NodeList)xPath.evaluate("/svg", doccopy, XPathConstants.NODESET)).item(0);
-        Float origWidth= Float.valueOf(nd.getAttribute("width"));
-        Float origHeight= Float.valueOf(nd.getAttribute("height"));
-
-        String img = getStringFromDocument(doccopy).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
-        //Log.d("SVG",img);
-        //Bitmap svg = SVGHelper.noContext().open(img).getBitmap();
-        //int origWidth = svg.getWidth();
-        //int origHeight = svg.getHeight();
-        //Log.d("TARGET", origWidth+ ", "+ origHeight);
-        Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
-        int svgWidth = svg.getWidth();
-        int svgHeight = svg.getHeight();
-        //Log.d("TARGET", svgWidth+ ", "+ svgHeight);
-        Node node = nodeslist.item(0);
-        if (nodeslist.getLength() > 0) {
-            // Log.d("VALS", ((Element) node).getAttribute("cx"));
-            float x = Float.parseFloat(((Element) node).getAttribute("cx")) * svgWidth / origWidth + (brailleServiceObj.getDotPerLineCount() - svgWidth) / 2;
-            float y = Float.parseFloat(((Element) node).getAttribute("cy")) * svgHeight / origHeight + (brailleServiceObj.getDotLineCount() - svgHeight) / 2;
-            float r = Float.parseFloat(((Element) node).getAttribute("r")) * svgHeight / origHeight;
-            target = new float[]{x, y, r};
-            //Log.d("TARGET", x+ ", "+ y);
-        }
-        else {
-            target = null;
-        }
-    }
-    public static float calcDistance(Integer[] pos, float[] target){
-        float dist= ((pos[1]-target[1])*(pos[1]-target[1])+ (pos[0]-target[0])*(pos[0]-target[0]));
-        // Log.d("x", String.valueOf(target[0]));
-        // Log.d("y", String.valueOf(target[1]));
-        return dist;
-    }
-
-    public static float calcAngle(Integer[] pos, float[] target){
-        Float angle = null, adj=null;
-        if (pos[1]> target[1]) {
-            adj=pos[1]-target[1];
-            Log.d("ANGLE", "Target Y smaller");
-        }
-        else{
-            Log.d("ANGLE", "Target Y greater");
-            adj= target[1]- pos[1];
-            if (adj==0){
-                if (target[0]>pos[0]){
-                    return 0;
-                }
-                else{
-                    return (float)Math.PI/2;
-                }
-            }
-        }
-
-        if (target[0]>pos[0]){
-            Log.d("ANGLE", "Target X greater");
-            angle = (float) Math.atan((target[0]-pos[0])/(adj));
-            if (angle>Math.PI/4){
-                return 0;
-            }
-            else{
-                return (float) Math.PI/4- angle;
-            }
-        }
-        else{
-            Log.d("ANGLE", "Target X smaller");
-            angle = (float) Math.atan((pos[0]- target[0])/(adj));
-            if (angle>Math.PI/4){
-                return (float) (Math.PI/2);
-            }
-            else{
-                return (float) Math.PI/4+ angle;
-            }
-        }
-
-    }
-
-    //get positions of various elements within the svg
-    public static void getOccupancy(Document doc) throws XPathExpressionException, IOException {
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display=none]) and not(descendant::*[@display=none]) and (parent::*[@data-image-layer] or (self::*[@data-image-layer] and not(child::*)))]", doc, XPathConstants.NODESET);
-        String[] occTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
-
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            ((Element)node).setAttribute("display", "none");
-        }
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            String tag;
-            Node node = nodeslist.item(i);
-            // fetching the tag for each element
-            tag = ((Element) node).getAttribute("id");
-
-            if (labelFill) {
-                ((Element) node).setAttribute("fill", "black");
-            }
-            // showing the element whose tag is stored to obtain its bitmap mapping
-            ((Element)node).removeAttribute("display");
-            byte[] byteArray= docToBitmap(doc);
-            for (int j=0; j<occTags.length; j++){
-                if (byteArray[j]!=0){
-                    if (occTags[j]==null){
-                        occTags[j]=tag;
-                    }
-                    else {
-                        occTags[j]= occTags[j] + ", " + tag;
-                    }
-                }
-            }
-            // hiding element again so we can move on to the next element
-            ((Element)node).setAttribute("display", "none");
-        }
-
-        // converting string array into 2D array that maps to the pins
-        for (int i = 0; i < data.length; ++i) {
-            occupancy.get(0)[i]=Arrays.copyOfRange(occTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
-        }
-        return;
-    }
-
 
     // get basic and detailed descriptions
     public static void getDescriptions(Document doc) throws XPathExpressionException, IOException {
@@ -771,9 +303,11 @@ public class DataAndMethods {
             }
             if (((Element)node).hasAttribute("aria-labelledby")) {
                 tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+                //Log.d("TAG", tag);
             }
             else{
                 tag=((Element)node).getAttribute("aria-label");
+                //Log.d("TAG", tag);
             }
             if (((Element)node).hasAttribute("aria-describedby")) {
                 detailTag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
@@ -827,25 +361,7 @@ public class DataAndMethods {
         String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
         //Log.d("SVG",img);
         //Log.d("DIMS", dims[0]+","+ dims[1]+","+dims[2]+","+dims[3]);
-        //Bitmap svg;
-        //if (dims[2]==0 || dims[3]==0)
         Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
-        /*else {
-            int x, y;
-            float width = dims[2]- dims[0];
-            float height = dims[3] - dims[1];
-
-            if (width/height > brailleServiceObj.getDotPerLineCount()/ brailleServiceObj.getDotLineCount()) {
-                x = brailleServiceObj.getDotPerLineCount();
-                y = (int) (height / (width / brailleServiceObj.getDotPerLineCount()));
-            }
-            else {
-                y = brailleServiceObj.getDotLineCount();
-                x = (int) (width / (height / brailleServiceObj.getDotLineCount()));
-            }
-            Log.d("DIMS", x+", "+y);
-            svg = SVGHelper.noContext().open(img).setRequestBounds(x, y).getBitmap();
-        }*/
         int x = svg.getWidth();
         int y = svg.getHeight();
         //Log.d("SVG",x+", "+ y);
@@ -865,29 +381,9 @@ public class DataAndMethods {
     // fetching the file to read from; returns file contents as String and also the file name
     //public static String[] getFile(int fileNumber) throws IOException, JSONException {
     public static String[] getFile() throws IOException, JSONException {
-        /*String folderName= "/sdcard/IMAGE/client/";
-        File directory = new File(folderName);
-        File[] files = directory.listFiles();
-
-        int filecount=files.length;
-        if (fileNumber>= filecount)
-            fileSelected=0;
-        else if (fileNumber<0)
-            fileSelected=filecount-1;
-
-        Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
-        byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
-
-        String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
-        Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
-        PhotoRequestFormat req= new PhotoRequestFormat();
-        req.setValues(base64, dims);
-        */
         // Uncomment the following lines for logging http requests
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-
-
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
                 //Need next 2 lines when server response is slow
                 .readTimeout(60, TimeUnit.SECONDS)
@@ -911,28 +407,16 @@ public class DataAndMethods {
         return new String[]{image, ""};
     }
 
-    public static void targetCounts() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+    public static void setImageDims() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         Document doc = getfreshDoc();
         XPath xPath = XPathFactory.newInstance().newXPath();
-        NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-target]", doc, XPathConstants.NODESET);
-        targetCount=0;
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            int count = Integer.parseInt(((Element)node).getAttribute("data-image-target"));
-            if (count > targetCount)
-                targetCount = count;
-        }
-
-        //XPath xPath = XPathFactory.newInstance().newXPath();
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
         Float width= Float.valueOf(node.getAttribute("width"));
         Float height= Float.valueOf(node.getAttribute("height"));
         dims[2] = width;
         dims[3] =height;
         zoomBox = dims[0]+" "+ dims[1] +" "+ width+ " "+ height;
-        //Log.d("TARGETS", String.valueOf(targetCount));
     }
-
     public static Cache getCache() {
         File cacheDir = new File(context.getCacheDir(), "cache");
         Cache cache = new Cache(cacheDir, DISK_CACHE_SIZE);
@@ -944,14 +428,12 @@ public class DataAndMethods {
         if (ongoingCall!=null){
             ongoingCall.cancel();
         }
-        pingsPlayer(R.raw.image_request_sent);
-        // Disabling the up button when request is in progress to prevent catastrophic fails
-        view.findViewById(R.id.ones).setEnabled(false);
+        //pingsPlayer(R.raw.image_request_sent);
         call.enqueue(new Callback<ResponseFormat>() {
             @Override
             public void onResponse(Call<ResponseFormat> call, Response<ResponseFormat> response) {
                 try {
-                    if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                    if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED || image == null) {
                         ResponseFormat resource = response.body();
                         //ResponseFormat.Rendering[] renderings = resource.renderings;
                         image = (resource.graphic).replaceFirst("data:.+,", "");
@@ -959,11 +441,12 @@ public class DataAndMethods {
                         byte[] data = image.getBytes("UTF-8");
                         data = Base64.decode(data, Base64.DEFAULT);
                         image = new String(data, "UTF-8");
-                        // currently retained this to set correct zoomBox
-                        targetCounts();
+                        // Log.d("IMAGE", image);
+                        // gets viewBox dims for current image
+                        setImageDims();
                         DataAndMethods.presentLayer--;
                         DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
-                        pingsPlayer(R.raw.image_results_arrived);
+                        //pingsPlayer(R.raw.image_results_arrived);
                         //Reset layer count to 0 before new file is loaded
                         //layerCount = 0;
                         //count guidance targets
@@ -1010,27 +493,6 @@ public class DataAndMethods {
         return image;
     }
 
-    //similar to getFile. To be used when TTS read out of file name is required. Could possibly replace getFile entirely
-/*    public static void changeFile(int fileNumber) throws JSONException, IOException {
-        presentLayer=0;
-        brailleServiceObj.display(data);
-        String[] output=getFile(fileNumber);
-        image=output[0];
-        //speaker("Opening file "+ output[1]);
-        //Log.d("FILENAME", output[1]);
-        return;
-    }
-*/
-    // get file mime type for photos
-    public static String getMimeType(String url) {
-        String type = null;
-        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
-        if (extension != null) {
-            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-        }
-        return type;
-    }
-
     // get fresh copy of the file void of previously made changes
     public static Document getfreshDoc() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -1042,7 +504,7 @@ public class DataAndMethods {
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
         Float width= Float.valueOf(node.getAttribute("width"));
         Float height= Float.valueOf(node.getAttribute("height"));
-        Log.d("NEWDOC", width+", "+height);
+        //Log.d("NEWDOC", width+", "+height);
         float x=0 ,y=0;
         float[] translations = new float[]{0 , 0};
         if (width/height > (float) brailleServiceObj.getDotPerLineCount()/ (float) brailleServiceObj.getDotLineCount()) {
@@ -1098,74 +560,6 @@ public class DataAndMethods {
         return new Integer[] {pinX, pinY};
     }
 
-    public static void fetchObjects(Integer[] pins) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
-        if (occupancy.get(0)[pins[1]][pins[0]]!=null){
-            selectedIds= (occupancy.get(0)[pins[1]][pins[0]]).split(", ");
-        }
-        else{
-            selectedIds=null;
-            speaker("Nothing to annotate");
-        }
-    }
-
-    public static void dispSelectedObjs() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
-        Document doc = getfreshDoc();
-        if (selectObj>=selectedIds.length){
-            selectObj =0;
-        } else if (selectObj<0) {
-            selectObj = selectedIds.length-1;
-        }
-        String id = selectedIds[selectObj];
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        NodeList nodeslist = ((NodeList)xPath.evaluate("//*[not(self::*[@id='"+id+"']) and not(descendant::*[@id='"+id+"']) and not(ancestor::*[@id='"+id+"']) and not(descendant::*[@data-image-layer])]", doc, XPathConstants.NODESET));
-        for(int i=0;i<nodeslist.getLength(); i++){
-            Node node = nodeslist.item(i);
-            ((Element)node).setAttribute("display","none");
-        }
-        /*
-        Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
-        if (node.hasAttribute("viewBox")) {
-            Float[] dim = new Float[]{dims[0], dims[1], dims[2] - dims[0], dims[3] - dims[1]};
-            String dimensions = Arrays.toString(dim).replaceAll(",", "");
-            node.setAttribute("viewBox", dimensions.substring(1, dimensions.length() - 1));
-        }*/
-        brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
-    }
-
-    public static void setTagType(){
-        if (DataAndMethods.tagType< 0){
-            DataAndMethods.tagType = DataAndMethods.tagTypes.length - 1;
-        }
-        else if (DataAndMethods.tagType>=DataAndMethods.tagTypes.length) {
-            DataAndMethods.tagType = 0;
-        }
-        switch (DataAndMethods.tagTypes[DataAndMethods.tagType]){
-            case "aria-label":
-                DataAndMethods.speaker("Editing label");
-                break;
-            case "aria-description":
-                DataAndMethods.speaker("Editing description");
-                break;
-            default:
-                DataAndMethods.speaker("Error");
-                break;
-        }
-    }
-
-    public static void saveTag() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
-        Document doc = getfreshDoc();
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        Element node = (Element)((NodeList)xPath.evaluate("//*[@id='"+selectedIds[selectObj]+"']", doc, XPathConstants.NODESET)).item(0);
-        if (speechTag != null) {
-            node.setAttribute(tagTypes[tagType], speechTag);
-            image = getStringFromDocument(doc);
-            Log.d("IMAGE", image);
-            speaker("Tag saved!");
-        }
-        else{
-            speaker("No tag available");
-        }
-    }
 
     public static void zoom(Integer[] pins, String mode) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         Document doc = getfreshDoc();
@@ -1179,11 +573,6 @@ public class DataAndMethods {
             node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
             if (mode.equals("Exploration"))
                 brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
-            else if (mode.equals("Guidance"))
-                brailleServiceObj.display(getGuidanceBitmaps(doc, presentLayer));
-            else
-                brailleServiceObj.display(getAnnotationBitmaps(doc, presentLayer, false));
-
         }
         else{
             if (zoomVal <= 100){
@@ -1195,10 +584,6 @@ public class DataAndMethods {
                 node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
                 if (mode.equals("Exploration"))
                     brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
-                else if (mode.equals("Guidance"))
-                    brailleServiceObj.display(getGuidanceBitmaps(doc, presentLayer));
-                else
-                    brailleServiceObj.display(getAnnotationBitmaps(doc, presentLayer, false));
             }
         }
         return;
@@ -1216,10 +601,6 @@ public class DataAndMethods {
             node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
             if (mode.equals("Exploration"))
                 brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
-            else if (mode.equals("Guidance"))
-                brailleServiceObj.display(getGuidanceBitmaps(doc, presentLayer));
-            else
-                brailleServiceObj.display(getAnnotationBitmaps(doc, presentLayer, false));
         }
         else{
             speaker("Oops! Cannot zoom out further");
@@ -1229,13 +610,6 @@ public class DataAndMethods {
     public static String zoomer(float width, float height, int zoomVal, Integer[] pins){
         float[] press=new float[]{0, 0};
         float sWidth=dims[0], sHeight=dims[1], fWidth=dims[2], fHeight=dims[3];
-        //float sWidth=0, sHeight=0, fWidth=width, fHeight=height;
-        /*if (dims[2]!=0 & dims[3]!=0){
-            sWidth=dims[0];
-            sHeight=dims[1];
-            fWidth=dims[2];
-            fHeight=dims[3];
-        }*/
 
         float scalingFactor, widthNew= fWidth - sWidth, heightNew= fHeight- sHeight;
         //int bufferPins;
@@ -1246,102 +620,11 @@ public class DataAndMethods {
         press[0] = (pins[0]/scalingFactor) + dims[0];
         scalingFactor = brailleServiceObj.getDotLineCount()/heightNew;
         press[1] = (pins[1]/scalingFactor) + dims[1];
-        //Log.d("SCALE", String.valueOf(scalingFactor));
-        //Log.d("DIMS", String.valueOf(widthNew)+", "+(dims[2]-dims[0]));
-
-        // Checking whether the padding is done along the height or the width
-        /*
-        Log.d("DIMS", String.valueOf(widthNew));
-        if ((widthNew/heightNew) > (float)(brailleServiceObj.getDotPerLineCount()/ brailleServiceObj.getDotLineCount())){
-        //if (Math.abs(widthNew- brailleServiceObj.getDotPerLineCount())<Math.abs(heightNew- brailleServiceObj.getDotLineCount())){
-            // Padding is done along the height
-            scalingFactor= brailleServiceObj.getDotPerLineCount()/widthNew;
-            // Log.d("ZOOM", String.valueOf(scalingFactor));
-            press[0]= pins[0]/scalingFactor;
-            Log.d("SCALING", String.valueOf(scalingFactor));
-            bufferPins = brailleServiceObj.getDotLineCount()- (int) Math.ceil(heightNew*scalingFactor);
-            Log.d("BUFFER", String.valueOf(bufferPins));
-            if (pins[1]<=((bufferPins/2)-1)){
-                press[1]= sHeight;
-            }
-            else if(pins[1]>= (brailleServiceObj.getDotLineCount()- (Math.floor(bufferPins/2) -1))){
-                press[1]= fHeight;
-            }
-            else{
-                press[1]= (pins[1]-((bufferPins/2)-1))/scalingFactor;
-            }
-        }
-        else{
-            //Log.d("SCALING", widthNew+", "+heightNew);
-            //Log.d("SCALING", pins[0]+", "+pins[1]);
-
-            scalingFactor= brailleServiceObj.getDotLineCount()/heightNew;
-            press[1]=pins[1]/scalingFactor;
-            //Log.d("SCALING", String.valueOf(scalingFactor));
-            bufferPins = brailleServiceObj.getDotPerLineCount()- (int) Math.ceil(widthNew*scalingFactor);
-            //Log.d("BUFFER", String.valueOf(bufferPins));
-            if (pins[0]<=((bufferPins/2)-1)){
-                press[0]= sWidth;
-            }
-            else if(pins[0]>= (brailleServiceObj.getDotPerLineCount()- (Math.floor(bufferPins/2) -1))){
-                press[0]= fWidth;
-            }
-            else{
-                press[0]= (pins[0]-((bufferPins/2)-1))/scalingFactor;
-            }
-        }*/
 
         Log.d("PINS", pins[0]+", "+pins[1]);
         Log.d("PRESS", press[0]+","+press[1]);
         float zoomWidth= width/((float)zoomVal/100);
         float zoomHeight= height/((float)zoomVal/100);
-
-        /*
-        Log.d("PINS", pins[0]+", "+pins[1]);
-        dims[0]= press[0]-zoomWidth/2;
-        dims[1]= press[1]-zoomHeight/2;
-        dims[2]= press[0]+zoomWidth/2;
-        dims[3]= press[1]+zoomHeight/2;
-
-        //Log.d("POSN", (dims[2]-dims[0])/2+", "+(dims[3]-dims[1])/2);
-        //Log.d("DIms", dims[0]+", "+dims[1]+", "+dims[2]+", "+dims[3]);
-        if (dims[0]<0.001){
-            dims[0]=0;
-            //dims[2]=press[0]+zoomWidth/2-dims[0];
-            dims[2]= zoomWidth;
-        }
-        else if (dims[2]>width){
-            dims[2]= width;
-            //dims[0]=press[0]-zoomWidth/2- (dims[2]-width);
-            dims[0] = dims[2] - zoomWidth;
-        }
-        if (dims[1]<0.001){
-            dims[1]=0;
-            //dims[3]=press[1]+zoomHeight/2-dims[1];
-            dims[3] = zoomHeight;
-        }
-        else if (dims[3]>height){
-            dims[3]=height;
-            //dims[1]=press[1]-zoomHeight/2- (dims[3]-height);
-            dims[1] = dims[3] - zoomHeight;
-        }
-
-        /*
-        // This bit helps make more optimized used of available pins while zooming
-        if ((widthNew/heightNew) > (float)(brailleServiceObj.getDotPerLineCount()/ brailleServiceObj.getDotLineCount())){
-            //Padding is done along the height
-            dims[1]=0;
-            dims[3] = height;
-            zoomHeight = height;
-        }
-        else{
-            //Padding is along the width
-            Log.d("ZOOM_MOD", "Here");
-            dims[0]=0;
-            dims[2] = width;
-            zoomWidth = width;
-        }
-        */
         Log.d("DIMS", dims[0] +", "+dims[1]+", "+dims[2]+", "+dims[3] );
         Log.d("SCALE", zoomWidth+","+zoomHeight);
         scalingFactor = zoomWidth/brailleServiceObj.getDotPerLineCount();
@@ -1352,10 +635,9 @@ public class DataAndMethods {
         dims[3] = dims[1] + zoomHeight;
         //Log.d("SCALE", String.valueOf(brailleServiceObj.getDotPerLineCount()));
 
-        if (dims[0]<0 || dims[1]<0 || dims[2]> width || dims[3] >height){
+        if (dims[0]<0){ //|| dims[1]<0 || dims[2]> width || dims[3] >height){
             dims[0] =0;
             dims[2] = dims[0] + zoomWidth;
-
         }
         else if (dims[2]>width){
             dims[2] = width;
@@ -1432,10 +714,6 @@ public class DataAndMethods {
         node.setAttribute("viewBox", zoomBox);
         if (className.equals("Exploration"))
             brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
-        else if (className.equals("Guidance"))
-            brailleServiceObj.display(getGuidanceBitmaps(doc, presentLayer));
-        else
-            brailleServiceObj.display(getAnnotationBitmaps(doc, presentLayer, false));
     }
 
     // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
@@ -1454,8 +732,5 @@ public class DataAndMethods {
         } catch (Exception e) {
             Log.d("ERROR", e.toString());
         }
-
-
     }
-
 }

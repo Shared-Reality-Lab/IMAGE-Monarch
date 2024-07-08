@@ -120,201 +120,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
-
-        /*
-        ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (((Button) findViewById(R.id.zeros)).hasFocus() &&
-                        keyEvent.getKeyCode()==confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    DataAndMethods.ttsEnabled=false;
-                    DataAndMethods.displayOn = false;
-                    brailleServiceObj.display(DataAndMethods.data);
-                }
-                return false;
-            }
-        });*/
-/*
-        ((Button) findViewById(R.id.mode)).setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (((Button) findViewById(R.id.mode)).hasFocus() &&
-                        (keyEvent.getKeyCode() == confirmButton ||
-                                keyEvent.getKeyCode() == backButton) &&
-                        keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-
-                    Intent myIntent;
-                    if (keyEvent.getKeyCode() == confirmButton) {
-                        myIntent = new Intent(Exploration.this, Annotation.class);
-                        //myIntent.putExtra("key", value); //Optional parameters
-                        DataAndMethods.speaker("Switching to Annotation mode");
-                    } else {
-                        myIntent = new Intent(Exploration.this, Guidance.class);
-                        //myIntent.putExtra("key", value); //Optional parameters
-                        DataAndMethods.speaker("Switching to Guidance mode");
-                    }
-
-                Exploration.this.startActivity(myIntent);
-                }
-                return false;
-            }
-        });
-*/
-        /*
-        ((Button) findViewById(R.id.ones)).setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (((Button) findViewById(R.id.ones)).hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    try {
-                        // Display current layer
-                        DataAndMethods.ttsEnabled=true;
-                        DataAndMethods.presentLayer++;
-                        if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
-                            DataAndMethods.presentLayer=0;
-                        DataAndMethods.displayOn = true;
-                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (ParserConfigurationException e) {
-                        throw new RuntimeException(e);
-                    } catch (SAXException e) {
-                        throw new RuntimeException(e);
-                    } catch (XPathExpressionException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                if (((Button) findViewById(R.id.ones)).hasFocus() &&
-                        keyEvent.getKeyCode()== backButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    try {
-                        // Display current layer
-                        DataAndMethods.ttsEnabled=true;
-                        DataAndMethods.presentLayer--;
-                        if (DataAndMethods.presentLayer<0)
-                            DataAndMethods.presentLayer= DataAndMethods.layerCount;
-                        DataAndMethods.displayOn = true;
-                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (ParserConfigurationException e) {
-                        throw new RuntimeException(e);
-                    } catch (SAXException e) {
-                        throw new RuntimeException(e);
-                    } catch (XPathExpressionException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                return false;
-            }
-        });
-
-
-        Switch debugSwitch = (Switch) findViewById(R.id.debugViewSwitch);
-        debugSwitch.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View view, int i, KeyEvent keyEvent) {
-                if (debugSwitch.hasFocus() &&
-                        keyEvent.getKeyCode()== confirmButton &&
-                        keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                    if (debugSwitch.isChecked()){
-                        debugSwitch.setChecked(false);
-                    }
-                    else{
-                        debugSwitch.setChecked(true);
-                    }
-                    brailleServiceObj.setDebugView(debugSwitch.isChecked());
-                    //audioPlayer("/sdcard/IMAGE/", "audio.mp3");
-                }
-                return false;
-            }
-        });
-        debugSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                debugSwitch.setChecked(!debugSwitch.isChecked());
-            }
-        });
-
-         */
     }
-/*
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        try {
-            Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
-                put(421, "UP");
-                put(420, "DOWN");
-                put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
-                put(KEYCODE_ZOOM_IN, "ZOOM IN");
-                put(KEYCODE_DPAD_UP, "DPAD UP");
-                put(KEYCODE_DPAD_DOWN, "DPAD DOWN");
-                put(KEYCODE_DPAD_LEFT, "DPAD LEFT");
-                put(KEYCODE_DPAD_RIGHT, "DPAD RIGHT");
-            }};
-            switch (keyMapping.getOrDefault(keyCode, "default")) {
-                // Navigating between files
-                case "UP":
-                    Log.d("KEY EVENT", event.toString());
-                    DataAndMethods.changeFile(++DataAndMethods.fileSelected);
-                    return true;
-                // Navigating between files
-                case "DOWN":
-                    Log.d("KEY EVENT", event.toString());
-                    DataAndMethods.changeFile(--DataAndMethods.fileSelected);
-                    return true;
-                case "ZOOM OUT":
-                    Log.d("KEY EVENT", event.toString());
-                    if(!DataAndMethods.zoomingOut) {
-                        DataAndMethods.speaker("Zoom mode enabled");
-                        DataAndMethods.zoomingOut = true;
-                        DataAndMethods.zoomingIn=false;
-                    }
-                    else {
-                        DataAndMethods.zoomingOut=false;
-                    }
-                    return true;
-                case "ZOOM IN":
-                    Log.d("KEY EVENT", event.toString());
-                    if(!DataAndMethods.zoomingIn) {
-                        DataAndMethods.speaker("Zoom mode enabled");
-                        DataAndMethods.zoomingIn = true;
-                        DataAndMethods.zoomingOut=false;
-                    }
-                    else {
-                        DataAndMethods.zoomingIn=false;
-                    }
-                    return true;
-                case "DPAD UP":
-                case "DPAD DOWN":
-                case "DPAD LEFT":
-                case "DPAD RIGHT":
-                    if (DataAndMethods.zoomVal>100){
-                        Log.d("DPAD", String.valueOf(keyCode));
-                        DataAndMethods.pan(keyCode, getLocalClassName());
-                    }
-                default:
-                    Log.d("KEY EVENT", event.toString());
-                    return false;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        } catch (XPathExpressionException e) {
-            throw new RuntimeException(e);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
-        }
-    }
-*/
-
     @Override
     public boolean onTouchEvent(MotionEvent event){
         if (!super.onTouchEvent(event)){
@@ -330,11 +136,13 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                         DataAndMethods.zoom(pins, "Exploration");
                     }
                     else {
+                        Log.d("TAGS", "ACCESS TTS");
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
                             DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], "ping");
                         } else {
+                            //Log.d("CHECKING!", tags.get(0)[pins[1]][pins[0]]);
                             DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
                         }
                     }
@@ -435,8 +243,6 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
         DataAndMethods.handler = e -> {
             if(DataAndMethods.ttsEnabled){
                 try{
-                    //Log.d("ACTIVITY", "Running registration on Annotation");
-                    // This works! Gesture control can now be used along with the handler.
                     onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
