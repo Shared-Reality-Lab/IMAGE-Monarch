@@ -444,7 +444,7 @@ public class DataAndMethods {
                         // Log.d("IMAGE", image);
                         // gets viewBox dims for current image
                         setImageDims();
-                        DataAndMethods.presentLayer--;
+                        setDefaultLayer(resource.layer);
                         DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
                         //pingsPlayer(R.raw.image_results_arrived);
                         //Reset layer count to 0 before new file is loaded
@@ -491,6 +491,25 @@ public class DataAndMethods {
         // Saving the in-progress call to allow interruption if needed
         ongoingCall=call;
         return image;
+    }
+
+    public static void setDefaultLayer(String layerInput) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        if (!layerInput.equals("None")){
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            Document doc = DataAndMethods.getfreshDoc();
+            Node defaultLayer = ((NodeList) xPath.evaluate("//*[self::*[@data-image-layer = '"+layerInput+"']]", doc, XPathConstants.NODESET)).item(0);
+            NodeList layers = ((NodeList) xPath.evaluate("//*[self::*[@data-image-layer]]", doc, XPathConstants.NODESET));
+            for(int i = 0 ; i < layers.getLength() ; i ++) {
+                Node node = layers.item(i);
+                if (node.isSameNode(defaultLayer)) {
+                    DataAndMethods.presentLayer = (i - 1);
+                    break;
+                }
+            }
+        }
+        else{
+            DataAndMethods.presentLayer--;
+        }
     }
 
     // get fresh copy of the file void of previously made changes

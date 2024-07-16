@@ -21,4 +21,7 @@ import com.google.gson.annotations.SerializedName;
 public class ResponseFormat {
     @SerializedName("data")
     public String graphic;
+
+    @SerializedName("layer")
+    public String layer;
 }
