@@ -5,17 +5,19 @@ plugins {
 
 android {
     namespace 'ca.mcgill.a11y.image'
-    compileSdkVersion 29
+    compileSdkVersion 31
 
     defaultConfig {
         applicationId "ca.mcgill.a11y.image"
-        minSdkVersion 29
-        targetSdkVersion 29
+        minSdkVersion 26
+        targetSdkVersion 31
         compileSdkVersion 31
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+        }
     }
 
     buildTypes {
@@ -30,6 +32,8 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+    externalNativeBuild {
     }
 }
 
