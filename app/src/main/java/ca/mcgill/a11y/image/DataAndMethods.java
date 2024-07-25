@@ -608,24 +608,6 @@ public class DataAndMethods {
         return;
     }
 
-    public static void zoomTo(Integer[] pins, Integer zoomValue, String mode) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
-        Document doc = getfreshDoc();
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
-        Float width= Float.valueOf(node.getAttribute("width"));
-        Float height= Float.valueOf(node.getAttribute("height"));
-
-        if (zoomVal >= 100){
-            zoomVal = zoomValue;
-            node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
-            if (mode.equals("Exploration"))
-                brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
-        }
-        else{
-            speaker("Oops! Cannot zoom out further");
-        }
-        return;
-    }
     public static String zoomer(float width, float height, int zoomVal, Integer[] pins){
         float[] press=new float[]{0, 0};
         float sWidth=dims[0], sHeight=dims[1], fWidth=dims[2], fHeight=dims[3];
