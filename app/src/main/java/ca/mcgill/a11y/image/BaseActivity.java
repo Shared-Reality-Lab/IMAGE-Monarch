@@ -11,6 +11,7 @@ import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 import static ca.mcgill.a11y.image.DataAndMethods.backButton;
 import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
 import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
+import static ca.mcgill.a11y.image.DataAndMethods.speaker;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -52,7 +53,6 @@ import javax.xml.xpath.XPathExpressionException;
 
 public class BaseActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener{
     static BrailleDisplay brailleServiceObj = null;
-    boolean zoom = false;
     int zoomVal = 100;
     static String channelSubscribed = "263773";
     @SuppressLint("WrongConstant")
@@ -166,27 +166,9 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        int action = event.getActionMasked();
-        if (action == MotionEvent.ACTION_UP && zoom) {
-            Integer[] pins = DataAndMethods.pinCheck(event.getX(), event.getY());
-            zoom = false;
-            try {
-                DataAndMethods.zoomTo(pins, zoomVal, getLocalClassName());
-            } catch (ParserConfigurationException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (SAXException e) {
-                throw new RuntimeException(e);
-            } catch (XPathExpressionException e) {
-                throw new RuntimeException(e);
-            }
-            return true;
-        }
         return false;
     }
-
-
+  
     @Override
     protected void onResume() {
         super.onResume();

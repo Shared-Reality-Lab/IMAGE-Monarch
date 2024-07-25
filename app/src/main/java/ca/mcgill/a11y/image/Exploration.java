@@ -17,91 +17,27 @@
 package ca.mcgill.a11y.image;
 
 
-import static android.view.KeyEvent.KEYCODE_DPAD_DOWN;
-import static android.view.KeyEvent.KEYCODE_DPAD_LEFT;
-import static android.view.KeyEvent.KEYCODE_DPAD_RIGHT;
-import static android.view.KeyEvent.KEYCODE_DPAD_UP;
-import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
-import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
-
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.hardware.input.InputManager;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
-import android.os.Handler;
-import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
-import android.util.Base64;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.View;
-import android.webkit.MimeTypeMap;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Switch;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GestureDetectorCompat;
 
-import com.scand.svg.SVGHelper;
-
-import org.json.JSONException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import okhttp3.OkHttpClient;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
-
-    // keyCode of confirm button as per current standard
-    int confirmButton = 504;
-    int backButton = 503;
 
     private GestureDetectorCompat mDetector;
 
@@ -115,7 +51,6 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 
         mDetector = new GestureDetectorCompat(getApplicationContext(),this);
         // Set the gesture detector as the double tap
-        // listener.
         mDetector.setOnDoubleTapListener(this);
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
@@ -123,7 +58,6 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     }
     @Override
     public boolean onTouchEvent(MotionEvent event){
-        if (!super.onTouchEvent(event)){
         if (this.mDetector.onTouchEvent(event)) {
             int action = event.getActionMasked();
             if (action==MotionEvent.ACTION_UP)
@@ -159,7 +93,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                     throw new RuntimeException(e);
                 }
             }
-        }}
+        }
         return true;
     }
 
