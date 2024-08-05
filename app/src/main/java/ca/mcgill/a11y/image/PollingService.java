@@ -20,6 +20,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -36,8 +37,9 @@ public class PollingService extends Service {
         public void run() {
             //create AsyncTask here
             try {
-                DataAndMethods.getFile();
-            } catch (IOException e) {
+                DataAndMethods.checkForUpdate();
+            }
+            catch (IOException e) {
                 throw new RuntimeException(e);
             } catch (JSONException e) {
                 throw new RuntimeException(e);

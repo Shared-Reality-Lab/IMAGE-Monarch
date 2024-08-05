@@ -18,26 +18,17 @@ package ca.mcgill.a11y.image;
 
 import com.google.gson.annotations.SerializedName;
 
-public class ResponseFormat {
-    @SerializedName("request_uuid")
-    public String Uuid;
-    @SerializedName("timestamp")
-    public long timestamp;
-    @SerializedName("renderings")
-    public Rendering[] renderings=null;
+import org.json.JSONException;
 
-    public class Rendering{
-        @SerializedName("description")
-        public String desc;
-        @SerializedName("type_id")
-        public String type_id;
-        @SerializedName("data")
-        public Data data;
+public class PhotoRequestFormat extends BaseRequestFormat {
+    @SerializedName("graphic")
+    private String graphic;
+    @SerializedName("dimensions")
+    private Integer[] dims;
+
+    public void setValues(String base64, Integer[] dims) throws JSONException {
+        this.graphic= base64;
+        this.dims=dims;
     }
-    public class Data{
-        @SerializedName("graphic")
-        public String graphic;
-        @SerializedName("layer")
-        public String layer;
-    }
+
 }

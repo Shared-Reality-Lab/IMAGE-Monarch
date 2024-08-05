@@ -1,30 +1,12 @@
-/*
- * Copyright (c) 2023 IMAGE Project, Shared Reality Lab, McGill University
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * and our Additional Terms along with this program.
- * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
- */
 package ca.mcgill.a11y.image;
-
 
 import static ca.mcgill.a11y.image.DataAndMethods.backButton;
 import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
-import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
+import static ca.mcgill.a11y.image.DataAndMethods.fileSelected;
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
-import static ca.mcgill.a11y.image.DataAndMethods.update;
 
-import android.annotation.SuppressLint;
-import android.content.Intent;
+import androidx.core.view.GestureDetectorCompat;
+
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
@@ -32,10 +14,6 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-
-import androidx.core.view.GestureDetectorCompat;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 
 import org.json.JSONException;
 import org.xml.sax.SAXException;
@@ -45,68 +23,40 @@ import java.util.ArrayList;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
-import androidx.lifecycle.MutableLiveData;
-public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+
+public class BasicPhotoMapRenderer extends BaseActivity  implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener  {
+
     private BrailleDisplay brailleServiceObj = null;
 
     private GestureDetectorCompat mDetector;
-
-
-    @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Intent intent = getIntent();
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_main);
-        //mDetector = new GestureDetectorCompat(getApplicationContext(),this);
-        // Set the gesture detector as the double tap
-        //mDetector.setOnDoubleTapListener(this);
-
+        setContentView(R.layout.activity_basic_photo_renderer);
         brailleServiceObj = DataAndMethods.brailleServiceObj;
-        // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
-        DataAndMethods.update.observe(this,new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean changedVal) {
-                if (changedVal){
-                    displayGraphic(confirmButton, "Exploration");
-                }
-            }
 
-        });
     }
-
-
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-            super.onKeyDown(keyCode, event);
-            switch (keyMapping.getOrDefault(keyCode, "default")) {
-                // Navigating between files
-                case "UP":
-                case "DOWN":
-                    // make force refresh
-                    Log.d("KEY EVENT", event.toString());
-                    try {
-                        DataAndMethods.checkForUpdate();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
-                    //DataAndMethods.checkForUpdate();
-                    return true;
+        super.onKeyDown(keyCode, event);
+        switch (keyMapping.getOrDefault(keyCode, "default")) {
+            case "OK":
+                DataAndMethods.displayGraphic(confirmButton, "Exploration");
+                return false;
 
-                case "OK":
-                    DataAndMethods.displayGraphic(confirmButton, "Exploration");
-                    return false;
+            case "CANCEL":
+                DataAndMethods.displayGraphic(backButton, "Exploration");
+                return false;
+            default:
+                Log.d("KEY EVENT", event.toString());
+                return false;
+        }
+    }
 
-                case "CANCEL":
-                    DataAndMethods.displayGraphic(backButton, "Exploration");
-                    return false;
-                default:
-                    Log.d("KEY EVENT", event.toString());
-                    return false;
-            }
+    @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+
     }
     @Override
     public boolean onTouchEvent(MotionEvent event){
@@ -213,17 +163,14 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
         return true;
     }
 
-    @Override
-    public void onCompletion(MediaPlayer mediaPlayer) {
-        mediaPlayer.release();
-    }
 
 
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
-        DataAndMethods.speaker("Classroom mode");
-        startService(new Intent(getApplicationContext(), PollingService.class));
+
+        DataAndMethods.displayGraphic(confirmButton, "Exploration");
+
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
 
@@ -243,10 +190,8 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "Exploration Paused");
-        stopService(new Intent(getApplicationContext(), PollingService.class));
+        Log.d("ACTIVITY", "BasicPhotoMapRenderer Paused");
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }
-
 }

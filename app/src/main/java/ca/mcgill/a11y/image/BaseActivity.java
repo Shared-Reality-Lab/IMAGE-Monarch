@@ -28,6 +28,7 @@ import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 import static ca.mcgill.a11y.image.DataAndMethods.backButton;
 import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
 import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
+import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 import static ca.mcgill.a11y.image.DataAndMethods.speaker;
 
 import android.Manifest;
@@ -49,6 +50,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Switch;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -68,9 +70,8 @@ import java.util.regex.Pattern;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
-public class BaseActivity extends AppCompatActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener{
+public class BaseActivity extends AppCompatActivity {
     static BrailleDisplay brailleServiceObj = null;
-    int zoomVal = 100;
     static String channelSubscribed = "263773";
     @SuppressLint("WrongConstant")
     @Override
@@ -81,52 +82,33 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
         if (DataAndMethods.brailleServiceObj==null) {
             brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
-            startService(new Intent(getApplicationContext(), PollingService.class));
         }
         else{
             brailleServiceObj = DataAndMethods.brailleServiceObj;
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
         }
+        /*OnBackPressedCallback onBackPressedCallback = new OnBackPressedCallback(true) {
+
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
+
+        };
+
+        this.getOnBackPressedDispatcher().addCallback(onBackPressedCallback);*/
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopService(new Intent(getApplicationContext(), PollingService.class));
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         try {
-            Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
-                put(421, "UP");
-                put(420, "DOWN");
-                put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
-                put(KEYCODE_ZOOM_IN, "ZOOM IN");
-                put(KEYCODE_DPAD_UP, "DPAD UP");
-                put(KEYCODE_DPAD_DOWN, "DPAD DOWN");
-                put(KEYCODE_DPAD_LEFT, "DPAD LEFT");
-                put(KEYCODE_DPAD_RIGHT, "DPAD RIGHT");
-                put(KEYCODE_MENU, "MENU");
-                put(confirmButton, "OK");
-                put(backButton, "CANCEL");
-            }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
-                // Navigating between files
-                case "UP":
-                case "DOWN":
-                    // make force refresh
-                    Log.d("KEY EVENT", event.toString());
-                    try {
-                        DataAndMethods.getFile();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
-                    //DataAndMethods.getFile();
-                    return true;
-
                 case "ZOOM OUT":
                     Log.d("KEY EVENT", event.toString());
                     if (!DataAndMethods.zoomingOut) {
@@ -158,13 +140,10 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
                         DataAndMethods.pan(keyCode, getLocalClassName());
                     }
                     return false;
-
-                case "OK":
-                    DataAndMethods.displayGraphic(confirmButton, "Exploration");
-                    return false;
-
-                case "CANCEL":
-                    DataAndMethods.displayGraphic(backButton, "Exploration");
+                case "BACK":
+                    //This prevents it from going out of the app with the back button
+                    if (!"ModeSelector".equalsIgnoreCase(getLocalClassName()))
+                        finish();
                     return false;
                 default:
                     Log.d("KEY EVENT", event.toString());
@@ -191,48 +170,4 @@ public class BaseActivity extends AppCompatActivity implements GestureDetector.O
         super.onResume();
     }
 
-    @Override
-    public boolean onSingleTapConfirmed(MotionEvent motionEvent) {
-        return false;
-    }
-
-    @Override
-    public boolean onDoubleTap(MotionEvent motionEvent) {
-        return false;
-    }
-
-    @Override
-    public boolean onDoubleTapEvent(MotionEvent motionEvent) {
-        return false;
-    }
-
-    @Override
-    public boolean onDown(MotionEvent motionEvent) {
-        return false;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent motionEvent) {
-
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent motionEvent) {
-        return false;
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
-        return false;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent motionEvent) {
-
-    }
-
-    @Override
-    public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
-        return false;
-    }
 }
