@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+// renders graphic currently stored in string 'image'
 public class BasicPhotoMapRenderer extends BaseActivity  implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener  {
 
     private BrailleDisplay brailleServiceObj = null;

@@ -47,6 +47,7 @@ import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+// generates map request using latitude and longitude coordinates and allows for selecting among map renderer(s) 
 public class MapSelector extends AppCompatActivity implements MediaPlayer.OnCompletionListener{
     private BrailleDisplay brailleServiceObj = null;
 

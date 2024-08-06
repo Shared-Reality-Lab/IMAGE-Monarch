@@ -47,10 +47,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import androidx.lifecycle.MutableLiveData;
 public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+    static String channelSubscribed = "263773";
     private BrailleDisplay brailleServiceObj = null;
-
     private GestureDetectorCompat mDetector;
-
 
     @SuppressLint("WrongConstant")
     @Override

@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName;
 
 import org.json.JSONException;
 
+// map request schema to IMAGE-server
 public class MapRequestFormat extends BaseRequestFormat {
     @SerializedName("coordinates")
     private Coordinates coords=new Coordinates();

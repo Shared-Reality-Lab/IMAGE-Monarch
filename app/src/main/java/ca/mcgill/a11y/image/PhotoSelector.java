@@ -45,6 +45,7 @@ import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+// generates photo request by navigating files in specified directory and allows for selecting among photo renderer(s)
 public class PhotoSelector extends BaseActivity implements MediaPlayer.OnCompletionListener{
 
 

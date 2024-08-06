@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+// Launcher activity; switches mode of application
 public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
     private GestureDetectorCompat mDetector;

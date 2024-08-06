@@ -21,6 +21,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.UUID;
 
+// base request schema extended for requests to IMAGE-server
 public class BaseRequestFormat {
     @SerializedName("request_uuid")
     private String Uuid= UUID.randomUUID().toString();

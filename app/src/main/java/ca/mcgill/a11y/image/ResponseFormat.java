@@ -18,6 +18,7 @@ package ca.mcgill.a11y.image;
 
 import com.google.gson.annotations.SerializedName;
 
+// response schema from server(s)
 public class ResponseFormat {
     @SerializedName("request_uuid")
     public String Uuid;

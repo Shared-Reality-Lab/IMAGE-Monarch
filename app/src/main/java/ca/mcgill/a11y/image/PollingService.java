@@ -28,6 +28,7 @@ import org.json.JSONException;
 
 import java.io.IOException;
 
+// service that polls server for updates
 public class PollingService extends Service {
     private Handler handler;
     public static final long DEFAULT_SYNC_INTERVAL = 5 * 1000;

@@ -24,7 +24,7 @@ import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Url;
 
-// Defines functions to be called to make photo or map requests
+// Defines functions to be called to make photo, map, and update requests
 public interface MakeRequest {
     //String url = "display/"+channelSubscribed;
     @Headers("Content-Type: application/json")

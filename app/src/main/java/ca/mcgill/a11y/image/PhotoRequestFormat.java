@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName;
 
 import org.json.JSONException;
 
+// photo request schema to IMAGE-server
 public class PhotoRequestFormat extends BaseRequestFormat {
     @SerializedName("graphic")
     private String graphic;

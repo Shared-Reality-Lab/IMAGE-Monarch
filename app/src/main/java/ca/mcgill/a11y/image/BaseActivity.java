@@ -70,9 +70,9 @@ import java.util.regex.Pattern;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+// Base activity which is extended by all other activities. Implements functionality common to all/most activities
 public class BaseActivity extends AppCompatActivity {
     static BrailleDisplay brailleServiceObj = null;
-    static String channelSubscribed = "263773";
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

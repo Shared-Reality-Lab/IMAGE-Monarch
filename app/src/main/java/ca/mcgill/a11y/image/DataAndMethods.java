@@ -26,7 +26,7 @@ import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
 import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
-import static ca.mcgill.a11y.image.BaseActivity.channelSubscribed;
+import static ca.mcgill.a11y.image.Exploration.channelSubscribed;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -91,34 +91,49 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DataAndMethods {
+    // SVG data received from response 
     static String image=null;
+    // used to refresh pins to down state
     static byte[][] data = null;
+    // short and long  descriptions of objects in current layer
     static ArrayList<String[][]> tags;
-    static ArrayList<String[][]> occupancy;
+    // default zoom value when new graphic is rendered in percentage
     static Integer zoomVal=100;
+    // current dimensions of graphic; dims = {start-x, start-y, end-x, end-y}
     static Float[] dims=new Float[]{0f,0f, 0f, 0f};
+    // original dimensions of graphic before viewBox manipulations
     static Float[] origDims=new Float[]{0f,0f, 0f, 0f};
+    // index of file selected in current directory
     static int fileSelected = 0;
+    // present layer; generally ranges between [0, layer count] 
     static Integer presentLayer = -1;
+    // sets whether the TTS label is assigned to the area enclosed by a shape
     static boolean labelFill=true;
+    // enables/disables TTS read out
     static boolean ttsEnabled=true;
+    // set zooming in/out as enabled or disabled
     static boolean zoomingIn=false, zoomingOut=false;
     static BrailleDisplay brailleServiceObj = null;
     static BrailleDisplay.MotionEventHandler handler;
+    // keep track of current request to server
     private static Call<ResponseFormat> ongoingCall;
+    // TTS engine instance
     static TextToSpeech tts = null;
+    // application context
     static Context context;
+    // application view
     static View view;
+    // string used to set viewBox
     static String zoomBox = "";
+    // keyCode of confirm button; braille dot 8 is used as Enter in current standard
     static int confirmButton = 504;
+    // keyCode of back button; braille dot 7 is used as backspace in current standard
     static int backButton = 503;
+    // cache storage size
     static final int DISK_CACHE_SIZE = 10 * 1024 * 1024;
-
-    //static boolean update;
+    //tracker to check whether new data has been received after server call
     static MutableLiveData<Boolean> update = new MutableLiveData<>();
-
-
-
+    // mapping of keyCodes
     static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
         put(421, "UP");
         put(420, "DOWN");
@@ -134,23 +149,23 @@ public class DataAndMethods {
         put(KEYCODE_BACK, "BACK");
     }};
 
+    // initializes the Braille display, TTS and other common components in newly created activity
     public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
         DataAndMethods.brailleServiceObj = brailleServiceObj;
         DataAndMethods.context = context;
         DataAndMethods.view = view;
 
+        // sets array with dimensions of pin array to 0s; used to refresh the pins when required
         data = new byte[brailleServiceObj.getDotLineCount()][];
         for (int i = 0; i < data.length; ++i) {
             data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
             Arrays.fill(data[i], (byte) 0x00);
         }
 
+        // empty string array to be populated with descriptions when the ayer is loaded
         tags = new ArrayList<>();
         tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
         tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
-
-        occupancy = new ArrayList<>();
-        occupancy.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
 
         // only initialize tts if it is not already set up; otherwise this takes too long
         if (tts==null){
@@ -194,9 +209,7 @@ public class DataAndMethods {
             try{
                 DataAndMethods.ttsEnabled=true;
                 if(keyCode ==confirmButton){
-                    //Log.d("PRESENT LAYER", presentLayer+","+layerCount);
                     ++ DataAndMethods.presentLayer;
-                    //Log.d("PRESENT LAYER", presentLayer+","+layerCount);
                 }
                 else{
                     -- DataAndMethods.presentLayer;
@@ -210,6 +223,7 @@ public class DataAndMethods {
         }
     }
 
+    // function to pad the bitmap to match the pin array aspect ratio
     public static Bitmap padBitmap(Bitmap bitmap, int padX, int padY)
     {
         Bitmap paddedBitmap = Bitmap.createBitmap(
@@ -435,7 +449,7 @@ public class DataAndMethods {
         return byteArray;
     }
 
-    // fetching the file to read from; returns file contents as String and also the file name
+    // fetching the file to read from; makes server request and also returns the file name
     public static String getFile(int fileNumber) throws IOException, JSONException {
         String folderName= "/sdcard/IMAGE/client/";
         File directory = new File(folderName);
@@ -463,6 +477,7 @@ public class DataAndMethods {
         return files[fileSelected].getName().replaceFirst("\\.[^.]*$", "");
     }
 
+    // initializes and returns the retrofit request;
     public static Retrofit requestBuilder(long readTimeout, long connectTimeout, String baseUrl){
         // Uncomment the following lines for logging http requests
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
@@ -493,44 +508,18 @@ public class DataAndMethods {
         return type;
     }
 
+    // makes server request for a tactile map rendering based on provided latitude longitude coordinates
     public static void getMap(Double lat, Double lon) throws JSONException {
         MapRequestFormat req= new MapRequestFormat();
         req.setValues(lat, lon);
-        /*// Uncomment the following lines for logging http requests
-        //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
-        //httpClient.addInterceptor(logging);
-        Retrofit retrofit = new Retrofit.Builder()
-                //.baseUrl("https://unicorn.cim.mcgill.ca/image/")
-                .baseUrl("https://image.a11y.mcgill.ca/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(httpClient.build())
-                .build();*/
         Retrofit retrofit = requestBuilder(60, 60, "https://image.a11y.mcgill.ca/");
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makeMapRequest(req);
         makeServerCall(call);
     }
 
-    // fetching updates from server if they exist
+    // fetches updates from server if they exist
     public static void checkForUpdate() throws IOException, JSONException {
-        /*// Uncomment the following lines for logging http requests
-        //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
-                //Need next 2 lines when server response is slow
-                .readTimeout(60, TimeUnit.SECONDS)
-                .connectTimeout(60, TimeUnit.SECONDS)
-                .cache(getCache());
-
-        //httpClient.addInterceptor(logging);
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(context.getString(R.string.server_url))
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(httpClient.build())
-                .build();*/
         Retrofit retrofit = requestBuilder(60, 60, context.getString(R.string.server_url));
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
@@ -538,6 +527,7 @@ public class DataAndMethods {
         makeServerCall(call);
     }
 
+    // initializes dims, zoomBox and origDims for new graphic
     public static void setImageDims() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         Document doc = getfreshDoc();
         XPath xPath = XPathFactory.newInstance().newXPath();
@@ -556,12 +546,15 @@ public class DataAndMethods {
             dims[3] += dims[1];
         }
     }
+
+    // returns cache from local
     public static Cache getCache() {
         File cacheDir = new File(context.getCacheDir(), "cache");
         Cache cache = new Cache(cacheDir, DISK_CACHE_SIZE);
         return cache;
     }
 
+    // makes async call to serevr
     public static void makeServerCall(Call<ResponseFormat> call){
         // Cancelling any ongoing requests that haven't been completed
         if (ongoingCall!=null){
@@ -630,6 +623,7 @@ public class DataAndMethods {
         ongoingCall=call;
     }
 
+    // resets zoom and dimension related variables for new graphics
     public static void resetGraphicParams(){
         zoomVal=100;
         dims=new Float[]{0f,0f, 0f, 0f};
@@ -639,6 +633,7 @@ public class DataAndMethods {
         zoomBox = "";
     }
 
+    // sets requested layer for new graphic; this is only called when 'layer' field exists in server resposne
     public static void setDefaultLayer(String layerInput) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
         //Log.d("LAYER INPUT", layerInput);
         if (!layerInput.equals("None")){
@@ -746,7 +741,7 @@ public class DataAndMethods {
         return new Integer[] {pinX, pinY};
     }
 
-
+    // handles zooming functions i.e. zooming in/out and displays new graphic after manipulations
     public static void zoom(Integer[] pins, String mode) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         Document doc = getfreshDoc();
         XPath xPath = XPathFactory.newInstance().newXPath();
@@ -777,7 +772,9 @@ public class DataAndMethods {
         return;
     }
 
+    // computes new graphic dimensions during zoom
     public static String zoomer(float width, float height, int zoomVal, Integer[] pins){
+        // image dimensions where the press occured
         float[] press=new float[]{0, 0};
         float sWidth=dims[0], sHeight=dims[1], fWidth=dims[2], fHeight=dims[3];
 
@@ -799,6 +796,7 @@ public class DataAndMethods {
         float zoomHeight= height/((float)zoomVal/100);
 
         //Log.d("SCALE", zoomWidth+","+zoomHeight);
+        // zoom while keeping the portion of the image at the point of press at the same pins post zoom
         scalingFactor = zoomWidth/brailleServiceObj.getDotPerLineCount();
         dims[0] = press[0] - (scalingFactor * (pins[0]));
         dims[2] = dims[0] + zoomWidth;
@@ -806,8 +804,8 @@ public class DataAndMethods {
         dims [1] = press[1] - (scalingFactor * (pins[1]));
         dims[3] = dims[1] + zoomHeight;
         //Log.d("NEW DIMS", dims[0]+","+dims[1]+","+dims[2]+","+dims[3]);
-
-        if (dims[0]<origDims[0]){ //|| dims[1]<0 || dims[2]> width || dims[3] >height){
+        // ensure that the newly calculted dimensions are within the limits of the origincal graphic
+        if (dims[0]<origDims[0]){ 
             dims[0] = origDims[0];
             dims[2] = dims[0] + zoomWidth;
         }
@@ -833,6 +831,7 @@ public class DataAndMethods {
         return zoomBox;
     }
 
+    // computes graphic dimensions and displays new graphic after pan operation
     public static void pan(int keyCode, String className) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         Document doc = getfreshDoc();
         XPath xPath = XPathFactory.newInstance().newXPath();
@@ -841,8 +840,10 @@ public class DataAndMethods {
         //Float height= Float.valueOf(node.getAttribute("height"));
         Float width = origDims[2];
         Float height = origDims[3];
+        // pan by 10%
         Float widthShift= (dims[2]-dims[0])/10;
         Float heightShift=(dims[3]-dims[1])/10;
+        // check pan direction
         switch(keyCode) {
             case KEYCODE_DPAD_UP:
                 // UP
@@ -866,6 +867,7 @@ public class DataAndMethods {
                 break;
         }
         //Log.d("DIMS", dims[0]+","+ dims[1]+","+dims[2]+","+dims[3]);
+        // ensure that panning stays within graphic bounds
         if (dims[0]<origDims[0]){
             dims[2]-=(dims[0]-origDims[0]);
             dims[0]=origDims[0];
@@ -899,6 +901,7 @@ public class DataAndMethods {
         return;
     }
 
+    // plays sound files; used for notification sounds 
     public static void pingsPlayer(int file){
         //set up MediaPlayer
         MediaPlayer mp = new MediaPlayer();
