@@ -26,7 +26,7 @@ import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
 import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
-import static ca.mcgill.a11y.image.Exploration.channelSubscribed;
+import static ca.mcgill.a11y.image.renderers.Exploration.channelSubscribed;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -45,7 +45,6 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 
 import com.scand.svg.SVGHelper;
 import org.json.JSONException;
@@ -82,6 +81,11 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+
+import ca.mcgill.a11y.image.request_formats.MakeRequest;
+import ca.mcgill.a11y.image.request_formats.MapRequestFormat;
+import ca.mcgill.a11y.image.request_formats.PhotoRequestFormat;
+import ca.mcgill.a11y.image.request_formats.ResponseFormat;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
@@ -92,11 +96,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DataAndMethods {
     // SVG data received from response 
-    static String image=null;
+    public static String image=null;
     // used to refresh pins to down state
     static byte[][] data = null;
     // short and long  descriptions of objects in current layer
-    static ArrayList<String[][]> tags;
+    public static ArrayList<String[][]> tags;
     // default zoom value when new graphic is rendered in percentage
     static Integer zoomVal=100;
     // current dimensions of graphic; dims = {start-x, start-y, end-x, end-y}
@@ -104,17 +108,18 @@ public class DataAndMethods {
     // original dimensions of graphic before viewBox manipulations
     static Float[] origDims=new Float[]{0f,0f, 0f, 0f};
     // index of file selected in current directory
-    static int fileSelected = 0;
+    public static int fileSelected = 0;
     // present layer; generally ranges between [0, layer count] 
     static Integer presentLayer = -1;
     // sets whether the TTS label is assigned to the area enclosed by a shape
     static boolean labelFill=true;
     // enables/disables TTS read out
-    static boolean ttsEnabled=true;
+    public static boolean ttsEnabled=true;
     // set zooming in/out as enabled or disabled
-    static boolean zoomingIn=false, zoomingOut=false;
-    static BrailleDisplay brailleServiceObj = null;
-    static BrailleDisplay.MotionEventHandler handler;
+    public static boolean zoomingIn=false;
+    public static boolean zoomingOut=false;
+    public static BrailleDisplay brailleServiceObj = null;
+    public static BrailleDisplay.MotionEventHandler handler;
     // keep track of current request to server
     private static Call<ResponseFormat> ongoingCall;
     // TTS engine instance
@@ -126,15 +131,15 @@ public class DataAndMethods {
     // string used to set viewBox
     static String zoomBox = "";
     // keyCode of confirm button; braille dot 8 is used as Enter in current standard
-    static int confirmButton = 504;
+    public static int confirmButton = 504;
     // keyCode of back button; braille dot 7 is used as backspace in current standard
-    static int backButton = 503;
+    public static int backButton = 503;
     // cache storage size
     static final int DISK_CACHE_SIZE = 10 * 1024 * 1024;
     //tracker to check whether new data has been received after server call
-    static MutableLiveData<Boolean> update = new MutableLiveData<>();
+    public static MutableLiveData<Boolean> update = new MutableLiveData<>();
     // mapping of keyCodes
-    static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
+    public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
         put(421, "UP");
         put(420, "DOWN");
         put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
@@ -162,7 +167,7 @@ public class DataAndMethods {
             Arrays.fill(data[i], (byte) 0x00);
         }
 
-        // empty string array to be populated with descriptions when the ayer is loaded
+        // empty string array to be populated with descriptions when the layer is loaded
         tags = new ArrayList<>();
         tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
         tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);

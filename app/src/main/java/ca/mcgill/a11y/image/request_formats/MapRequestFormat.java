@@ -14,31 +14,27 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.request_formats;
 
 import com.google.gson.annotations.SerializedName;
 
-// response schema from server(s)
-public class ResponseFormat {
-    @SerializedName("request_uuid")
-    public String Uuid;
-    @SerializedName("timestamp")
-    public long timestamp;
-    @SerializedName("renderings")
-    public Rendering[] renderings=null;
+import org.json.JSONException;
 
-    public class Rendering{
-        @SerializedName("description")
-        public String desc;
-        @SerializedName("type_id")
-        public String type_id;
-        @SerializedName("data")
-        public Data data;
+// map request schema to IMAGE-server
+public class MapRequestFormat extends BaseRequestFormat {
+    @SerializedName("coordinates")
+    private Coordinates coords=new Coordinates();
+    @SerializedName("url")
+    private String url= "https://example-map-url.com";
+
+    public class Coordinates{
+        @SerializedName("latitude")
+        Double lat;
+        @SerializedName("longitude")
+        Double lon;
     }
-    public class Data{
-        @SerializedName("graphic")
-        public String graphic;
-        @SerializedName("layer")
-        public String layer;
+    public void setValues(Double lat, Double lon) throws JSONException {
+        this.coords.lat = lat;
+        this.coords.lon = lon;
     }
 }

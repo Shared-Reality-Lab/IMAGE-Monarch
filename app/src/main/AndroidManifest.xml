@@ -27,10 +27,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BrailleDisplay">
         <activity
-            android:name=".BasicPhotoMapRenderer"
+            android:name=".renderers.BasicPhotoMapRenderer"
             android:exported="false" />
         <activity
-            android:name=".ModeSelector"
+            android:name=".selectors.ModeSelector"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -39,10 +39,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MapSelector"
+            android:name=".selectors.MapSelector"
             android:exported="true" />
         <activity
-            android:name=".PhotoSelector"
+            android:name=".selectors.PhotoSelector"
             android:exported="true" />
 
         <service
@@ -51,7 +51,7 @@
             android:exported="true" />
 
         <activity
-            android:name=".Exploration"
+            android:name=".renderers.Exploration"
             android:configChanges="touchscreen"
             android:exported="true">
             <intent-filter>

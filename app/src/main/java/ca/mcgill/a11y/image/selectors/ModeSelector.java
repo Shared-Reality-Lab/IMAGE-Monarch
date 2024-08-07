@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 IMAGE Project, Shared Reality Lab, McGill University
+ * Copyright (c) 2024 IMAGE Project, Shared Reality Lab, McGill University
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -14,11 +14,9 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.selectors;
 
 
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
 import static ca.mcgill.a11y.image.DataAndMethods.speaker;
 import static ca.mcgill.a11y.image.DataAndMethods.update;
 
@@ -28,7 +26,6 @@ import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,13 +33,10 @@ import android.widget.Button;
 
 import androidx.core.view.GestureDetectorCompat;
 
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.util.ArrayList;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
+import ca.mcgill.a11y.image.BaseActivity;
+import ca.mcgill.a11y.image.DataAndMethods;
+import ca.mcgill.a11y.image.renderers.Exploration;
+import ca.mcgill.a11y.image.R;
 
 // Launcher activity; switches mode of application
 public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
@@ -88,7 +82,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
     private View.OnKeyListener btnListener = new View.OnKeyListener() {
         @Override
         public boolean onKey(View view, int i, KeyEvent keyEvent) {
-            if (keyEvent.getKeyCode()== confirmButton &&
+            if (keyEvent.getKeyCode()== DataAndMethods.confirmButton &&
                     keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 Intent myIntent = null;
                 if ((findViewById(R.id.classroom_mode)).hasFocus()){

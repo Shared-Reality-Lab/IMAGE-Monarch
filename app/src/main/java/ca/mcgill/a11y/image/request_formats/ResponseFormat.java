@@ -14,28 +14,31 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.request_formats;
 
+import com.google.gson.annotations.SerializedName;
 
-import retrofit2.Call;
-import retrofit2.http.Body;
-import retrofit2.http.GET;
-import retrofit2.http.Headers;
-import retrofit2.http.POST;
-import retrofit2.http.Url;
+// response schema from server(s)
+public class ResponseFormat {
+    @SerializedName("request_uuid")
+    public String Uuid;
+    @SerializedName("timestamp")
+    public long timestamp;
+    @SerializedName("renderings")
+    public Rendering[] renderings=null;
 
-// Defines functions to be called to make photo, map, and update requests
-public interface MakeRequest {
-    //String url = "display/"+channelSubscribed;
-    @Headers("Content-Type: application/json")
-    @GET
-    Call<ResponseFormat> checkForUpdates(@Url String url);
-
-    @Headers("Content-Type: application/json")
-    @POST("render/")
-    Call<ResponseFormat> makePhotoRequest(@Body PhotoRequestFormat req);
-
-    @Headers("Content-Type: application/json")
-    @POST("render/")
-    Call<ResponseFormat> makeMapRequest(@Body MapRequestFormat req);
+    public class Rendering{
+        @SerializedName("description")
+        public String desc;
+        @SerializedName("type_id")
+        public String type_id;
+        @SerializedName("data")
+        public Data data;
+    }
+    public class Data{
+        @SerializedName("graphic")
+        public String graphic;
+        @SerializedName("layer")
+        public String layer;
+    }
 }

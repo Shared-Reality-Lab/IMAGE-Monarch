@@ -14,7 +14,7 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.request_formats;
 
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;

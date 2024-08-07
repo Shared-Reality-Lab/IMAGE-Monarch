@@ -14,7 +14,7 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.renderers;
 
 
 import static ca.mcgill.a11y.image.DataAndMethods.backButton;
@@ -46,8 +46,13 @@ import java.util.ArrayList;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import androidx.lifecycle.MutableLiveData;
+
+import ca.mcgill.a11y.image.BaseActivity;
+import ca.mcgill.a11y.image.DataAndMethods;
+import ca.mcgill.a11y.image.PollingService;
+
 public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
-    static String channelSubscribed = "263773";
+    public static String channelSubscribed = "263773";
     private BrailleDisplay brailleServiceObj = null;
     private GestureDetectorCompat mDetector;
 

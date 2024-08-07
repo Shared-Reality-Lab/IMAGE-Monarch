@@ -15,11 +15,9 @@
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
 
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.renderers;
 
-import static ca.mcgill.a11y.image.DataAndMethods.backButton;
-import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
-import static ca.mcgill.a11y.image.DataAndMethods.fileSelected;
+
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 
 import androidx.core.view.GestureDetectorCompat;
@@ -31,18 +29,18 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-
-import org.json.JSONException;
 import org.xml.sax.SAXException;
-
 import java.io.IOException;
 import java.util.ArrayList;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+import ca.mcgill.a11y.image.BaseActivity;
+import ca.mcgill.a11y.image.DataAndMethods;
+import ca.mcgill.a11y.image.R;
+
 // renders graphic currently stored in string 'image'
-public class BasicPhotoMapRenderer extends BaseActivity  implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener  {
+public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener  {
 
     private BrailleDisplay brailleServiceObj = null;
 
@@ -60,11 +58,11 @@ public class BasicPhotoMapRenderer extends BaseActivity  implements GestureDetec
         super.onKeyDown(keyCode, event);
         switch (keyMapping.getOrDefault(keyCode, "default")) {
             case "OK":
-                DataAndMethods.displayGraphic(confirmButton, "Exploration");
+                DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
                 return false;
 
             case "CANCEL":
-                DataAndMethods.displayGraphic(backButton, "Exploration");
+                DataAndMethods.displayGraphic(DataAndMethods.backButton, "Exploration");
                 return false;
             default:
                 Log.d("KEY EVENT", event.toString());
@@ -187,7 +185,7 @@ public class BasicPhotoMapRenderer extends BaseActivity  implements GestureDetec
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
 
-        DataAndMethods.displayGraphic(confirmButton, "Exploration");
+        DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
 
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
