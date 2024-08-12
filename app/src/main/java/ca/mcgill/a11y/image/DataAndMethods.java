@@ -896,7 +896,7 @@ public class DataAndMethods {
         zoomBox = panned.substring(1,panned.length() - 1);
         node.setAttribute("viewBox", zoomBox);
         //Log.d("PAN", zoomBox);
-        if (className.equals("Exploration") || className.equals("BasicPhotoMapRenderer"))
+        if (className.equals("renderers.Exploration") || className.equals("renderers.BasicPhotoMapRenderer"))
             brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
     }
 
@@ -918,4 +918,17 @@ public class DataAndMethods {
             Log.d("ERROR", e.toString());
         }
     }
+
+
+    // this is used to replicate what the outcome of a server call is for the demo example
+    public static void makePseudoServerCall(){
+        resetGraphicParams();
+        image = //"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> " +
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" version=\"1.1\"" +
+                        "width=\"96\" height=\"40\" id=\"svg135\"> <g class=\"layer\" data-image-layer=\"Layer 1\">" +
+                "\n<ellipse fill=\"none\" stroke=\"#000000\" stroke-width=\"0.885\" id=\"path358\" " +
+                "cx=\"48\" cy=\"20\" rx=\"15\" ry=\"15\" /> </g> \n</svg>";
+    }
+
+
 }

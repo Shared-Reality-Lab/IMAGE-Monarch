@@ -142,7 +142,8 @@ public class BaseActivity extends AppCompatActivity {
                     return false;
                 case "BACK":
                     //This prevents it from going out of the app with the back button
-                    if (!"ModeSelector".equalsIgnoreCase(getLocalClassName()))
+                    //Log.d("CLASS", getLocalClassName());
+                    if (!"selectors.ModeSelector".equalsIgnoreCase(getLocalClassName()))
                         finish();
                     return false;
                 default:

@@ -67,6 +67,153 @@ The rendering SVGs must comply with the following guidelines:
 Should/must/may used here are as per [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ### Develop, debug, improve!
+The Monarch application has been modularized to make it easy to develop and include new functionality. Currently, the application flow is as follows:
+
+#### Getting started: Add your own 'selector' and 'renderer' (+BONUS!: Use an existing 'renderer')
+##### Creating a 'selector'
+1. Copy the layout file activity_my_own_selector.xml from the 'starter_code' directory into 'app\src\main\res\layout'. Also, copy the MyOwnSelector.java file  into the application's 'selectors' directory. 
+2. Within activity_my_own_selector.xml, create two buttons. Set their ids to '@+id/classic' and '@+id/fill' and names to "Classic" and "Fill" respectively. 
+3. Set layout, add button click and focus change listeners by copying the following into the indicated positions in MyOwnSelector.java Activity:
+
+Code Snippet 1
+```
+    setContentView(R.layout.activity_my_own_selector);
+
+        ((Button) findViewById(R.id.classic)).setOnKeyListener(btnListener);
+        ((Button) findViewById(R.id.classic)).setOnFocusChangeListener(focusListener);
+        ((Button) findViewById(R.id.fill)).setOnKeyListener(btnListener);
+        ((Button) findViewById(R.id.fill)).setOnFocusChangeListener(focusListener);
+```
+Code Snippet 2
+
+```
+    private View.OnFocusChangeListener focusListener = new View.OnFocusChangeListener(){
+        @Override
+        public void onFocusChange(View view, boolean b) {
+            switch (view.getId()){
+                case R.id.classic:
+                    speaker("Classic");
+                    break;
+                case R.id.fill:
+                    speaker("Fill");
+                    break;
+            }
+        }
+    };
+    private View.OnKeyListener btnListener = new View.OnKeyListener() {
+        @Override
+        public boolean onKey(View view, int i, KeyEvent keyEvent) {
+            if (keyEvent.getKeyCode()== DataAndMethods.confirmButton &&
+                    keyEvent.getAction()== KeyEvent.ACTION_DOWN){
+                //Intent myIntent = null;
+                if ((findViewById(R.id.classic)).hasFocus()){
+                    //myIntent = new Intent(getApplicationContext(), BasicPhotoMapRenderer.class);
+                    DataAndMethods.speaker("Switching to Classic mode");
+                }
+                else if ((findViewById(R.id.fill)).hasFocus()){
+                    //myIntent = new Intent(getApplicationContext(), MyOwnRenderer.class);
+                    DataAndMethods.speaker("Switching to Fill mode");
+
+                }
+                //myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                //getApplicationContext().startActivity(myIntent);
+            }
+            return false;
+        }};
+
+```
+4. Add Activity MyOwnSelector in AndroidManifest.xml within the application node:
+```
+<activity
+            android:name=".selectors.MyOwnSelector"
+            android:exported="true" />
+```
+5. Now add an additional button in activity_mode_selector.xml layout to make your selector accessible through mode selector by including the following snippet within the TableLayout element.
+```
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+            <Button
+                android:id="@+id/my_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="My Mode" />
+        </TableRow>
+```
+6. Add button click and focus change listeners by copying the following into the indicated positions in ModeSelector.java Activity:
+Code Snippet 1
+```
+((Button) findViewById(R.id.my_mode)).setOnKeyListener(btnListener);
+((Button) findViewById(R.id.my_mode)).setOnFocusChangeListener(focusListener);
+```
+Code Snippet 2
+```
+case R.id.my_mode:
+    speaker("My Mode");
+    break;
+```
+Code Snippet 3
+```
+else if ((findViewById(R.id.my_mode)).hasFocus()){
+    myIntent = new Intent(getApplicationContext(), MyOwnSelector.class);
+    DataAndMethods.speaker("Switching to My mode");
+}
+```
+6. That's it! Run the application. A new button 'My mode' will be added within Mode Selector from where you will be able to access your new selector. 
+
+##### Using an existing 'renderer': Making the 'Classic' button functional
+7. (After completing steps 1. to 6.) If you wish to have the same end user experience as the basic photos and maps experience, you should reuse the existing BasicPhotoMapRenderer. To do so, in within MyOwnSelector.java uncomment the following lines to launch the BasicPhotoMapRenderer when Classic button is pressed
+```
+myIntent = new Intent(getApplicationContext(), BasicPhotoMapRenderer.class);
+```
+```
+myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+getApplicationContext().startActivity(myIntent);
+```
+8. The 'Classic' button is now functional! On running the app and pressing the "Classic" button, you will see a circle of raised pins.
+
+NOTE: Typically the 'selector' makes a server request to receive a new rendering(s) based on the request made (that is, based on the photo selected in Photo mode or the map coordinates provided in Map mode). However, for the purpose of this tutorial, the makePseudoServerCall function called at the start of activity MyOwnSelector changes the graphic to a predefined static value without actually making a call to the server. 
+
+##### Creating a new 'renderer': Making the Fill button functional
+9. (After completing steps 1. to 6.(and optionally 7. and 8.) ) We will now make a basic renderer which shows the filled in version of closed shapes! (Read NOTE at the end of this subsection) Start by copying the MyOwnRenderer.java file  into the application's 'renderers' directory. 
+10. Add Activity MyOwnRenderer in AndroidManifest.xml within the application node:
+```
+<activity
+            android:name=".renderers.MyOwnRenderer"
+            android:exported="true" />
+```
+11. Add a new method at the end of DataAndMethods class which fills in the shape within the existing graphic
+
+```
+public static void fillShape() throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        Document doc = getfreshDoc();
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i);
+            ((Element)node).setAttribute("fill", "black");
+        }
+        image = getStringFromDocument(doc);
+    }
+```
+12. Add in the following lines in the onResume() function of  MyOwnRenderer to first fill in the shape within the existing svg and then raise the pins to display the graphic.
+
+Code Snippet
+```
+DataAndMethods.fillShape();
+DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
+```
+13. Uncomment the following line in MyOwnSelector.java to set the intent when "Fill" button is pressed
+```
+myIntent = new Intent(getApplicationContext(), MyOwnRenderer.class);
+```
+14. The Fill button is now functional... Run the application! 
+
+NOTE: Despite it being executed as a separate activity, the underlying functions used to run MyOwnRenderer and end user experience are the same as that for BasicPhotoMapRenderer... Some liberties have been taken for the purpose of writing this tutorial, however typically, you should reuse BasicPhotoMapRenderer here! After you've gone through this tutorial, you should be able to figure out how to do this on your own...
+
+--Documentation is somewhat outdated after this point--
+
 Refer this section for an overview of the program flow to get you started... 
 
 The flowcharts indicate the sequence of functions called when you interact with the elements of the UI. The list beside each block provides the sequential order of various actions executed by each function. Function calls/ important code segments within each function are indicated by a cascade of blocks from the calling function. 

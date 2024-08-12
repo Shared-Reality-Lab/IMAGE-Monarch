@@ -60,7 +60,8 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
         ((Button) findViewById(R.id.photo_mode)).setOnFocusChangeListener(focusListener);
         ((Button) findViewById(R.id.map_mode)).setOnKeyListener(btnListener);
         ((Button) findViewById(R.id.map_mode)).setOnFocusChangeListener(focusListener);
-
+        // Code snippet 1
+        
     }
 
     private View.OnFocusChangeListener focusListener = new View.OnFocusChangeListener(){
@@ -76,6 +77,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
                 case R.id.map_mode:
                     speaker("Map Mode");
                     break;
+                // Code snippet 2
             }
         }
     };
@@ -97,6 +99,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
                     myIntent = new Intent(getApplicationContext(), MapSelector.class);
                     DataAndMethods.speaker("Switching to Map mode");
                 }
+                //Code snippet 3
                 myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 getApplicationContext().startActivity(myIntent);
             }
