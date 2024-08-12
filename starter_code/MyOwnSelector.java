@@ -36,7 +36,7 @@ import androidx.core.view.GestureDetectorCompat;
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.renderers.BasicPhotoMapRenderer;
-import ca.mcgill.a11y.image.renderers.MyOwnRenderer;
+//import ca.mcgill.a11y.image.renderers.MyOwnRenderer;
 import ca.mcgill.a11y.image.R;
 
 // Launcher activity; switches mode of application

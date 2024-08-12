@@ -67,11 +67,11 @@ The rendering SVGs must comply with the following guidelines:
 Should/must/may used here are as per [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ### Develop, debug, improve!
-The Monarch application has been modularized to make it easy to develop and include new functionality. Currently, the application flow is as follows:
+The Monarch application has been modularized to make it easy to develop and include new functionality.
 
 #### Getting started: Add your own 'selector' and 'renderer' (+BONUS!: Use an existing 'renderer')
 ##### Creating a 'selector'
-1. Copy the layout file activity_my_own_selector.xml from the 'starter_code' directory into 'app\src\main\res\layout'. Also, copy the MyOwnSelector.java file  into the application's 'selectors' directory. 
+1. Copy the layout file activity_my_own_selector.xml from the 'starter_code' directory into 'app\src\main\res\layout'. Also, copy the MyOwnSelector.java file  into the application's '[selectors](app/src/main/java/ca/mcgill/a11y/image/selectors)' directory. 
 2. Within activity_my_own_selector.xml, create two buttons. Set their ids to '@+id/classic' and '@+id/fill' and names to "Classic" and "Fill" respectively. 
 3. Set layout, add button click and focus change listeners by copying the following into the indicated positions in MyOwnSelector.java Activity:
 
@@ -105,7 +105,7 @@ Code Snippet 2
         public boolean onKey(View view, int i, KeyEvent keyEvent) {
             if (keyEvent.getKeyCode()== DataAndMethods.confirmButton &&
                     keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                //Intent myIntent = null;
+                Intent myIntent = null;
                 if ((findViewById(R.id.classic)).hasFocus()){
                     //myIntent = new Intent(getApplicationContext(), BasicPhotoMapRenderer.class);
                     DataAndMethods.speaker("Switching to Classic mode");
@@ -142,6 +142,7 @@ Code Snippet 2
         </TableRow>
 ```
 6. Add button click and focus change listeners by copying the following into the indicated positions in ModeSelector.java Activity:
+
 Code Snippet 1
 ```
 ((Button) findViewById(R.id.my_mode)).setOnKeyListener(btnListener);
@@ -204,7 +205,10 @@ Code Snippet
 DataAndMethods.fillShape();
 DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
 ```
-13. Uncomment the following line in MyOwnSelector.java to set the intent when "Fill" button is pressed
+13. Uncomment the following lines in MyOwnSelector.java to set the intent when "Fill" button is pressed
+```
+import ca.mcgill.a11y.image.renderers.MyOwnRenderer;
+```
 ```
 myIntent = new Intent(getApplicationContext(), MyOwnRenderer.class);
 ```
