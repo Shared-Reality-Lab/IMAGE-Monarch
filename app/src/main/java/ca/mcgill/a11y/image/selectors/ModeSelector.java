@@ -88,7 +88,8 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
                     keyEvent.getAction()== KeyEvent.ACTION_DOWN){
                 Intent myIntent = null;
                 if ((findViewById(R.id.classroom_mode)).hasFocus()){
-                    myIntent = new Intent(getApplicationContext(), Exploration.class);
+                    myIntent = new Intent(getApplicationContext(), ClassroomSelector.class);
+                    DataAndMethods.speaker("Switching to Classroom mode");
                 }
                 else if ((findViewById(R.id.photo_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), PhotoSelector.class);

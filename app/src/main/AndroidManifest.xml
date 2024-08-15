@@ -27,7 +27,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BrailleDisplay">
         <activity
+            android:name=".selectors.ClassroomSelector"
+            android:exported="false" />
+        <activity
             android:name=".renderers.BasicPhotoMapRenderer"
+            android:exported="false" />
+        <activity
+            android:name=".renderers.Guidance"
             android:exported="false" />
         <activity
             android:name=".selectors.ModeSelector"
@@ -53,8 +59,7 @@
         <activity
             android:name=".renderers.Exploration"
             android:configChanges="touchscreen"
-            android:exported="true">
-        </activity>
+            android:exported="true"></activity>
     </application>
 
 </manifest>

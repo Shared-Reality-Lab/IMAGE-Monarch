@@ -4,12 +4,12 @@
 
 - [Getting started](#getting-started)
   - [How do I install it on my Monarch?](how-do-i-install-it-on-my-monarch-from-the-repo)
-  - [How do I use the application?](how-do-i-use-the-application)
+
 
 - [Details...](#details)
   - [Tactile graphics](#tactile-graphics)
   - [Develop, debug, improve!](#develop-debug-improve)
-
+  - [How do I use the application?](how-do-i-use-the-application)
 
 ## Introduction
 This is the source code for an Android application to render tactile graphics on the [Monarch](https://www.humanware.com/en-usa/monarch). The application works by reading graphic files from the device file system (or using the coordinates entered for maps), making requests to the [IMAGE server](https://github.com/Shared-Reality-Lab/IMAGE-server) and rendering the responses as tactile graphics on the pin array.
@@ -32,18 +32,7 @@ You might will also need to do some (or all) of the following (especially for a 
 - Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
 - Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
 
-### How do I use the application?
-The application UI visually appears as shown below:
-![Monarch application GUI](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/5223165a-6b75-4595-b403-e8b9fe176d51)
 
-**DOWN**: Lowers all the raised pins \
-<a name="UpButton"> **UP** </a>: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
-**DebugView**: Shows/hides the debug view i.e. the visual display of the pins. \
-**Text Fields**: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the point of interest (POI) in the first and second text fields respectively. \
-**GET MAP!**: Sends a request to the server for the latitude and longitude coordinates of the POI entered in the text fields. 
-
-Use the directional buttons on the Monarch to navigate through the buttons and fields on the UI. Press the 'confirm' button (i.e. the Enter/ dot 8 in a Perkins style keyboard) to click on a button.
-Use the Up and Down arrows on the device to navigate between the files in the target directory.
 
 ## Details...
 ### Tactile graphics
@@ -67,8 +56,15 @@ The rendering SVGs must comply with the following guidelines:
 Should/must/may used here are as per [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ### Develop, debug, improve!
-The Monarch application has been modularized to make it easy to develop and include new functionality.
+The Monarch application has been modularized to make it easy to develop and include new functionality. 
 
+The application is majorly made up of two main types of components: 
+1. To select modes in which the application is running (e.g. mode that connects to the authoring tool or one that deals with photo/map experiences) and selecting content either by alphanumeric entries or looping through files on the device. We will henceforth refer to them as 'selectors' and they can be found within the [selectors](app/src/main/java/ca/mcgill/a11y/image/selectors) directory.
+2. To render the svg response received from the server. While the format of the response is expected to follow the guidelines listed [above](#tactile-graphics) we might want to vary the user experience by selecting what/ how something is presented to the user or present multiple possible renderings for the same source graphic. We will henceforth refer to these components as 'renderers' and they can be found within the [renderers](app/src/main/java/ca/mcgill/a11y/image/renderers) directory.
+
+The other components within the application directory are miscellaneous or shared components that do not find a place under the above two types. The BaseActivity, is the activity which all other activities in the application are extended from, DataAndMethods contains methods used by activities and PollingService is a service that runs in the background checking for updates in the response.
+
+NOTE: While refactoring, all components besides the 'Annotation mode', for which there is currently no defined future purpose, were moved into the current application. However, if you wish to refine or try out the Annotation mode its latest version can be found on the ['voice-interface'](/Shared-Reality-Lab/IMAGE-Monarch/tree/voice-interface) branch
 #### Getting started: Add your own 'selector' and 'renderer' (+BONUS!: Use an existing 'renderer')
 ##### Creating a 'selector'
 1. Copy the layout file activity_my_own_selector.xml from the 'starter_code' directory into 'app\src\main\res\layout'. Also, copy the MyOwnSelector.java file  into the application's '[selectors](app/src/main/java/ca/mcgill/a11y/image/selectors)' directory. 
@@ -217,6 +213,19 @@ myIntent = new Intent(getApplicationContext(), MyOwnRenderer.class);
 NOTE: Despite it being executed as a separate activity, the underlying functions used to run MyOwnRenderer and end user experience are the same as that for BasicPhotoMapRenderer... Some liberties have been taken for the purpose of writing this tutorial, however typically, you should reuse BasicPhotoMapRenderer here! After you've gone through this tutorial, you should be able to figure out how to do this on your own...
 
 --Documentation is somewhat outdated after this point--
+
+### How do I use the application?
+The application UI visually appears as shown below:
+![Monarch application GUI](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/5223165a-6b75-4595-b403-e8b9fe176d51)
+
+**DOWN**: Lowers all the raised pins \
+<a name="UpButton"> **UP** </a>: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
+**DebugView**: Shows/hides the debug view i.e. the visual display of the pins. \
+**Text Fields**: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the point of interest (POI) in the first and second text fields respectively. \
+**GET MAP!**: Sends a request to the server for the latitude and longitude coordinates of the POI entered in the text fields. 
+
+Use the directional buttons on the Monarch to navigate through the buttons and fields on the UI. Press the 'confirm' button (i.e. the Enter/ dot 8 in a Perkins style keyboard) to click on a button.
+Use the Up and Down arrows on the device to navigate between the files in the target directory.
 
 Refer this section for an overview of the program flow to get you started... 
 

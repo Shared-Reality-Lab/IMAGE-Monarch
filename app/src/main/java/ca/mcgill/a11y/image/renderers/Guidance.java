@@ -21,7 +21,6 @@ import static ca.mcgill.a11y.image.DataAndMethods.backButton;
 import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
 import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
-import static ca.mcgill.a11y.image.DataAndMethods.update;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -34,7 +33,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.core.view.GestureDetectorCompat;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 
 import org.json.JSONException;
@@ -45,13 +43,12 @@ import java.util.ArrayList;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
-import androidx.lifecycle.MutableLiveData;
 
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.PollingService;
 
-public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+public class Guidance extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
     private GestureDetectorCompat mDetector;
 
@@ -71,7 +68,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
             @Override
             public void onChanged(Boolean changedVal) {
                 if (changedVal){
-                    displayGraphic(confirmButton, "Exploration");
+                    displayGraphic(confirmButton, "Guidance");
                 }
             }
 
@@ -100,11 +97,11 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                     return true;
 
                 case "OK":
-                    DataAndMethods.displayGraphic(confirmButton, "Exploration");
+                    DataAndMethods.displayGraphic(confirmButton, "Guidance");
                     return false;
 
                 case "CANCEL":
-                    DataAndMethods.displayGraphic(backButton, "Exploration");
+                    DataAndMethods.displayGraphic(backButton, "Guidance");
                     return false;
                 default:
                     Log.d("KEY EVENT", event.toString());
@@ -122,7 +119,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                 try{
                     // Check if zooming mode is enabled
                     if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
-                        DataAndMethods.zoom(pins, "Exploration");
+                        DataAndMethods.zoom(pins, "Guidance");
                     }
                     else {
                         Log.d("TAGS", "ACCESS TTS");
@@ -201,6 +198,23 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     @Override
     public boolean onDoubleTap(MotionEvent event) {
         Log.d("GESTURE!", "onDoubleTap: " + event.toString());
+        try {
+            if (!DataAndMethods.showAll)
+                brailleServiceObj.display(DataAndMethods.displayTargetLayer(DataAndMethods.getfreshDoc()));
+            else {
+                brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), true));
+                DataAndMethods.showAll = !DataAndMethods.showAll;
+            }
+            //DataAndMethods.showAll = !DataAndMethods.showAll;
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        }
         return true;
     }
 
@@ -224,8 +238,8 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "Exploration Resumed");
-        DataAndMethods.speaker("Exploration mode");
+        Log.d("ACTIVITY", "Guidance Resumed");
+        DataAndMethods.speaker("Guidance mode");
         startService(new Intent(getApplicationContext(), PollingService.class));
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
@@ -246,7 +260,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "Exploration Paused");
+        Log.d("ACTIVITY", "Guidance Paused");
         stopService(new Intent(getApplicationContext(), PollingService.class));
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
