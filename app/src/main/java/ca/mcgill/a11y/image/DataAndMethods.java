@@ -88,6 +88,7 @@ import ca.mcgill.a11y.image.request_formats.PhotoRequestFormat;
 import ca.mcgill.a11y.image.request_formats.ResponseFormat;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -597,7 +598,8 @@ public class DataAndMethods {
     public static void getMap(Double lat, Double lon) throws JSONException {
         MapRequestFormat req= new MapRequestFormat();
         req.setValues(lat, lon);
-        Retrofit retrofit = requestBuilder(60, 60, "https://image.a11y.mcgill.ca/");
+        Retrofit retrofit = requestBuilder(60, 60, // "https://unicorn.cim.mcgill.ca/image/" );
+                "https://image.a11y.mcgill.ca/");
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makeMapRequest(req);
         makeServerCall(call);
@@ -736,6 +738,7 @@ public class DataAndMethods {
                 // This text is not read out when a request is cancelled as there is expected to be
                 // an ongoing request and can be confused as a result of that request.
                 // Causes interrupted requests to die silently!
+                Log.d("RESPONSE", "FAILED!");
                 if (!call.isCanceled()){
                     pingsPlayer(R.raw.image_error);
                 }
