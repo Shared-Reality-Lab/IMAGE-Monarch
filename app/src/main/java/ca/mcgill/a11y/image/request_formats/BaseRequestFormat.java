@@ -14,14 +14,27 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.request_formats;
 
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
-public class ResponseFormat {
-    @SerializedName("data")
-    public String graphic;
+import java.util.UUID;
 
-    @SerializedName("layer")
-    public String layer;
+// base request schema extended for requests to IMAGE-server
+public class BaseRequestFormat {
+    @SerializedName("request_uuid")
+    private String Uuid= UUID.randomUUID().toString();
+    @SerializedName("timestamp")
+    private long timestamp = System.currentTimeMillis() / 1000L;
+    @SerializedName("context")
+    private String context="";
+    @SerializedName("language")
+    private String lang="en";
+    @SerializedName("capabilities")
+    private String[] caps= new String[]{};
+    @SerializedName("renderers")
+    private String[] rends= new String[]{"ca.mcgill.a11y.image.renderer.TactileSVG"};
+    @SerializedName("preprocessors")
+    private JsonObject preps= new JsonObject();
 }

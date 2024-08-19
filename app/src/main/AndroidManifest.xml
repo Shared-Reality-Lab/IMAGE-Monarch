@@ -26,14 +26,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.BrailleDisplay">
-        <service
-            android:name=".PollingService"
-            android:enabled="true"
-            android:exported="true"></service>
-
         <activity
-            android:name=".Exploration"
-            android:configChanges="touchscreen"
+            android:name=".selectors.ClassroomSelector"
+            android:exported="false" />
+        <activity
+            android:name=".renderers.BasicPhotoMapRenderer"
+            android:exported="false" />
+        <activity
+            android:name=".renderers.Guidance"
+            android:exported="false" />
+        <activity
+            android:name=".selectors.ModeSelector"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -41,6 +44,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".selectors.MapSelector"
+            android:exported="true" />
+        <activity
+            android:name=".selectors.PhotoSelector"
+            android:exported="true" />
+
+        <service
+            android:name=".PollingService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity
+            android:name=".renderers.Exploration"
+            android:configChanges="touchscreen"
+            android:exported="true"></activity>
     </application>
 
 </manifest>

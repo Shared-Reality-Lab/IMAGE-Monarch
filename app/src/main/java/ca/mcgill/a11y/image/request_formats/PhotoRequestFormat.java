@@ -14,18 +14,22 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.request_formats;
 
+import com.google.gson.annotations.SerializedName;
 
-import retrofit2.Call;
-import retrofit2.http.GET;
-import retrofit2.http.Headers;
-import retrofit2.http.Url;
+import org.json.JSONException;
 
-// Defines functions to be called to make photo or map requests
-public interface MakeRequest {
-    //String url = "display/"+channelSubscribed;
-    @Headers("Content-Type: application/json")
-    @GET
-    Call<ResponseFormat> checkForUpdates(@Url String url);;
+// photo request schema to IMAGE-server
+public class PhotoRequestFormat extends BaseRequestFormat {
+    @SerializedName("graphic")
+    private String graphic;
+    @SerializedName("dimensions")
+    private Integer[] dims;
+
+    public void setValues(String base64, Integer[] dims) throws JSONException {
+        this.graphic= base64;
+        this.dims=dims;
+    }
+
 }

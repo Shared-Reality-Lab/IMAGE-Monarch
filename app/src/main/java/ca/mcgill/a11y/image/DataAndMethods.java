@@ -17,19 +17,23 @@
 
 package ca.mcgill.a11y.image;
 
+import static android.view.KeyEvent.KEYCODE_BACK;
 import static android.view.KeyEvent.KEYCODE_DPAD_DOWN;
 import static android.view.KeyEvent.KEYCODE_DPAD_LEFT;
 import static android.view.KeyEvent.KEYCODE_DPAD_RIGHT;
 import static android.view.KeyEvent.KEYCODE_DPAD_UP;
+import static android.view.KeyEvent.KEYCODE_MENU;
+import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
+import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
-import static ca.mcgill.a11y.image.BaseActivity.channelSubscribed;
+import static ca.mcgill.a11y.image.selectors.ClassroomSelector.channelSubscribed;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
-import android.net.http.HttpResponseCache;
 import android.os.BrailleDisplay;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,6 +42,10 @@ import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.webkit.MimeTypeMap;
+
+import androidx.lifecycle.MutableLiveData;
+
 import com.scand.svg.SVGHelper;
 import org.json.JSONException;
 import org.w3c.dom.Document;
@@ -51,12 +59,15 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.CacheResponse;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -70,8 +81,14 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+
+import ca.mcgill.a11y.image.request_formats.MakeRequest;
+import ca.mcgill.a11y.image.request_formats.MapRequestFormat;
+import ca.mcgill.a11y.image.request_formats.PhotoRequestFormat;
+import ca.mcgill.a11y.image.request_formats.ResponseFormat;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -79,47 +96,89 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DataAndMethods {
-    static boolean displayOn=false;
-    static String image=null;
+    // SVG data received from response 
+    public static String image=null;
+    // used to refresh pins to down state
     static byte[][] data = null;
-    static ArrayList<String[][]> tags;
-    static ArrayList<String[][]> occupancy;
+    // short and long  descriptions of objects in current layer
+    public static ArrayList<String[][]> tags;
+    // default zoom value when new graphic is rendered in percentage
     static Integer zoomVal=100;
-    static float[] dims=new float[]{0,0, 0, 0};
-    static Integer presentLayer = -1, presentTarget = 0;
+    // current dimensions of graphic; dims = {start-x, start-y, end-x, end-y}
+    static Float[] dims=new Float[]{0f,0f, 0f, 0f};
+    // original dimensions of graphic before viewBox manipulations
+    static Float[] origDims=new Float[]{0f,0f, 0f, 0f};
+    // index of file selected in current directory
+    public static int fileSelected = 0;
+    // present layer generally ranges between [0, layer count]; present target indicates current target in guidance and
+    // targetCount is the number of targets in guidance mode
+    static Integer presentLayer = -1, presentTarget = 0, targetCount;
+    // sets whether the TTS label is assigned to the area enclosed by a shape
     static boolean labelFill=true;
-    static boolean ttsEnabled=true;
-    static boolean zoomingIn=false, zoomingOut=false;
-    static Integer layerCount=0;
-    static BrailleDisplay brailleServiceObj = null;
-    static BrailleDisplay.MotionEventHandler handler;
-    private static Call<ResponseFormat> ongoingCall;
-    static TextToSpeech tts;
-    static Context context;
-    static View view;
-    static String zoomBox = "";
-    static int confirmButton = 504;
-    static int backButton = 503;
-    public static final int DISK_CACHE_SIZE = 10 * 1024 * 1024;
+    // enables/disables TTS read out
+    public static boolean ttsEnabled=true;
+    // set zooming in/out as enabled or disabled
+    public static boolean zoomingIn=false;
+    public static boolean zoomingOut=false;
 
+    // showing/hiding non-target elements in guidance mode
+    public static boolean showAll = false;
+    public static BrailleDisplay brailleServiceObj = null;
+    public static BrailleDisplay.MotionEventHandler handler;
+    // keep track of current request to server
+    private static Call<ResponseFormat> ongoingCall;
+    // TTS engine instance
+    static TextToSpeech tts = null;
+    // application context
+    static Context context;
+    // application view
+    static View view;
+    // string used to set viewBox
+    static String zoomBox = "";
+    // keyCode of confirm button; braille dot 8 is used as Enter in current standard
+    public static int confirmButton = 504;
+    // keyCode of back button; braille dot 7 is used as backspace in current standard
+    public static int backButton = 503;
+    // cache storage size
+    static final int DISK_CACHE_SIZE = 10 * 1024 * 1024;
+    //tracker to check whether new data has been received after server call
+    public static MutableLiveData<Boolean> update = new MutableLiveData<>();
+    // mapping of keyCodes
+    public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
+        put(421, "UP");
+        put(420, "DOWN");
+        put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
+        put(KEYCODE_ZOOM_IN, "ZOOM IN");
+        put(KEYCODE_DPAD_UP, "DPAD UP");
+        put(KEYCODE_DPAD_DOWN, "DPAD DOWN");
+        put(KEYCODE_DPAD_LEFT, "DPAD LEFT");
+        put(KEYCODE_DPAD_RIGHT, "DPAD RIGHT");
+        put(KEYCODE_MENU, "MENU");
+        put(confirmButton, "OK");
+        put(backButton, "CANCEL");
+        put(KEYCODE_BACK, "BACK");
+    }};
+
+    // initializes the Braille display, TTS and other common components in newly created activity
     public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
         DataAndMethods.brailleServiceObj = brailleServiceObj;
         DataAndMethods.context = context;
         DataAndMethods.view = view;
 
+        // sets array with dimensions of pin array to 0s; used to refresh the pins when required
         data = new byte[brailleServiceObj.getDotLineCount()][];
         for (int i = 0; i < data.length; ++i) {
             data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
             Arrays.fill(data[i], (byte) 0x00);
         }
 
+        // empty string array to be populated with descriptions when the layer is loaded
         tags = new ArrayList<>();
         tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
         tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
 
-        occupancy = new ArrayList<>();
-        occupancy.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
-
+        // only initialize tts if it is not already set up; otherwise this takes too long
+        if (tts==null){
         tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
 
             @Override
@@ -151,31 +210,40 @@ public class DataAndMethods {
                         }
                     });
                 }
-            }});
+            }});}
     }
 
     //check mode and display appropriate layer
     public static void displayGraphic(int keyCode, String mode){
-        try{
+        try{if (mode=="Exploration"){
+
+                DataAndMethods.ttsEnabled=true;
+                if(keyCode ==confirmButton){
+                    ++ DataAndMethods.presentLayer;
+                }
+                else{
+                    -- DataAndMethods.presentLayer;
+                }
+                brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+
+
+
+        } else if (mode=="Guidance"){
             DataAndMethods.ttsEnabled=true;
-            DataAndMethods.displayOn= true;
             if(keyCode ==confirmButton){
-                DataAndMethods.presentLayer++;
-                if (DataAndMethods.presentLayer>=DataAndMethods.layerCount+1)
-                    DataAndMethods.presentLayer=0;
+                ++ DataAndMethods.presentTarget;
             }
             else{
-                DataAndMethods.presentLayer--;
-                if (DataAndMethods.presentLayer<0)
-                    DataAndMethods.presentLayer= DataAndMethods.layerCount;
+                -- DataAndMethods.presentTarget;
             }
-            brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-
-        }catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
+            brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), true));
+        }}
+        catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
             throw new RuntimeException(e);
         }
     }
 
+    // function to pad the bitmap to match the pin array aspect ratio
     public static Bitmap padBitmap(Bitmap bitmap, int padX, int padY)
     {
         Bitmap paddedBitmap = Bitmap.createBitmap(
@@ -221,15 +289,21 @@ public class DataAndMethods {
         // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[self::*[@data-image-layer] and not(ancestor::metadata)]", doc, XPathConstants.NODESET);
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
-        layerCount=nodeslist.getLength();
+        Integer layerCount=nodeslist.getLength();
+        //Log.d("PRESENT LAYER", DataAndMethods.presentLayer+","+layerCount);
+        if (DataAndMethods.presentLayer>= layerCount+1)
+            DataAndMethods.presentLayer= 0;
+        else if (DataAndMethods.presentLayer<0)
+            DataAndMethods.presentLayer= layerCount;
+        //Log.d("PRESENT LAYER", DataAndMethods.presentLayer+","+layerCount);
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i);
             // hide layers which are not the present layer
-            if (i!= presentLayer && presentLayer!=layerCount) {
+            if (i!= DataAndMethods.presentLayer && DataAndMethods.presentLayer!=layerCount) {
                 ((Element)node).setAttribute("display","none");
             }
             // TTS output of layer description
-            if (i==presentLayer){
+            if (i==DataAndMethods.presentLayer){
                 //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
                 String tag;
                 //Log.d("GETTING TAGS", node.getNodeName());
@@ -247,7 +321,7 @@ public class DataAndMethods {
             }
         }
         //If there is no tag as a layer, hide elements unless the full image is to be shown
-        if (presentLayer!=layerCount){
+        if (DataAndMethods.presentLayer!=layerCount){
 
             nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])] ", doc, XPathConstants.NODESET);
             for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
@@ -292,6 +366,72 @@ public class DataAndMethods {
         for (int i = 0; i < data.length; ++i) {
             dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
         }
+        return dataRead;
+    }
+
+    // get present target and description tags from the doc
+    public static byte[][] getGuidanceBitmaps(Document doc, Boolean readCaption) throws XPathExpressionException, IOException, ParserConfigurationException, SAXException {
+        String tag = "";
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        if (targetCount ==0){
+            speaker("No guidance mode available");
+            return data;
+        }
+        else if (presentTarget<=0 ){
+            presentTarget = targetCount;
+        }
+        else if (presentTarget > targetCount){
+            presentTarget = 1;
+        }
+
+        NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(descendant-or-self::*[@data-image-target = '"+presentTarget+"'])]", doc, XPathConstants.NODESET);
+
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i);
+            ((Element)node).setAttribute("display","none");
+        }
+
+        nodeslist = (NodeList) xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none'] and ancestor::metadata)]", doc, XPathConstants.NODESET);
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i).cloneNode(true);
+            doc.getElementsByTagName("svg").item(0).appendChild(node);
+        }
+
+        //speaker(tag);
+        byte[] mask = docToBitmap(doc);
+        doc = getTargetLayer(getfreshDoc());
+        Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
+        if (((Element)targetLayer).hasAttribute("aria-labelledby")) {
+            tag= doc.getElementById(((Element) targetLayer).getAttribute("aria-labelledby")).getTextContent();
+            //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
+        }
+        else{
+            tag=((Element)targetLayer).getAttribute("aria-label");
+            //Log.d("GETTING TAGS", "Otherwise here!");
+        }
+        Node node = ((NodeList) xPath.evaluate("//*[ancestor-or-self::*[@data-image-target = '"+presentTarget+"']]", doc, XPathConstants.NODESET)).item(0);
+        if (((Element)node).hasAttribute("aria-labelledby")) {
+            tag += "\n" + doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+            //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent()));
+        }
+        else{
+            tag += "\n" + ((Element)node).getAttribute("aria-label");
+            //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
+        }
+        if (readCaption){
+        speaker("Layer: " + tag);}
+
+        byte[] target = docToBitmap(doc);
+
+        byte[] byteArray = new byte[mask.length];
+        for (int i = 0; i < mask.length; i++) {
+            byteArray[i] = (byte) (mask[i] * target[i]);
+        }
+        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
+        for (int i = 0; i < data.length; ++i) {
+            dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+        }
+
         return dataRead;
     }
 
@@ -395,81 +535,179 @@ public class DataAndMethods {
         return byteArray;
     }
 
-    // fetching the file to read from; returns file contents as String and also the file name
-    //public static String[] getFile(int fileNumber) throws IOException, JSONException {
-    public static String[] getFile() throws IOException, JSONException {
+    // fetching the file to read from; makes server request and also returns the file name
+    public static String getFile(int fileNumber) throws IOException, JSONException {
+        String folderName= "/sdcard/IMAGE/client/";
+        File directory = new File(folderName);
+        File[] files = directory.listFiles();
+
+        int filecount=files.length;
+        if (fileNumber>= filecount)
+            fileSelected=0;
+        else if (fileNumber<0)
+            fileSelected=filecount-1;
+
+        Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
+        byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
+
+        String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+        Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
+        PhotoRequestFormat req= new PhotoRequestFormat();
+        req.setValues(base64, dims);
+        Retrofit retrofit = requestBuilder(60, 60, "https://image.a11y.mcgill.ca/");
+
+        MakeRequest makereq= retrofit.create(MakeRequest.class);
+        Call<ResponseFormat> call= makereq.makePhotoRequest(req);
+        makeServerCall(call);
+        // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
+        return files[fileSelected].getName().replaceFirst("\\.[^.]*$", "");
+    }
+
+    // initializes and returns the retrofit request;
+    public static Retrofit requestBuilder(long readTimeout, long connectTimeout, String baseUrl){
         // Uncomment the following lines for logging http requests
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
                 //Need next 2 lines when server response is slow
-                .readTimeout(60, TimeUnit.SECONDS)
-                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(readTimeout, TimeUnit.SECONDS)
+                .connectTimeout(connectTimeout, TimeUnit.SECONDS)
                 .cache(getCache());
 
         //httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(context.getString(R.string.server_url))
+                .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(httpClient.build())
                 .build();
+        return retrofit;
+    }
+
+    // get file mime type
+    public static String getMimeType(String url) {
+        String type = null;
+        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+        if (extension != null) {
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        }
+        return type;
+    }
+
+    // makes server request for a tactile map rendering based on provided latitude longitude coordinates
+    public static void getMap(Double lat, Double lon) throws JSONException {
+        MapRequestFormat req= new MapRequestFormat();
+        req.setValues(lat, lon);
+        Retrofit retrofit = requestBuilder(60, 60, // "https://unicorn.cim.mcgill.ca/image/" );
+                "https://image.a11y.mcgill.ca/");
+        MakeRequest makereq= retrofit.create(MakeRequest.class);
+        Call<ResponseFormat> call= makereq.makeMapRequest(req);
+        makeServerCall(call);
+    }
+
+    // fetches updates from server if they exist
+    public static void checkForUpdate() throws IOException, JSONException {
+        Retrofit retrofit = requestBuilder(60, 60, context.getString(R.string.server_url));
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.checkForUpdates(context.getString(R.string.server_url)+"display/"+channelSubscribed);
-        image= makeServerCall(call);
-        //DataAndMethods.presentLayer--;
-        //DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
-        // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
-        return new String[]{image, ""};
+        makeServerCall(call);
     }
 
+    // initializes dims, zoomBox and origDims for new graphic
     public static void setImageDims() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         Document doc = getfreshDoc();
         XPath xPath = XPathFactory.newInstance().newXPath();
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
-        Float width= Float.valueOf(node.getAttribute("width"));
-        Float height= Float.valueOf(node.getAttribute("height"));
-        dims[2] = width;
-        dims[3] =height;
-        zoomBox = dims[0]+" "+ dims[1] +" "+ width+ " "+ height;
+        if (!node.hasAttribute("viewBox")) {
+            Float width = Float.valueOf(node.getAttribute("width"));
+            Float height = Float.valueOf(node.getAttribute("height"));
+            dims[2] = width;
+            dims[3] = height;
+            zoomBox = dims[0] + " " + dims[1] + " " + width + " " + height;
+            origDims = new Float[]{0f, 0f, width, height};
+        }
+        else {
+            dims = Arrays.copyOf(origDims, origDims.length);
+            dims[2] += dims[0];
+            dims[3] += dims[1];
+        }
     }
+
+    // get number of targets if guidance exists
+    public static void targetCounts() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+        Document doc = getfreshDoc();
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-target]", doc, XPathConstants.NODESET);
+        targetCount=0;
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i);
+            int count = Integer.parseInt(((Element)node).getAttribute("data-image-target"));
+            if (count > targetCount)
+                targetCount = count;
+        }
+    }
+
+    // get layer in which the current target is
+    public static Document getTargetLayer(Document doc) throws XPathExpressionException {
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
+        //Log.d("TARGET Layer", String.valueOf(((Element) targetLayer).getAttribute("data-image-layer")));
+
+        String layerName = ((Element) targetLayer).getAttribute("data-image-layer");
+        NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(descendant-or-self::*[@data-image-layer = '"+layerName+"']) and not(ancestor::*[@data-image-layer = '"+layerName+"'])]", doc, XPathConstants.NODESET);
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i);
+            ((Element)node).setAttribute("display","none");
+        }
+        nodeslist= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i);
+            Float zoomLevel= Float.valueOf(((Element)node).getAttribute("data-image-zoom"));
+            if (zoomVal<zoomLevel)
+                ((Element)node).setAttribute("display","none");
+        }
+        return doc;
+    }
+
+    // returns cache from local
     public static Cache getCache() {
         File cacheDir = new File(context.getCacheDir(), "cache");
         Cache cache = new Cache(cacheDir, DISK_CACHE_SIZE);
         return cache;
     }
 
-    public static String makeServerCall(Call<ResponseFormat> call){
+    // makes async call to serevr
+    public static void makeServerCall(Call<ResponseFormat> call){
         // Cancelling any ongoing requests that haven't been completed
         if (ongoingCall!=null){
             ongoingCall.cancel();
         }
-        //pingsPlayer(R.raw.image_request_sent);
+        update.setValue(false);
         call.enqueue(new Callback<ResponseFormat>() {
             @Override
             public void onResponse(Call<ResponseFormat> call, Response<ResponseFormat> response) {
                 try {
                     if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED || image == null) {
                         ResponseFormat resource = response.body();
-                        //ResponseFormat.Rendering[] renderings = resource.renderings;
-                        image = (resource.graphic).replaceFirst("data:.+,", "");
+                        ResponseFormat.Rendering[] renderings = resource.renderings;
+                        image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
                         //Log.d("RESPONSE", image);
                         byte[] data = image.getBytes("UTF-8");
                         data = Base64.decode(data, Base64.DEFAULT);
                         image = new String(data, "UTF-8");
                         // Log.d("IMAGE", image);
                         // gets viewBox dims for current image
+                        resetGraphicParams();
                         setImageDims();
-                        setDefaultLayer(resource.layer);
-                        DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
-                        //pingsPlayer(R.raw.image_results_arrived);
-                        //Reset layer count to 0 before new file is loaded
-                        //layerCount = 0;
-                        //count guidance targets
-
-                        // Enabling the up button again when the response has been received.
-                        //view.findViewById(R.id.ones).setEnabled(true);
+                        targetCounts();
+                        if (renderings[0].data.layer != null) {
+                            setDefaultLayer(renderings[0].data.layer);
+                        }
+                        else{
+                            presentLayer = -1;
+                        }
+                        update.setValue(true);
                     }
                     else{
                         Log.d("CACHE", "Fetching from cache!");
@@ -500,6 +738,7 @@ public class DataAndMethods {
                 // This text is not read out when a request is cancelled as there is expected to be
                 // an ongoing request and can be confused as a result of that request.
                 // Causes interrupted requests to die silently!
+                Log.d("RESPONSE", "FAILED!");
                 if (!call.isCanceled()){
                     pingsPlayer(R.raw.image_error);
                 }
@@ -507,10 +746,23 @@ public class DataAndMethods {
         });
         // Saving the in-progress call to allow interruption if needed
         ongoingCall=call;
-        return image;
     }
 
+    // resets zoom and dimension related variables for new graphics
+    public static void resetGraphicParams(){
+        zoomVal=100;
+        dims=new Float[]{0f,0f, 0f, 0f};
+        origDims=new Float[]{0f,0f, 0f, 0f};
+        zoomingIn=false;
+        zoomingOut=false;
+        zoomBox = "";
+        targetCount = 0;
+        presentTarget = 0;
+    }
+
+    // sets requested layer for new graphic; this is only called when 'layer' field exists in server resposne
     public static void setDefaultLayer(String layerInput) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        //Log.d("LAYER INPUT", layerInput);
         if (!layerInput.equals("None")){
             XPath xPath = XPathFactory.newInstance().newXPath();
             Document doc = DataAndMethods.getfreshDoc();
@@ -524,7 +776,8 @@ public class DataAndMethods {
                 }
             }
         }
-        else{
+        // Making sure the layer doesn't go to -2 on first run
+        else if(DataAndMethods.presentLayer>=0){
             DataAndMethods.presentLayer--;
         }
     }
@@ -536,8 +789,10 @@ public class DataAndMethods {
         InputSource is = new InputSource(new StringReader(image));
         //Log.d("STRING", image);
         Document doc = builder.parse(is);
+
         XPath xPath = XPathFactory.newInstance().newXPath();
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
+
         Float width= Float.valueOf(node.getAttribute("width"));
         Float height= Float.valueOf(node.getAttribute("height"));
         //Log.d("NEWDOC", width+", "+height);
@@ -577,9 +832,26 @@ public class DataAndMethods {
         }
 
             //node.setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
-            //Log.d("TRANS", "translate("+translations[0]+" "+translations[1]+")");
-
-        node.setAttribute("viewBox", zoomBox );
+        //Log.d("TRANS", "translate("+translations[0]+" "+translations[1]+")");
+        // check if it is the initial run
+        if (origDims[2]==0f){
+            // check if the viewBox attribute exists
+            if (node.hasAttribute("viewBox")){
+                zoomBox = node.getAttribute("viewBox");
+                //Log.d("VIEW_old", zoomBox);
+                origDims =  Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
+                // perform manipulations to zoomBox
+                origDims[2] = x;
+                origDims[3] = y;
+                String zoomDims= Arrays.toString(origDims).replaceAll(",", "");
+                //Log.d("ZOOM",Arrays.toString(press));
+                zoomBox = zoomDims.substring(1,zoomDims.length() - 1);
+                node.setAttribute("viewBox", zoomBox );
+            }}
+            else{
+                node.setAttribute("viewBox", zoomBox );
+            }
+        //Log.d("VIEW", node.getAttribute("viewBox"));
         return doc;
     }
 
@@ -596,19 +868,23 @@ public class DataAndMethods {
         return new Integer[] {pinX, pinY};
     }
 
-
+    // handles zooming functions i.e. zooming in/out and displays new graphic after manipulations
     public static void zoom(Integer[] pins, String mode) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         Document doc = getfreshDoc();
         XPath xPath = XPathFactory.newInstance().newXPath();
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
-        Float width= Float.valueOf(node.getAttribute("width"));
-        Float height= Float.valueOf(node.getAttribute("height"));
+        //Float width= Float.valueOf(node.getAttribute("width"));
+        //Float height= Float.valueOf(node.getAttribute("height"));
+        Float width = origDims[2];
+        Float height = origDims[3];
 
         if (zoomingIn){
             zoomVal+= 25;
             node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
             if (mode.equals("Exploration"))
                 brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+            else if (mode.equals("Guidance"))
+                brailleServiceObj.display(getGuidanceBitmaps(doc, false));
         }
         else{
             if (zoomVal <= 100){
@@ -620,15 +896,27 @@ public class DataAndMethods {
                 node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
                 if (mode.equals("Exploration"))
                     brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+                else if (mode.equals("Guidance")) {
+                    if (showAll){
+                        brailleServiceObj.display(DataAndMethods.displayTargetLayer(doc));
+                    }
+                    else {
+                        brailleServiceObj.display(getGuidanceBitmaps(doc, false));
+                    }
+                }
             }
         }
         return;
     }
 
+    // computes new graphic dimensions during zoom
     public static String zoomer(float width, float height, int zoomVal, Integer[] pins){
+        // image dimensions where the press occured
         float[] press=new float[]{0, 0};
         float sWidth=dims[0], sHeight=dims[1], fWidth=dims[2], fHeight=dims[3];
 
+        //Log.d("RECEIVED", width+", "+height);
+        //Log.d("DIMS", dims[0] +", "+dims[1]+", "+dims[2]+", "+dims[3] );
         float scalingFactor, widthNew= fWidth - sWidth, heightNew= fHeight- sHeight;
         //int bufferPins;
 
@@ -639,30 +927,31 @@ public class DataAndMethods {
         scalingFactor = brailleServiceObj.getDotLineCount()/heightNew;
         press[1] = (pins[1]/scalingFactor) + dims[1];
 
-        Log.d("PINS", pins[0]+", "+pins[1]);
-        Log.d("PRESS", press[0]+","+press[1]);
+        //Log.d("PINS", pins[0]+", "+pins[1]);
+        //Log.d("PRESS", press[0]+","+press[1]);
         float zoomWidth= width/((float)zoomVal/100);
         float zoomHeight= height/((float)zoomVal/100);
-        Log.d("DIMS", dims[0] +", "+dims[1]+", "+dims[2]+", "+dims[3] );
-        Log.d("SCALE", zoomWidth+","+zoomHeight);
+
+        //Log.d("SCALE", zoomWidth+","+zoomHeight);
+        // zoom while keeping the portion of the image at the point of press at the same pins post zoom
         scalingFactor = zoomWidth/brailleServiceObj.getDotPerLineCount();
         dims[0] = press[0] - (scalingFactor * (pins[0]));
         dims[2] = dims[0] + zoomWidth;
         scalingFactor = zoomHeight / brailleServiceObj.getDotLineCount();
         dims [1] = press[1] - (scalingFactor * (pins[1]));
         dims[3] = dims[1] + zoomHeight;
-        //Log.d("SCALE", String.valueOf(brailleServiceObj.getDotPerLineCount()));
-
-        if (dims[0]<0){ //|| dims[1]<0 || dims[2]> width || dims[3] >height){
-            dims[0] =0;
+        //Log.d("NEW DIMS", dims[0]+","+dims[1]+","+dims[2]+","+dims[3]);
+        // ensure that the newly calculted dimensions are within the limits of the origincal graphic
+        if (dims[0]<origDims[0]){ 
+            dims[0] = origDims[0];
             dims[2] = dims[0] + zoomWidth;
         }
         else if (dims[2]>width){
             dims[2] = width;
             dims[0] = dims[2] -zoomWidth;
         }
-        if (dims[1]<0){
-            dims[1] =0;
+        if (dims[1]<origDims[1]){
+            dims[1] =origDims[1];
             dims[3] = dims[1] + zoomHeight;
         }
         else if (dims[3]>height){
@@ -679,14 +968,19 @@ public class DataAndMethods {
         return zoomBox;
     }
 
+    // computes graphic dimensions and displays new graphic after pan operation
     public static void pan(int keyCode, String className) throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
         Document doc = getfreshDoc();
         XPath xPath = XPathFactory.newInstance().newXPath();
         Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
-        Float width= Float.valueOf(node.getAttribute("width"));
-        Float height= Float.valueOf(node.getAttribute("height"));
+        //Float width= Float.valueOf(node.getAttribute("width"));
+        //Float height= Float.valueOf(node.getAttribute("height"));
+        Float width = origDims[2];
+        Float height = origDims[3];
+        // pan by 10%
         Float widthShift= (dims[2]-dims[0])/10;
         Float heightShift=(dims[3]-dims[1])/10;
+        // check pan direction
         switch(keyCode) {
             case KEYCODE_DPAD_UP:
                 // UP
@@ -709,29 +1003,41 @@ public class DataAndMethods {
                 dims[2] += widthShift;
                 break;
         }
-
-        if (dims[0]<0.001){
-            dims[2]-=dims[0];
-            dims[0]=0;
+        //Log.d("DIMS", dims[0]+","+ dims[1]+","+dims[2]+","+dims[3]);
+        // ensure that panning stays within graphic bounds
+        if (dims[0]<origDims[0]){
+            dims[2]-=(dims[0]-origDims[0]);
+            dims[0]=origDims[0];
         }
-        else if (dims[2]>width){
-            dims[0]-= (dims[2]-width);
-            dims[2]=width;
+        else if (dims[2] >(width+origDims[0])){
+            dims[0]-= (dims[2]-(width+origDims[0]));
+            dims[2]=(width+origDims[0]);
         }
-        if (dims[1]<0.001){
-            dims[3]-=dims[1];
-            dims[1]=0;
+        if (dims[1]<origDims[1]){
+            dims[3]-=(dims[1]-origDims[1]);
+            dims[1]=origDims[1];
         }
-        else if (dims[3]>height){
-            dims[1]-=(dims[3]-height);
-            dims[3]=height;
+        else if (dims[3]>(height+origDims[1])){
+            dims[1]-=(dims[3]-(height+origDims[1]));
+            dims[3]=(height+origDims[1]);
         }
+        //Log.d("DIMS", dims[0]+","+ dims[1]+","+dims[2]+","+dims[3]);
         Float[] panning= new Float[]{dims[0], dims[1], dims[2]-dims[0], dims[3]-dims[1]};
         String panned= Arrays.toString(panning).replaceAll(",", "");
+        //Log.d("VIEWBOX", node.getAttribute("viewBox"));
         zoomBox = panned.substring(1,panned.length() - 1);
         node.setAttribute("viewBox", zoomBox);
-        if (className.equals("Exploration"))
+        //Log.d("PAN", zoomBox);
+        if (className.equals("renderers.Exploration") || className.equals("renderers.BasicPhotoMapRenderer"))
             brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+        if (className.equals("renderers.Guidance")){
+            if (showAll){
+                brailleServiceObj.display(DataAndMethods.displayTargetLayer(doc));
+            }
+            else {
+                brailleServiceObj.display(getGuidanceBitmaps(doc, false));
+            }
+        }
     }
 
     // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
@@ -740,6 +1046,7 @@ public class DataAndMethods {
         return;
     }
 
+    // plays sound files; used for notification sounds 
     public static void pingsPlayer(int file){
         //set up MediaPlayer
         MediaPlayer mp = new MediaPlayer();
@@ -750,5 +1057,46 @@ public class DataAndMethods {
         } catch (Exception e) {
             Log.d("ERROR", e.toString());
         }
+    }
+
+
+    // this is used to replicate what the outcome of a server call is for the demo example
+    public static void makePseudoServerCall(){
+        resetGraphicParams();
+        image = //"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> " +
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" version=\"1.1\"" +
+                        "width=\"96\" height=\"40\" id=\"svg135\"> <g class=\"layer\" data-image-layer=\"Layer 1\">" +
+                "\n<ellipse fill=\"none\" stroke=\"#000000\" stroke-width=\"0.885\" id=\"path358\" " +
+                "cx=\"48\" cy=\"20\" rx=\"15\" ry=\"15\" /> </g> \n</svg>";
+    }
+
+    public static byte[][] displayTargetLayer(Document doc) throws XPathExpressionException, IOException {
+        doc = getTargetLayer(doc);
+        byte[] byteArray = docToBitmap(doc);
+        final Handler handler = new Handler(Looper.getMainLooper());
+        Document finalDoc = doc;
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getDescriptions(finalDoc);
+                    //Log.d("DESCRIPTIONS", "Description loaded");
+                    // This ping plays when the descriptions (i.e. TTS labels) are loaded.
+                    // Generally occurs with a little delay following the tactile rendering
+                    showAll = true;
+                    pingsPlayer(R.raw.ping);
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
+        for (int i = 0; i < data.length; ++i) {
+            dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+        }
+        return dataRead;
     }
 }

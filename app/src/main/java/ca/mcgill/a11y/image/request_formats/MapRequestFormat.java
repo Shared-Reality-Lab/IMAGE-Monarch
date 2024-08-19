@@ -14,26 +14,27 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.request_formats;
 
-import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
-import java.util.UUID;
+import org.json.JSONException;
 
-public class BaseRequestFormat {
-    @SerializedName("request_uuid")
-    private String Uuid= UUID.randomUUID().toString();
-    @SerializedName("timestamp")
-    private long timestamp = System.currentTimeMillis() / 1000L;
-    @SerializedName("context")
-    private String context="";
-    @SerializedName("language")
-    private String lang="en";
-    @SerializedName("capabilities")
-    private String[] caps= new String[]{};
-    @SerializedName("renderers")
-    private String[] rends= new String[]{"ca.mcgill.a11y.image.renderer.TactileSVG"};
-    @SerializedName("preprocessors")
-    private JsonObject preps= new JsonObject();
+// map request schema to IMAGE-server
+public class MapRequestFormat extends BaseRequestFormat {
+    @SerializedName("coordinates")
+    private Coordinates coords=new Coordinates();
+    @SerializedName("url")
+    private String url= "https://example-map-url.com";
+
+    public class Coordinates{
+        @SerializedName("latitude")
+        Double lat;
+        @SerializedName("longitude")
+        Double lon;
+    }
+    public void setValues(Double lat, Double lon) throws JSONException {
+        this.coords.lat = lat;
+        this.coords.lon = lon;
+    }
 }

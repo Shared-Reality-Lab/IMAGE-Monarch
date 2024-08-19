@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 IMAGE Project, Shared Reality Lab, McGill University
+ * Copyright (c) 2024 IMAGE Project, Shared Reality Lab, McGill University
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -27,6 +27,7 @@ import org.json.JSONException;
 
 import java.io.IOException;
 
+// service that polls server for updates
 public class PollingService extends Service {
     private Handler handler;
     public static final long DEFAULT_SYNC_INTERVAL = 5 * 1000;
@@ -36,8 +37,9 @@ public class PollingService extends Service {
         public void run() {
             //create AsyncTask here
             try {
-                DataAndMethods.getFile();
-            } catch (IOException e) {
+                DataAndMethods.checkForUpdate();
+            }
+            catch (IOException e) {
                 throw new RuntimeException(e);
             } catch (JSONException e) {
                 throw new RuntimeException(e);

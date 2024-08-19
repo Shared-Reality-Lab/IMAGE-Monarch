@@ -14,8 +14,13 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-package ca.mcgill.a11y.image;
+package ca.mcgill.a11y.image.renderers;
 
+
+import static ca.mcgill.a11y.image.DataAndMethods.backButton;
+import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
+import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
+import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -24,10 +29,13 @@ import android.os.BrailleDisplay;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 import androidx.core.view.GestureDetectorCompat;
+import androidx.lifecycle.Observer;
 
+import org.json.JSONException;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
@@ -36,11 +44,13 @@ import java.util.ArrayList;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
-public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+import ca.mcgill.a11y.image.BaseActivity;
+import ca.mcgill.a11y.image.DataAndMethods;
+import ca.mcgill.a11y.image.PollingService;
+
+public class Guidance extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
-
     private GestureDetectorCompat mDetector;
-
 
     @SuppressLint("WrongConstant")
     @Override
@@ -48,13 +58,55 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_main);
-
-        mDetector = new GestureDetectorCompat(getApplicationContext(),this);
+        //mDetector = new GestureDetectorCompat(getApplicationContext(),this);
         // Set the gesture detector as the double tap
-        mDetector.setOnDoubleTapListener(this);
+        //mDetector.setOnDoubleTapListener(this);
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        DataAndMethods.update.observe(this,new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean changedVal) {
+                if (changedVal){
+                    displayGraphic(confirmButton, "Guidance");
+                }
+            }
+
+        });
+    }
+
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+            super.onKeyDown(keyCode, event);
+            switch (keyMapping.getOrDefault(keyCode, "default")) {
+                // Navigating between files
+                case "UP":
+                case "DOWN":
+                    // make force refresh
+                    Log.d("KEY EVENT", event.toString());
+                    try {
+                        DataAndMethods.checkForUpdate();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                    //DataAndMethods.checkForUpdate();
+                    return true;
+
+                case "OK":
+                    DataAndMethods.displayGraphic(confirmButton, "Guidance");
+                    return false;
+
+                case "CANCEL":
+                    DataAndMethods.displayGraphic(backButton, "Guidance");
+                    return false;
+                default:
+                    Log.d("KEY EVENT", event.toString());
+                    return false;
+            }
     }
     @Override
     public boolean onTouchEvent(MotionEvent event){
@@ -67,7 +119,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                 try{
                     // Check if zooming mode is enabled
                     if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
-                        DataAndMethods.zoom(pins, "Exploration");
+                        DataAndMethods.zoom(pins, "Guidance");
                     }
                     else {
                         Log.d("TAGS", "ACCESS TTS");
@@ -146,6 +198,23 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     @Override
     public boolean onDoubleTap(MotionEvent event) {
         Log.d("GESTURE!", "onDoubleTap: " + event.toString());
+        try {
+            if (!DataAndMethods.showAll)
+                brailleServiceObj.display(DataAndMethods.displayTargetLayer(DataAndMethods.getfreshDoc()));
+            else {
+                brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), true));
+                DataAndMethods.showAll = !DataAndMethods.showAll;
+            }
+            //DataAndMethods.showAll = !DataAndMethods.showAll;
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        }
         return true;
     }
 
@@ -169,8 +238,9 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "Exploration Resumed");
-
+        Log.d("ACTIVITY", "Guidance Resumed");
+        DataAndMethods.speaker("Guidance mode");
+        startService(new Intent(getApplicationContext(), PollingService.class));
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
 
@@ -186,24 +256,12 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
             return false;
         };
         brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
-        if (DataAndMethods.displayOn){
-            try {
-                brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (XPathExpressionException e) {
-                throw new RuntimeException(e);
-            } catch (ParserConfigurationException e) {
-                throw new RuntimeException(e);
-            } catch (SAXException e) {
-                throw new RuntimeException(e);
-            }
-        }
         super.onResume();
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "Exploration Paused");
+        Log.d("ACTIVITY", "Guidance Paused");
+        stopService(new Intent(getApplicationContext(), PollingService.class));
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }
