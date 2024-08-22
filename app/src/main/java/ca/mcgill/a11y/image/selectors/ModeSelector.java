@@ -125,6 +125,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
     protected void onResume() {
         Log.d("ACTIVITY", "ModeSelector Resumed");
         DataAndMethods.speaker("Mode selector");
+        DataAndMethods.image = null;
         update.setValue(false);
         super.onResume();
     }
