@@ -28,15 +28,23 @@ import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
 import static ca.mcgill.a11y.image.selectors.ClassroomSelector.channelSubscribed;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
@@ -44,6 +52,8 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.MutableLiveData;
 
 import com.scand.svg.SVGHelper;
@@ -54,6 +64,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -86,6 +99,7 @@ import ca.mcgill.a11y.image.request_formats.MakeRequest;
 import ca.mcgill.a11y.image.request_formats.MapRequestFormat;
 import ca.mcgill.a11y.image.request_formats.PhotoRequestFormat;
 import ca.mcgill.a11y.image.request_formats.ResponseFormat;
+import ca.mcgill.a11y.image.selectors.ClassroomSelector;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -97,29 +111,29 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DataAndMethods {
     // SVG data received from response 
-    public static String image=null;
+    public static String image = null;
     // used to refresh pins to down state
     static byte[][] data = null;
     // short and long  descriptions of objects in current layer
     public static ArrayList<String[][]> tags;
     // default zoom value when new graphic is rendered in percentage
-    static Integer zoomVal=100;
+    static Integer zoomVal = 100;
     // current dimensions of graphic; dims = {start-x, start-y, end-x, end-y}
-    static Float[] dims=new Float[]{0f,0f, 0f, 0f};
+    static Float[] dims = new Float[]{0f, 0f, 0f, 0f};
     // original dimensions of graphic before viewBox manipulations
-    static Float[] origDims=new Float[]{0f,0f, 0f, 0f};
+    static Float[] origDims = new Float[]{0f, 0f, 0f, 0f};
     // index of file selected in current directory
     public static int fileSelected = 0;
     // present layer generally ranges between [0, layer count]; present target indicates current target in guidance and
     // targetCount is the number of targets in guidance mode
     static Integer presentLayer = -1, presentTarget = 0, targetCount;
     // sets whether the TTS label is assigned to the area enclosed by a shape
-    static boolean labelFill=true;
+    static boolean labelFill = true;
     // enables/disables TTS read out
-    public static boolean ttsEnabled=true;
+    public static boolean ttsEnabled = true;
     // set zooming in/out as enabled or disabled
-    public static boolean zoomingIn=false;
-    public static boolean zoomingOut=false;
+    public static boolean zoomingIn = false;
+    public static boolean zoomingOut = false;
 
     // showing/hiding non-target elements in guidance mode
     public static boolean showAll = false;
@@ -159,8 +173,12 @@ public class DataAndMethods {
         put(KEYCODE_BACK, "BACK");
     }};
 
+    // speech recognizer stuff
+    public static SpeechRecognizer speechRecognizer = null;
+    public static Intent speechRecognizerIntent;
+
     // initializes the Braille display, TTS and other common components in newly created activity
-    public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
+    public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view) {
         DataAndMethods.brailleServiceObj = brailleServiceObj;
         DataAndMethods.context = context;
         DataAndMethods.view = view;
@@ -174,45 +192,125 @@ public class DataAndMethods {
 
         // empty string array to be populated with descriptions when the layer is loaded
         tags = new ArrayList<>();
-        tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
-        tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
+        tags.add(new String[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
+        tags.add(new String[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
 
         // only initialize tts if it is not already set up; otherwise this takes too long
-        if (tts==null){
-        tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
+        if (tts == null) {
+            tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
 
-            @Override
-            public void onInit(int status) {
+                @Override
+                public void onInit(int status) {
 
-                if(status != TextToSpeech.SUCCESS){
-                    Log.e("error", "Initialization Failed!"+status);
-                }
-                else {
-                    tts.setLanguage(Locale.getDefault());
-                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                        @Override
-                        public void onStart(String s) {
+                    if (status != TextToSpeech.SUCCESS) {
+                        Log.e("error", "Initialization Failed!" + status);
+                    } else {
+                        tts.setLanguage(Locale.getDefault());
+                        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                            @Override
+                            public void onStart(String s) {
 
-                        }
-
-                        @Override
-                        public void onDone(String s) {
-                            //Log.d("CHECKING!", s);
-                            // plays ping when TTS readout is completed based on utteranceId
-                            if (s.equals("ping")){
-                                pingsPlayer(R.raw.blip);
                             }
-                        }
 
-                        @Override
-                        public void onError(String s) {
+                            @Override
+                            public void onDone(String s) {
+                                //Log.d("CHECKING!", s);
+                                // plays ping when TTS readout is completed based on utteranceId
+                                if (s.equals("ping")) {
+                                    pingsPlayer(R.raw.blip);
+                                }
+                            }
 
-                        }
-                    });
+                            @Override
+                            public void onError(String s) {
+
+                            }
+                        });
+                    }
                 }
-            }});}
+            });
+        }
+        if (speechRecognizer == null) {
+            // Voice Command Recognition Stuff
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(DataAndMethods.context);
+            speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+
+
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                @Override
+                public void onReadyForSpeech(Bundle bundle) {
+
+                }
+
+                @Override
+                public void onBeginningOfSpeech() {
+                    Log.d("SPEECHREC", "Listening");
+                    //Toast toast = Toast.makeText(getApplicationContext() , "Listening...", Toast.LENGTH_SHORT);
+                    //toast.show();
+                }
+
+                @Override
+                public void onRmsChanged(float v) {
+
+                }
+
+                @Override
+                public void onBufferReceived(byte[] bytes) {
+
+                }
+
+                @Override
+                public void onEndOfSpeech() {
+
+                }
+
+                @Override
+                public void onError(int i) {
+                    Log.d("SPEECHREC", String.valueOf(i));
+                    switch (i) {
+                        case SpeechRecognizer.ERROR_NO_MATCH:
+                            DataAndMethods.speaker("Failed to recognize text");
+                        default:
+                            DataAndMethods.speaker("Error occurred during speech recognition");
+                    }
+                }
+
+                @Override
+                public void onResults(Bundle bundle) {
+                    ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    String results = data.get(0);
+                    onVoiceRecognitionResults(results);
+                    //speaker("Query acquired: "+cmd);
+                }
+
+                @Override
+                public void onPartialResults(Bundle bundle) {
+
+                }
+
+                @Override
+                public void onEvent(int i, Bundle bundle) {
+
+                }
+            });
+        }
     }
 
+
+    // handle voice recognition results()
+    public static void onVoiceRecognitionResults(String results){
+        if (DataAndMethods.speechRecognizerIntent.getStringExtra("Activity").equals("renderers.BasicPhotoMapRenderer")){
+            // Log.d("VOICE_REC", results);
+            Intent myIntent = new Intent(DataAndMethods.context, FollowUpQuery.class);
+            myIntent.putExtra("query", results);
+            myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            DataAndMethods.context.startActivity(myIntent);
+
+        }else
+            Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
+    }
     //check mode and display appropriate layer
     public static void displayGraphic(int keyCode, String mode){
         try{if (mode=="Exploration"){
@@ -707,6 +805,7 @@ public class DataAndMethods {
                         else{
                             presentLayer = -1;
                         }
+                        pingsPlayer(R.raw.image_results_arrived);
                         update.setValue(true);
                     }
                     else{
@@ -1059,17 +1158,7 @@ public class DataAndMethods {
         }
     }
 
-
-    // this is used to replicate what the outcome of a server call is for the demo example
-    public static void makePseudoServerCall(){
-        resetGraphicParams();
-        image = //"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> " +
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" version=\"1.1\"" +
-                        "width=\"96\" height=\"40\" id=\"svg135\"> <g class=\"layer\" data-image-layer=\"Layer 1\">" +
-                "\n<ellipse fill=\"none\" stroke=\"#000000\" stroke-width=\"0.885\" id=\"path358\" " +
-                "cx=\"48\" cy=\"20\" rx=\"15\" ry=\"15\" /> </g> \n</svg>";
-    }
-
+    // display layer that the current target is in
     public static byte[][] displayTargetLayer(Document doc) throws XPathExpressionException, IOException {
         doc = getTargetLayer(doc);
         byte[] byteArray = docToBitmap(doc);
@@ -1098,5 +1187,57 @@ public class DataAndMethods {
             dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
         }
         return dataRead;
+    }
+
+    // check if selected region is valid
+    public static boolean validateRegion(Integer[] region){
+        //Log.d("REGION", Arrays.toString(region));
+        if (region[0]<region[2] && region[1]<region[3])
+            return true;
+        else
+            return false;
+    }
+
+    // show ROI selected
+    public static void showRegion(Integer[] region) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        Float[] currentDims = Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
+        Float xPerDot = currentDims[2]/ DataAndMethods.brailleServiceObj.getDotPerLineCount();
+        Float yPerDot = currentDims[3]/ DataAndMethods.brailleServiceObj.getDotLineCount();
+        //Log.d("REGION", Arrays.toString(region));
+        //Log.d("DIMS", zoomBox+","+xPerDot+","+yPerDot);
+        /*data = new byte[brailleServiceObj.getDotLineCount()][];
+        for (int i = 0; i < data.length; ++i) {
+            data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
+            Arrays.fill(data[i], (byte) 0x00);
+        }*/
+        // slice from index 5 to index 9
+        // byte[] slice = Arrays.copyOfRange(myArray, 5, 10);
+        byte[][] data = DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, false);
+        byte[][] selection = new byte[brailleServiceObj.getDotLineCount()][];
+        //Log.d("DATA", String.valueOf(data[0].length));
+        for (int i = 0; i < selection.length; ++i) {
+            selection[i] = new byte[brailleServiceObj.getDotPerLineCount()];
+            if (i>=region[1] && i<=region[3]) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+                outputStream.write( Arrays.copyOfRange(DataAndMethods.data[i], 0 ,region[0] ));
+                outputStream.write( Arrays.copyOfRange(data[i], region[0] ,region[2]+1 ) );
+                outputStream.write( Arrays.copyOfRange(DataAndMethods.data[i], region[2]+1 ,brailleServiceObj.getDotPerLineCount() ));
+                selection[i]= outputStream.toByteArray( );
+            }
+            else{
+                //Log.d("COORDS", String.valueOf(i));
+                Arrays.fill(selection[i], (byte) 0x00);
+            }
+        }
+        brailleServiceObj.display(selection);
+    }
+    // this is used to replicate what the outcome of a server call is for the demo example
+    public static void makePseudoServerCall(){
+        resetGraphicParams();
+        image = //"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> " +
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" version=\"1.1\"" +
+                        "width=\"96\" height=\"40\" id=\"svg135\"> <g class=\"layer\" data-image-layer=\"Layer 1\">" +
+                        "\n<ellipse fill=\"none\" stroke=\"#000000\" stroke-width=\"0.885\" id=\"path358\" " +
+                        "cx=\"48\" cy=\"20\" rx=\"15\" ry=\"15\" /> </g> \n</svg>";
     }
 }

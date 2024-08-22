@@ -60,9 +60,12 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
             case "OK":
                 DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
                 return false;
-
             case "CANCEL":
                 DataAndMethods.displayGraphic(DataAndMethods.backButton, "Exploration");
+                return false;
+            case "MENU":
+                DataAndMethods.pingsPlayer(R.raw.blip);
+                DataAndMethods.speechRecognizer.startListening(DataAndMethods.speechRecognizerIntent.putExtra("Activity", getLocalClassName()));
                 return false;
             default:
                 Log.d("KEY EVENT", event.toString());
@@ -72,7 +75,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-
+        mediaPlayer.release();
     }
     @Override
     public boolean onTouchEvent(MotionEvent event){
