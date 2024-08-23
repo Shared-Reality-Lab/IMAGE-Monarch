@@ -63,11 +63,9 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
             case "OK":
                 switch(state){
                     case 0:
-                        // Make request without region
-                        finish();
-                        break;
                     case 2:
-                        // Make request with region
+                        // Make request without region
+                        DataAndMethods.sendFollowUpQuery(query, region);
                         finish();
                         break;
                     default:

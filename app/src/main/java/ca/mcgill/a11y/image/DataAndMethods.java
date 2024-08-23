@@ -120,8 +120,10 @@ public class DataAndMethods {
     static Integer zoomVal = 100;
     // current dimensions of graphic; dims = {start-x, start-y, end-x, end-y}
     static Float[] dims = new Float[]{0f, 0f, 0f, 0f};
-    // original dimensions of graphic before viewBox manipulations
+    // original dimensions of graphic before viewBox manipulations; The height and width are, however, adjusted to fit the 96x40
     static Float[] origDims = new Float[]{0f, 0f, 0f, 0f};
+    // original graphic dimension before aspect ratio manipulations as this is needed for the follow up query
+    static Float[] origRatioDims = new Float[]{0f, 0f};
     // index of file selected in current directory
     public static int fileSelected = 0;
     // present layer generally ranges between [0, layer count]; present target indicates current target in guidance and
@@ -852,6 +854,7 @@ public class DataAndMethods {
         zoomVal=100;
         dims=new Float[]{0f,0f, 0f, 0f};
         origDims=new Float[]{0f,0f, 0f, 0f};
+        origRatioDims = new Float[] {0f, 0f};
         zoomingIn=false;
         zoomingOut=false;
         zoomBox = "";
@@ -939,12 +942,14 @@ public class DataAndMethods {
                 zoomBox = node.getAttribute("viewBox");
                 //Log.d("VIEW_old", zoomBox);
                 origDims =  Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
+                origRatioDims = Arrays.copyOfRange(origDims, 2, 4);
                 // perform manipulations to zoomBox
                 origDims[2] = x;
                 origDims[3] = y;
                 String zoomDims= Arrays.toString(origDims).replaceAll(",", "");
                 //Log.d("ZOOM",Arrays.toString(press));
                 zoomBox = zoomDims.substring(1,zoomDims.length() - 1);
+                //Log.d("VIEW_new", zoomBox);
                 node.setAttribute("viewBox", zoomBox );
             }}
             else{
@@ -1200,18 +1205,6 @@ public class DataAndMethods {
 
     // show ROI selected
     public static void showRegion(Integer[] region) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
-        Float[] currentDims = Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
-        Float xPerDot = currentDims[2]/ DataAndMethods.brailleServiceObj.getDotPerLineCount();
-        Float yPerDot = currentDims[3]/ DataAndMethods.brailleServiceObj.getDotLineCount();
-        //Log.d("REGION", Arrays.toString(region));
-        //Log.d("DIMS", zoomBox+","+xPerDot+","+yPerDot);
-        /*data = new byte[brailleServiceObj.getDotLineCount()][];
-        for (int i = 0; i < data.length; ++i) {
-            data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
-            Arrays.fill(data[i], (byte) 0x00);
-        }*/
-        // slice from index 5 to index 9
-        // byte[] slice = Arrays.copyOfRange(myArray, 5, 10);
         byte[][] data = DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, false);
         byte[][] selection = new byte[brailleServiceObj.getDotLineCount()][];
         //Log.d("DATA", String.valueOf(data[0].length));
@@ -1230,6 +1223,40 @@ public class DataAndMethods {
             }
         }
         brailleServiceObj.display(selection);
+    }
+    // make follow up query to server
+    public static void sendFollowUpQuery(String query, Integer[] region){
+        // calculate focus values if region exists
+        if (region!=null){
+            Float[] focus= new Float[]{0f, 0f, 0f, 0f};
+            Float[] currentDims = Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
+            Float xPerDot = currentDims[2]/ DataAndMethods.brailleServiceObj.getDotPerLineCount();
+            Float yPerDot = currentDims[3]/ DataAndMethods.brailleServiceObj.getDotLineCount();
+            Float xShift = origRatioDims[0]==0f?0f:(origDims[2]-origRatioDims[0])/2;
+            Float yShift = origRatioDims[1]==0f?0f:(origDims[3]-origRatioDims[1])/2;
+            //Float a = 0f;
+            //Log.d("CHECK!", String.valueOf(0f==a)); // checking java == on float
+            // Log.d("ZOOMED_ON", Arrays.toString(currentDims));
+            // Log.d("ORIG_DIMS", Arrays.toString(origDims));
+            // Log.d("ORIG_RATIO_DIMS", Arrays.toString(origRatioDims));
+            // Log.d("REGION", Arrays.toString(region));
+            // get outer bounds of region of selected pins within graphic
+            focus[0]= (xPerDot*region[0]+currentDims[0]-xShift<origDims[0])?
+                    origDims[0] : xPerDot*region[0]+currentDims[0]-xShift;
+            focus[1]=(yPerDot*region[1]+currentDims[1]-yShift<origDims[1])?
+                    origDims[1] : yPerDot*region[1]+currentDims[1]-yShift;
+            focus[2]= Math.min(xPerDot * (region[2] + 1) + currentDims[0]-xShift, (origDims[0] + origRatioDims[0]));
+            focus[3]= Math.min(yPerDot * (region[3] + 1) + currentDims[1]-yShift, (origDims[1] + origRatioDims[1]));
+            // Log.d("FOCUS", Arrays.toString(focus));
+            focus[0] = (focus[0] -origDims[0]) / origRatioDims[0];
+            focus[1] = (focus[1] -origDims[1]) / origRatioDims[1];
+            focus[2] = (focus[2] -origDims[0]) / origRatioDims[0];
+            focus[3] = (focus[3] -origDims[1]) / origRatioDims[1];
+            // Log.d("FOCUS", Arrays.toString(focus));
+        }
+
+
+
     }
     // this is used to replicate what the outcome of a server call is for the demo example
     public static void makePseudoServerCall(){
