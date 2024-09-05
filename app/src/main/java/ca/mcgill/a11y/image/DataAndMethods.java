@@ -88,7 +88,6 @@ import ca.mcgill.a11y.image.request_formats.PhotoRequestFormat;
 import ca.mcgill.a11y.image.request_formats.ResponseFormat;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -112,7 +111,7 @@ public class DataAndMethods {
     public static int fileSelected = 0;
     // present layer generally ranges between [0, layer count]; present target indicates current target in guidance and
     // targetCount is the number of targets in guidance mode
-    static Integer presentLayer = -1, presentTarget = 0, targetCount;
+    static Integer presentLayer = 0, presentTarget = 0, targetCount;
     // sets whether the TTS label is assigned to the area enclosed by a shape
     static boolean labelFill=true;
     // enables/disables TTS read out
@@ -179,6 +178,7 @@ public class DataAndMethods {
 
         // only initialize tts if it is not already set up; otherwise this takes too long
         if (tts==null){
+
         tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
 
             @Override
@@ -210,8 +210,9 @@ public class DataAndMethods {
                         }
                     });
                 }
-            }});}
+            }}, "com.google.android.tts");}
     }
+
 
     //check mode and display appropriate layer
     public static void displayGraphic(int keyCode, String mode){
@@ -232,6 +233,7 @@ public class DataAndMethods {
             DataAndMethods.ttsEnabled=true;
             if(keyCode ==confirmButton){
                 ++ DataAndMethods.presentTarget;
+                Log.d("PRESENT TARGET", String.valueOf(DataAndMethods.presentTarget));
             }
             else{
                 -- DataAndMethods.presentTarget;

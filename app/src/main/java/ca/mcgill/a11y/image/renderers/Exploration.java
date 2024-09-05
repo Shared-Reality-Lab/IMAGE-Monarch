@@ -67,6 +67,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        DataAndMethods.image = null;
         DataAndMethods.update.observe(this,new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean changedVal) {
@@ -225,7 +226,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
-        DataAndMethods.speaker("Exploration mode");
+        // DataAndMethods.speaker("Exploration mode");
         startService(new Intent(getApplicationContext(), PollingService.class));
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);

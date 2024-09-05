@@ -21,6 +21,7 @@ import static ca.mcgill.a11y.image.DataAndMethods.backButton;
 import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
 import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
+import static ca.mcgill.a11y.image.DataAndMethods.update;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -64,6 +65,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        DataAndMethods.image = null;
         DataAndMethods.update.observe(this,new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean changedVal) {
@@ -239,7 +241,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Guidance Resumed");
-        DataAndMethods.speaker("Guidance mode");
+        //DataAndMethods.speaker("Guidance mode");
         startService(new Intent(getApplicationContext(), PollingService.class));
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);

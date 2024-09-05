@@ -21,10 +21,12 @@ import static ca.mcgill.a11y.image.DataAndMethods.speaker;
 import static ca.mcgill.a11y.image.DataAndMethods.update;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -125,6 +127,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
     protected void onResume() {
         Log.d("ACTIVITY", "ModeSelector Resumed");
         DataAndMethods.speaker("Mode selector");
+        DataAndMethods.image = null;
         update.setValue(false);
         super.onResume();
     }

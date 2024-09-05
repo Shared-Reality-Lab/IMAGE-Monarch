@@ -148,13 +148,13 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
     protected void onResume() {
         Log.d("ACTIVITY", "Classroom Selector Resumed");
         DataAndMethods.speaker("Classroom Selector");
-        startService(new Intent(getApplicationContext(), PollingService.class));
+        //startService(new Intent(getApplicationContext(), PollingService.class));
         super.onResume();
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "Exploration Paused");
-        stopService(new Intent(getApplicationContext(), PollingService.class));
+        Log.d("ACTIVITY", "Classroom Selector Paused");
+        //stopService(new Intent(getApplicationContext(), PollingService.class));
         super.onPause();
     }
 
