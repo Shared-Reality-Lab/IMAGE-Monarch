@@ -39,9 +39,9 @@ public class History{
         // Log.d("HISTORY", history() );
     }
 
-    public String history(){
-        return this.type + ", " + this.request;
-    }
+    // public String history(){
+    //    return this.type + ", " + this.request;
+    // }
 
     public void setResponse(String response){
         this.response = response;

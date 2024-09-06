@@ -1313,11 +1313,10 @@ public class DataAndMethods {
             call = makereq.makeMapRequest(req);
         }
 
-        /*
 
 
-        Log.d("REQUEST", String.valueOf(jsonObject.has("latitude")));
-         */
+        // Log.d("REQUEST", String.valueOf(history.temp_request.getJSONObject("followup")));
+
 
         // need to make a separate function so that 'image' is not replaced
         makeServerCall(call);

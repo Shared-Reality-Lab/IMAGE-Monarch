@@ -61,23 +61,12 @@ public class BaseRequestFormat {
         @SerializedName("focus")
         Float[] focus;
         @SerializedName("previous")
-        //BaseRequestFormat.PreviousReqs[] previous= null;
         String[][] previous = null;
     }
     public void setFollowupValues(String query, Float[] focus) throws JSONException {
         this.followup = new BaseRequestFormat.FollowUp();
         this.followup.query = query;
         this.followup.focus = focus;
-    }
-
-    public static class PreviousReqs{
-        String query;
-        String response;
-
-        public PreviousReqs(String query, String response){
-            this.query = query;
-            this.response = response;
-        }
     }
 
     public void setPrevious(String[][] previous){
