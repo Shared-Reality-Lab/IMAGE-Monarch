@@ -28,17 +28,14 @@ import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
 import static ca.mcgill.a11y.image.selectors.ClassroomSelector.channelSubscribed;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -52,12 +49,15 @@ import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.scand.svg.SVGHelper;
+
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -66,12 +66,10 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.ByteArrayOutputStream;
-import java.io.Console;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -79,6 +77,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -95,11 +94,11 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import ca.mcgill.a11y.image.request_formats.BaseRequestFormat;
 import ca.mcgill.a11y.image.request_formats.MakeRequest;
 import ca.mcgill.a11y.image.request_formats.MapRequestFormat;
 import ca.mcgill.a11y.image.request_formats.PhotoRequestFormat;
 import ca.mcgill.a11y.image.request_formats.ResponseFormat;
-import ca.mcgill.a11y.image.selectors.ClassroomSelector;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -112,6 +111,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class DataAndMethods {
     // SVG data received from response 
     public static String image = null;
+    // Keep recent request history
+    public static History history = new History();
     // used to refresh pins to down state
     static byte[][] data = null;
     // short and long  descriptions of objects in current layer
@@ -128,7 +129,9 @@ public class DataAndMethods {
     public static int fileSelected = 0;
     // present layer generally ranges between [0, layer count]; present target indicates current target in guidance and
     // targetCount is the number of targets in guidance mode
-    static Integer presentLayer = -1, presentTarget = 0, targetCount;
+    public static Integer presentLayer = -1;
+    static Integer presentTarget = 0;
+    static Integer targetCount;
     // sets whether the TTS label is assigned to the area enclosed by a shape
     static boolean labelFill = true;
     // enables/disables TTS read out
@@ -230,7 +233,7 @@ public class DataAndMethods {
                         });
                     }
                 }
-            });
+            }, "com.google.android.tts");
         }
         if (speechRecognizer == null) {
             // Voice Command Recognition Stuff
@@ -303,7 +306,7 @@ public class DataAndMethods {
 
     // handle voice recognition results()
     public static void onVoiceRecognitionResults(String results){
-        if (DataAndMethods.speechRecognizerIntent.getStringExtra("Activity").equals("renderers.BasicPhotoMapRenderer")){
+        if (history.type.equals("Photo")|| history.type.equals("Map")){
             // Log.d("VOICE_REC", results);
             Intent myIntent = new Intent(DataAndMethods.context, FollowUpQuery.class);
             myIntent.putExtra("query", results);
@@ -647,34 +650,48 @@ public class DataAndMethods {
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
-        Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
+        /*Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
         byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
 
         String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
         Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
         PhotoRequestFormat req= new PhotoRequestFormat();
-        req.setValues(base64, dims);
+        req.setValues(base64, dims);*/
+        PhotoRequestFormat req = createPhotoRequest(folderName);
         Retrofit retrofit = requestBuilder(60, 60, "https://image.a11y.mcgill.ca/");
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makePhotoRequest(req);
+        history.updateHistory(req);
         makeServerCall(call);
         // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
         return files[fileSelected].getName().replaceFirst("\\.[^.]*$", "");
     }
+    public static PhotoRequestFormat createPhotoRequest(String folderName) throws IOException, JSONException {
+        File directory = new File(folderName);
+        File[] files = directory.listFiles();
+        Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
+        byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
+        String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+        Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
+        PhotoRequestFormat req= new PhotoRequestFormat();
+        req.setValues(base64, dims);
+        return req;
+    }
+
 
     // initializes and returns the retrofit request;
     public static Retrofit requestBuilder(long readTimeout, long connectTimeout, String baseUrl){
         // Uncomment the following lines for logging http requests
-        //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        // HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        // logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
                 //Need next 2 lines when server response is slow
                 .readTimeout(readTimeout, TimeUnit.SECONDS)
                 .connectTimeout(connectTimeout, TimeUnit.SECONDS)
                 .cache(getCache());
 
-        //httpClient.addInterceptor(logging);
+        // httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
@@ -702,6 +719,7 @@ public class DataAndMethods {
                 "https://image.a11y.mcgill.ca/");
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makeMapRequest(req);
+        history.updateHistory(req);
         makeServerCall(call);
     }
 
@@ -791,6 +809,7 @@ public class DataAndMethods {
                     if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED || image == null) {
                         ResponseFormat resource = response.body();
                         ResponseFormat.Rendering[] renderings = resource.renderings;
+                        if (!history.temp_request.has("followup")){
                         image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
                         //Log.d("RESPONSE", image);
                         byte[] data = image.getBytes("UTF-8");
@@ -807,6 +826,13 @@ public class DataAndMethods {
                         else{
                             presentLayer = -1;
                         }
+                        }
+                        else{
+                            // this is where followup response is handled
+                            //Log.d("FOLLOW UP", "Found followup field");
+                            history.setResponse("This is the followup query response");
+                        }
+                        history.setHistory(true);
                         pingsPlayer(R.raw.image_results_arrived);
                         update.setValue(true);
                     }
@@ -814,20 +840,14 @@ public class DataAndMethods {
                         Log.d("CACHE", "Fetching from cache!");
                     }
                 }
-                catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
                 // This occurs when there is no rendering returned
-                catch (ArrayIndexOutOfBoundsException| NullPointerException e){
+                catch (IOException | ParserConfigurationException | SAXException |
+                       XPathExpressionException e) {
+                    history.setHistory(false);
+                    throw new RuntimeException(e);
+                } catch (ArrayIndexOutOfBoundsException | NullPointerException e){
                     pingsPlayer(R.raw.image_error);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
-                    throw new RuntimeException(e);
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
+                    history.setHistory(false);
                 }
             }
 
@@ -1225,10 +1245,16 @@ public class DataAndMethods {
         brailleServiceObj.display(selection);
     }
     // make follow up query to server
-    public static void sendFollowUpQuery(String query, Integer[] region){
+    public static void sendFollowUpQuery(String query, Integer[] region) throws JSONException, IOException {
+        Float[] focus = null;
+        Retrofit retrofit = requestBuilder(60, 60, // "https://unicorn.cim.mcgill.ca/image/" );
+                "https://image.a11y.mcgill.ca/");
+        MakeRequest makereq= retrofit.create(MakeRequest.class);
+        Call<ResponseFormat> call = null;
+
         // calculate focus values if region exists
         if (region!=null){
-            Float[] focus= new Float[]{0f, 0f, 0f, 0f};
+            focus= new Float[]{0f, 0f, 0f, 0f};
             Float[] currentDims = Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
             Float xPerDot = currentDims[2]/ DataAndMethods.brailleServiceObj.getDotPerLineCount();
             Float yPerDot = currentDims[3]/ DataAndMethods.brailleServiceObj.getDotLineCount();
@@ -1255,9 +1281,71 @@ public class DataAndMethods {
             // Log.d("FOCUS", Arrays.toString(focus));
         }
 
+        if (history.type.equals("Photo")){
+            // PhotoRequestFormat req= createPhotoRequest("/sdcard/IMAGE/client/");
+            String base64 = history.request.getString("graphic");
+            String dimensions= history.request.getString("dimensions");
+            //Log.d("REQUEST_HISTORY", dimensions);
+            dimensions = dimensions.substring(1,dimensions.length()-1);
+            Integer[] dims= Arrays.stream(dimensions.split(",")).map(Integer::valueOf).toArray(Integer[]::new);
+            PhotoRequestFormat req= new PhotoRequestFormat();
+            req.setValues(base64, dims);
+            //Log.d("HISTORY", history.type);
+            req.setFollowupValues(query,focus);
+            if (history.request.has("followup")){
+                String[][] previous = setPrevious();
+                req.setPrevious(previous);
+            }
+            history.updateHistory(req);
+            call= makereq.makePhotoRequest(req);
+        }
+        else if (history.type.equals("Map")){
+            MapRequestFormat req = new MapRequestFormat();
+            Double lat = history.request.getJSONObject("coordinates").getDouble("latitude");
+            Double lon = history.request.getJSONObject("coordinates").getDouble("longitude");
+            req.setValues(lat, lon);
+            req.setFollowupValues(query,focus);
+            if (history.request.has("followup")){
+                String[][] previous = setPrevious();
+                req.setPrevious(previous);
+            }
+            history.updateHistory(req);
+            call = makereq.makeMapRequest(req);
+        }
 
+        /*
+
+
+        Log.d("REQUEST", String.valueOf(jsonObject.has("latitude")));
+         */
+
+        // need to make a separate function so that 'image' is not replaced
+        makeServerCall(call);
 
     }
+    
+    public static String[][] setPrevious() throws JSONException {
+        // Log.d("PREVIOUS", String.valueOf(history.request.getJSONObject("followup")));
+        String query = history.request.getJSONObject("followup").getString("query");
+        String response = history.response;
+        //List<BaseRequestFormat.PreviousReqs> previous = new ArrayList<>();;
+        List<String[]> previous = new ArrayList<>();
+        if (history.request.getJSONObject("followup").has("previous")){
+            JSONArray old_previous = history.request.getJSONObject("followup").getJSONArray("previous");
+            for (int i=0; i<old_previous.length(); i++){
+                JSONArray old_prev = old_previous.getJSONArray(i);
+                String[] prev = new String[] {old_prev.getString(0), old_prev.getString(1)};
+                previous.add(prev);
+            }
+        }
+        //BaseRequestFormat.PreviousReqs prev = new BaseRequestFormat.PreviousReqs(query, response);
+        String[] prev = new String[] {query, response};
+        previous.add(prev);
+        return previous.toArray(new String[][]{});
+    }
+
+
+
     // this is used to replicate what the outcome of a server call is for the demo example
     public static void makePseudoServerCall(){
         resetGraphicParams();

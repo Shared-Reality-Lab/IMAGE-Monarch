@@ -22,6 +22,7 @@ import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 
 import androidx.core.view.GestureDetectorCompat;
 
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
@@ -45,6 +46,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
     private BrailleDisplay brailleServiceObj = null;
 
     private GestureDetectorCompat mDetector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,17 +61,17 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
         switch (keyMapping.getOrDefault(keyCode, "default")) {
             case "OK":
                 DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
-                return false;
+                return true;
             case "CANCEL":
                 DataAndMethods.displayGraphic(DataAndMethods.backButton, "Exploration");
-                return false;
+                return true;
             case "MENU":
                 DataAndMethods.pingsPlayer(R.raw.blip);
-                DataAndMethods.speechRecognizer.startListening(DataAndMethods.speechRecognizerIntent.putExtra("Activity", getLocalClassName()));
-                return false;
+                DataAndMethods.speechRecognizer.startListening(DataAndMethods.speechRecognizerIntent);
+                return true;
             default:
                 Log.d("KEY EVENT", event.toString());
-                return false;
+                return true;
         }
     }
 
