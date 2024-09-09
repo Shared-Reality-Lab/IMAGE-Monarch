@@ -809,23 +809,23 @@ public class DataAndMethods {
                     if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED || image == null) {
                         ResponseFormat resource = response.body();
                         ResponseFormat.Rendering[] renderings = resource.renderings;
-                        if (!history.temp_request.has("followup")){
-                        image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
-                        //Log.d("RESPONSE", image);
-                        byte[] data = image.getBytes("UTF-8");
-                        data = Base64.decode(data, Base64.DEFAULT);
-                        image = new String(data, "UTF-8");
-                        // Log.d("IMAGE", image);
-                        // gets viewBox dims for current image
-                        resetGraphicParams();
-                        setImageDims();
-                        targetCounts();
-                        if (renderings[0].data.layer != null) {
-                            setDefaultLayer(renderings[0].data.layer);
-                        }
-                        else{
-                            presentLayer = -1;
-                        }
+                        if (history.temp_request == null || !history.temp_request.has("followup")){
+                            image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
+                            //Log.d("RESPONSE", image);
+                            byte[] data = image.getBytes("UTF-8");
+                            data = Base64.decode(data, Base64.DEFAULT);
+                            image = new String(data, "UTF-8");
+                            // Log.d("IMAGE", image);
+                            // gets viewBox dims for current image
+                            resetGraphicParams();
+                            setImageDims();
+                            targetCounts();
+                            if (renderings[0].data.layer != null) {
+                                setDefaultLayer(renderings[0].data.layer);
+                            }
+                            else{
+                                presentLayer = -1;
+                            }
                         }
                         else{
                             // this is where followup response is handled

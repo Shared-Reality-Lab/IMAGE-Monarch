@@ -67,10 +67,11 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        DataAndMethods.image = null;
         DataAndMethods.update.observe(this,new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean changedVal) {
-                if (changedVal){
+                if (changedVal && DataAndMethods.image != null){
                     displayGraphic(confirmButton, "Exploration");
                 }
             }
@@ -100,11 +101,13 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                     return true;
 
                 case "OK":
-                    DataAndMethods.displayGraphic(confirmButton, "Exploration");
+                    if (DataAndMethods.image!= null)
+                        DataAndMethods.displayGraphic(confirmButton, "Exploration");
                     return false;
 
                 case "CANCEL":
-                    DataAndMethods.displayGraphic(backButton, "Exploration");
+                    if (DataAndMethods.image!= null)
+                        DataAndMethods.displayGraphic(backButton, "Exploration");
                     return false;
                 default:
                     Log.d("KEY EVENT", event.toString());
