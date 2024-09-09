@@ -79,6 +79,10 @@ public class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         // View Actions
         setContentView(R.layout.activity_main);
+        if(ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
+            checkPermission();
+        }
+
         if (DataAndMethods.brailleServiceObj==null) {
             brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
@@ -98,6 +102,12 @@ public class BaseActivity extends AppCompatActivity {
 
         this.getOnBackPressedDispatcher().addCallback(onBackPressedCallback);*/
 
+    }
+    // check permissions required for voice recognition
+    private void checkPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.RECORD_AUDIO},1);
+        }
     }
 
     @Override

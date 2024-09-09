@@ -29,14 +29,19 @@ import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 import static ca.mcgill.a11y.image.selectors.ClassroomSelector.channelSubscribed;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
@@ -46,19 +51,25 @@ import android.webkit.MimeTypeMap;
 
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.scand.svg.SVGHelper;
+
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -66,6 +77,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -82,6 +94,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import ca.mcgill.a11y.image.request_formats.BaseRequestFormat;
 import ca.mcgill.a11y.image.request_formats.MakeRequest;
 import ca.mcgill.a11y.image.request_formats.MapRequestFormat;
 import ca.mcgill.a11y.image.request_formats.PhotoRequestFormat;
@@ -97,29 +110,35 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DataAndMethods {
     // SVG data received from response 
-    public static String image=null;
+    public static String image = null;
+    // Keep recent request history
+    public static History history = new History();
     // used to refresh pins to down state
     static byte[][] data = null;
     // short and long  descriptions of objects in current layer
     public static ArrayList<String[][]> tags;
     // default zoom value when new graphic is rendered in percentage
-    static Integer zoomVal=100;
+    static Integer zoomVal = 100;
     // current dimensions of graphic; dims = {start-x, start-y, end-x, end-y}
-    static Float[] dims=new Float[]{0f,0f, 0f, 0f};
-    // original dimensions of graphic before viewBox manipulations
-    static Float[] origDims=new Float[]{0f,0f, 0f, 0f};
+    static Float[] dims = new Float[]{0f, 0f, 0f, 0f};
+    // original dimensions of graphic before viewBox manipulations; The height and width are, however, adjusted to fit the 96x40
+    static Float[] origDims = new Float[]{0f, 0f, 0f, 0f};
+    // original graphic dimension before aspect ratio manipulations as this is needed for the follow up query
+    static Float[] origRatioDims = new Float[]{0f, 0f};
     // index of file selected in current directory
     public static int fileSelected = 0;
     // present layer generally ranges between [0, layer count]; present target indicates current target in guidance and
     // targetCount is the number of targets in guidance mode
-    static Integer presentLayer = -1, presentTarget = 0, targetCount;
+    public static Integer presentLayer = -1;
+    static Integer presentTarget = 0;
+    static Integer targetCount;
     // sets whether the TTS label is assigned to the area enclosed by a shape
-    static boolean labelFill=true;
+    static boolean labelFill = true;
     // enables/disables TTS read out
-    public static boolean ttsEnabled=true;
+    public static boolean ttsEnabled = true;
     // set zooming in/out as enabled or disabled
-    public static boolean zoomingIn=false;
-    public static boolean zoomingOut=false;
+    public static boolean zoomingIn = false;
+    public static boolean zoomingOut = false;
 
     // showing/hiding non-target elements in guidance mode
     public static boolean showAll = false;
@@ -159,8 +178,12 @@ public class DataAndMethods {
         put(KEYCODE_BACK, "BACK");
     }};
 
+    // speech recognizer stuff
+    public static SpeechRecognizer speechRecognizer = null;
+    public static Intent speechRecognizerIntent;
+
     // initializes the Braille display, TTS and other common components in newly created activity
-    public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
+    public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view) {
         DataAndMethods.brailleServiceObj = brailleServiceObj;
         DataAndMethods.context = context;
         DataAndMethods.view = view;
@@ -174,45 +197,125 @@ public class DataAndMethods {
 
         // empty string array to be populated with descriptions when the layer is loaded
         tags = new ArrayList<>();
-        tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
-        tags.add(new String [brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
+        tags.add(new String[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
+        tags.add(new String[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
 
         // only initialize tts if it is not already set up; otherwise this takes too long
-        if (tts==null){
-        tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
+        if (tts == null) {
+            tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
 
-            @Override
-            public void onInit(int status) {
+                @Override
+                public void onInit(int status) {
 
-                if(status != TextToSpeech.SUCCESS){
-                    Log.e("error", "Initialization Failed!"+status);
-                }
-                else {
-                    tts.setLanguage(Locale.getDefault());
-                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                        @Override
-                        public void onStart(String s) {
+                    if (status != TextToSpeech.SUCCESS) {
+                        Log.e("error", "Initialization Failed!" + status);
+                    } else {
+                        tts.setLanguage(Locale.getDefault());
+                        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                            @Override
+                            public void onStart(String s) {
 
-                        }
-
-                        @Override
-                        public void onDone(String s) {
-                            //Log.d("CHECKING!", s);
-                            // plays ping when TTS readout is completed based on utteranceId
-                            if (s.equals("ping")){
-                                pingsPlayer(R.raw.blip);
                             }
-                        }
 
-                        @Override
-                        public void onError(String s) {
+                            @Override
+                            public void onDone(String s) {
+                                //Log.d("CHECKING!", s);
+                                // plays ping when TTS readout is completed based on utteranceId
+                                if (s.equals("ping")) {
+                                    pingsPlayer(R.raw.blip);
+                                }
+                            }
 
-                        }
-                    });
+                            @Override
+                            public void onError(String s) {
+
+                            }
+                        });
+                    }
                 }
-            }});}
+            }, "com.google.android.tts");
+        }
+        if (speechRecognizer == null) {
+            // Voice Command Recognition Stuff
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(DataAndMethods.context);
+            speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+
+
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                @Override
+                public void onReadyForSpeech(Bundle bundle) {
+
+                }
+
+                @Override
+                public void onBeginningOfSpeech() {
+                    Log.d("SPEECHREC", "Listening");
+                    //Toast toast = Toast.makeText(getApplicationContext() , "Listening...", Toast.LENGTH_SHORT);
+                    //toast.show();
+                }
+
+                @Override
+                public void onRmsChanged(float v) {
+
+                }
+
+                @Override
+                public void onBufferReceived(byte[] bytes) {
+
+                }
+
+                @Override
+                public void onEndOfSpeech() {
+
+                }
+
+                @Override
+                public void onError(int i) {
+                    Log.d("SPEECHREC", String.valueOf(i));
+                    switch (i) {
+                        case SpeechRecognizer.ERROR_NO_MATCH:
+                            DataAndMethods.speaker("Failed to recognize text");
+                        default:
+                            DataAndMethods.speaker("Error occurred during speech recognition");
+                    }
+                }
+
+                @Override
+                public void onResults(Bundle bundle) {
+                    ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    String results = data.get(0);
+                    onVoiceRecognitionResults(results);
+                    //speaker("Query acquired: "+cmd);
+                }
+
+                @Override
+                public void onPartialResults(Bundle bundle) {
+
+                }
+
+                @Override
+                public void onEvent(int i, Bundle bundle) {
+
+                }
+            });
+        }
     }
 
+
+    // handle voice recognition results()
+    public static void onVoiceRecognitionResults(String results){
+        if (history.type.equals("Photo")|| history.type.equals("Map")){
+            // Log.d("VOICE_REC", results);
+            Intent myIntent = new Intent(DataAndMethods.context, FollowUpQuery.class);
+            myIntent.putExtra("query", results);
+            myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            DataAndMethods.context.startActivity(myIntent);
+
+        }else
+            Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
+    }
     //check mode and display appropriate layer
     public static void displayGraphic(int keyCode, String mode){
         try{if (mode=="Exploration"){
@@ -547,34 +650,48 @@ public class DataAndMethods {
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
-        Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
+        /*Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
         byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
 
         String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
         Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
         PhotoRequestFormat req= new PhotoRequestFormat();
-        req.setValues(base64, dims);
+        req.setValues(base64, dims);*/
+        PhotoRequestFormat req = createPhotoRequest(folderName);
         Retrofit retrofit = requestBuilder(60, 60, "https://image.a11y.mcgill.ca/");
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makePhotoRequest(req);
+        history.updateHistory(req);
         makeServerCall(call);
         // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
         return files[fileSelected].getName().replaceFirst("\\.[^.]*$", "");
     }
+    public static PhotoRequestFormat createPhotoRequest(String folderName) throws IOException, JSONException {
+        File directory = new File(folderName);
+        File[] files = directory.listFiles();
+        Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
+        byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
+        String base64 = "data:"+ getMimeType(files[fileSelected].getName())+";base64,"+ Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+        Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
+        PhotoRequestFormat req= new PhotoRequestFormat();
+        req.setValues(base64, dims);
+        return req;
+    }
+
 
     // initializes and returns the retrofit request;
     public static Retrofit requestBuilder(long readTimeout, long connectTimeout, String baseUrl){
         // Uncomment the following lines for logging http requests
-        //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        // HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        // logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
                 //Need next 2 lines when server response is slow
                 .readTimeout(readTimeout, TimeUnit.SECONDS)
                 .connectTimeout(connectTimeout, TimeUnit.SECONDS)
                 .cache(getCache());
 
-        //httpClient.addInterceptor(logging);
+        // httpClient.addInterceptor(logging);
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(baseUrl)
@@ -602,6 +719,7 @@ public class DataAndMethods {
                 "https://image.a11y.mcgill.ca/");
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makeMapRequest(req);
+        history.updateHistory(req);
         makeServerCall(call);
     }
 
@@ -691,42 +809,45 @@ public class DataAndMethods {
                     if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED || image == null) {
                         ResponseFormat resource = response.body();
                         ResponseFormat.Rendering[] renderings = resource.renderings;
-                        image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
-                        //Log.d("RESPONSE", image);
-                        byte[] data = image.getBytes("UTF-8");
-                        data = Base64.decode(data, Base64.DEFAULT);
-                        image = new String(data, "UTF-8");
-                        // Log.d("IMAGE", image);
-                        // gets viewBox dims for current image
-                        resetGraphicParams();
-                        setImageDims();
-                        targetCounts();
-                        if (renderings[0].data.layer != null) {
-                            setDefaultLayer(renderings[0].data.layer);
+                        if (history.temp_request == null || !history.temp_request.has("followup")){
+                            image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
+                            //Log.d("RESPONSE", image);
+                            byte[] data = image.getBytes("UTF-8");
+                            data = Base64.decode(data, Base64.DEFAULT);
+                            image = new String(data, "UTF-8");
+                            // Log.d("IMAGE", image);
+                            // gets viewBox dims for current image
+                            resetGraphicParams();
+                            setImageDims();
+                            targetCounts();
+                            if (renderings[0].data.layer != null) {
+                                setDefaultLayer(renderings[0].data.layer);
+                            }
+                            else{
+                                presentLayer = -1;
+                            }
                         }
                         else{
-                            presentLayer = -1;
+                            // this is where followup response is handled
+                            //Log.d("FOLLOW UP", "Found followup field");
+                            history.setResponse("This is the followup query response");
                         }
+                        history.setHistory(true);
+                        pingsPlayer(R.raw.image_results_arrived);
                         update.setValue(true);
                     }
                     else{
                         Log.d("CACHE", "Fetching from cache!");
                     }
                 }
-                catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
                 // This occurs when there is no rendering returned
-                catch (ArrayIndexOutOfBoundsException| NullPointerException e){
+                catch (IOException | ParserConfigurationException | SAXException |
+                       XPathExpressionException e) {
+                    history.setHistory(false);
+                    throw new RuntimeException(e);
+                } catch (ArrayIndexOutOfBoundsException | NullPointerException e){
                     pingsPlayer(R.raw.image_error);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
-                    throw new RuntimeException(e);
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
+                    history.setHistory(false);
                 }
             }
 
@@ -753,6 +874,7 @@ public class DataAndMethods {
         zoomVal=100;
         dims=new Float[]{0f,0f, 0f, 0f};
         origDims=new Float[]{0f,0f, 0f, 0f};
+        origRatioDims = new Float[] {0f, 0f};
         zoomingIn=false;
         zoomingOut=false;
         zoomBox = "";
@@ -840,12 +962,14 @@ public class DataAndMethods {
                 zoomBox = node.getAttribute("viewBox");
                 //Log.d("VIEW_old", zoomBox);
                 origDims =  Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
+                origRatioDims = Arrays.copyOfRange(origDims, 2, 4);
                 // perform manipulations to zoomBox
                 origDims[2] = x;
                 origDims[3] = y;
                 String zoomDims= Arrays.toString(origDims).replaceAll(",", "");
                 //Log.d("ZOOM",Arrays.toString(press));
                 zoomBox = zoomDims.substring(1,zoomDims.length() - 1);
+                //Log.d("VIEW_new", zoomBox);
                 node.setAttribute("viewBox", zoomBox );
             }}
             else{
@@ -1059,17 +1183,7 @@ public class DataAndMethods {
         }
     }
 
-
-    // this is used to replicate what the outcome of a server call is for the demo example
-    public static void makePseudoServerCall(){
-        resetGraphicParams();
-        image = //"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> " +
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" version=\"1.1\"" +
-                        "width=\"96\" height=\"40\" id=\"svg135\"> <g class=\"layer\" data-image-layer=\"Layer 1\">" +
-                "\n<ellipse fill=\"none\" stroke=\"#000000\" stroke-width=\"0.885\" id=\"path358\" " +
-                "cx=\"48\" cy=\"20\" rx=\"15\" ry=\"15\" /> </g> \n</svg>";
-    }
-
+    // display layer that the current target is in
     public static byte[][] displayTargetLayer(Document doc) throws XPathExpressionException, IOException {
         doc = getTargetLayer(doc);
         byte[] byteArray = docToBitmap(doc);
@@ -1098,5 +1212,146 @@ public class DataAndMethods {
             dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
         }
         return dataRead;
+    }
+
+    // check if selected region is valid
+    public static boolean validateRegion(Integer[] region){
+        //Log.d("REGION", Arrays.toString(region));
+        if (region[0]<region[2] && region[1]<region[3])
+            return true;
+        else
+            return false;
+    }
+
+    // show ROI selected
+    public static void showRegion(Integer[] region) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
+        byte[][] data = DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, false);
+        byte[][] selection = new byte[brailleServiceObj.getDotLineCount()][];
+        //Log.d("DATA", String.valueOf(data[0].length));
+        for (int i = 0; i < selection.length; ++i) {
+            selection[i] = new byte[brailleServiceObj.getDotPerLineCount()];
+            if (i>=region[1] && i<=region[3]) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+                outputStream.write( Arrays.copyOfRange(DataAndMethods.data[i], 0 ,region[0] ));
+                outputStream.write( Arrays.copyOfRange(data[i], region[0] ,region[2]+1 ) );
+                outputStream.write( Arrays.copyOfRange(DataAndMethods.data[i], region[2]+1 ,brailleServiceObj.getDotPerLineCount() ));
+                selection[i]= outputStream.toByteArray( );
+            }
+            else{
+                //Log.d("COORDS", String.valueOf(i));
+                Arrays.fill(selection[i], (byte) 0x00);
+            }
+        }
+        brailleServiceObj.display(selection);
+    }
+    // make follow up query to server
+    public static void sendFollowUpQuery(String query, Integer[] region) throws JSONException, IOException {
+        Float[] focus = null;
+        Retrofit retrofit = requestBuilder(60, 60, // "https://unicorn.cim.mcgill.ca/image/" );
+                "https://image.a11y.mcgill.ca/");
+        MakeRequest makereq= retrofit.create(MakeRequest.class);
+        Call<ResponseFormat> call = null;
+
+        // calculate focus values if region exists
+        if (region!=null){
+            focus= new Float[]{0f, 0f, 0f, 0f};
+            Float[] currentDims = Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
+            Float xPerDot = currentDims[2]/ DataAndMethods.brailleServiceObj.getDotPerLineCount();
+            Float yPerDot = currentDims[3]/ DataAndMethods.brailleServiceObj.getDotLineCount();
+            Float xShift = origRatioDims[0]==0f?0f:(origDims[2]-origRatioDims[0])/2;
+            Float yShift = origRatioDims[1]==0f?0f:(origDims[3]-origRatioDims[1])/2;
+            //Float a = 0f;
+            //Log.d("CHECK!", String.valueOf(0f==a)); // checking java == on float
+            // Log.d("ZOOMED_ON", Arrays.toString(currentDims));
+            // Log.d("ORIG_DIMS", Arrays.toString(origDims));
+            // Log.d("ORIG_RATIO_DIMS", Arrays.toString(origRatioDims));
+            // Log.d("REGION", Arrays.toString(region));
+            // get outer bounds of region of selected pins within graphic
+            focus[0]= (xPerDot*region[0]+currentDims[0]-xShift<origDims[0])?
+                    origDims[0] : xPerDot*region[0]+currentDims[0]-xShift;
+            focus[1]=(yPerDot*region[1]+currentDims[1]-yShift<origDims[1])?
+                    origDims[1] : yPerDot*region[1]+currentDims[1]-yShift;
+            focus[2]= Math.min(xPerDot * (region[2] + 1) + currentDims[0]-xShift, (origDims[0] + origRatioDims[0]));
+            focus[3]= Math.min(yPerDot * (region[3] + 1) + currentDims[1]-yShift, (origDims[1] + origRatioDims[1]));
+            // Log.d("FOCUS", Arrays.toString(focus));
+            focus[0] = (focus[0] -origDims[0]) / origRatioDims[0];
+            focus[1] = (focus[1] -origDims[1]) / origRatioDims[1];
+            focus[2] = (focus[2] -origDims[0]) / origRatioDims[0];
+            focus[3] = (focus[3] -origDims[1]) / origRatioDims[1];
+            // Log.d("FOCUS", Arrays.toString(focus));
+        }
+
+        if (history.type.equals("Photo")){
+            // PhotoRequestFormat req= createPhotoRequest("/sdcard/IMAGE/client/");
+            String base64 = history.request.getString("graphic");
+            String dimensions= history.request.getString("dimensions");
+            //Log.d("REQUEST_HISTORY", dimensions);
+            dimensions = dimensions.substring(1,dimensions.length()-1);
+            Integer[] dims= Arrays.stream(dimensions.split(",")).map(Integer::valueOf).toArray(Integer[]::new);
+            PhotoRequestFormat req= new PhotoRequestFormat();
+            req.setValues(base64, dims);
+            //Log.d("HISTORY", history.type);
+            req.setFollowupValues(query,focus);
+            if (history.request.has("followup")){
+                String[][] previous = setPrevious();
+                req.setPrevious(previous);
+            }
+            history.updateHistory(req);
+            call= makereq.makePhotoRequest(req);
+        }
+        else if (history.type.equals("Map")){
+            MapRequestFormat req = new MapRequestFormat();
+            Double lat = history.request.getJSONObject("coordinates").getDouble("latitude");
+            Double lon = history.request.getJSONObject("coordinates").getDouble("longitude");
+            req.setValues(lat, lon);
+            req.setFollowupValues(query,focus);
+            if (history.request.has("followup")){
+                String[][] previous = setPrevious();
+                req.setPrevious(previous);
+            }
+            history.updateHistory(req);
+            call = makereq.makeMapRequest(req);
+        }
+
+
+
+        // Log.d("REQUEST", String.valueOf(history.temp_request.getJSONObject("followup")));
+
+
+        // need to make a separate function so that 'image' is not replaced
+        makeServerCall(call);
+
+    }
+    
+    public static String[][] setPrevious() throws JSONException {
+        // Log.d("PREVIOUS", String.valueOf(history.request.getJSONObject("followup")));
+        String query = history.request.getJSONObject("followup").getString("query");
+        String response = history.response;
+        //List<BaseRequestFormat.PreviousReqs> previous = new ArrayList<>();;
+        List<String[]> previous = new ArrayList<>();
+        if (history.request.getJSONObject("followup").has("previous")){
+            JSONArray old_previous = history.request.getJSONObject("followup").getJSONArray("previous");
+            for (int i=0; i<old_previous.length(); i++){
+                JSONArray old_prev = old_previous.getJSONArray(i);
+                String[] prev = new String[] {old_prev.getString(0), old_prev.getString(1)};
+                previous.add(prev);
+            }
+        }
+        //BaseRequestFormat.PreviousReqs prev = new BaseRequestFormat.PreviousReqs(query, response);
+        String[] prev = new String[] {query, response};
+        previous.add(prev);
+        return previous.toArray(new String[][]{});
+    }
+
+
+
+    // this is used to replicate what the outcome of a server call is for the demo example
+    public static void makePseudoServerCall(){
+        resetGraphicParams();
+        image = //"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> " +
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" version=\"1.1\"" +
+                        "width=\"96\" height=\"40\" id=\"svg135\"> <g class=\"layer\" data-image-layer=\"Layer 1\">" +
+                        "\n<ellipse fill=\"none\" stroke=\"#000000\" stroke-width=\"0.885\" id=\"path358\" " +
+                        "cx=\"48\" cy=\"20\" rx=\"15\" ry=\"15\" /> </g> \n</svg>";
     }
 }

@@ -64,10 +64,11 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
         brailleServiceObj = DataAndMethods.brailleServiceObj;
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+        DataAndMethods.image = null;
         DataAndMethods.update.observe(this,new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean changedVal) {
-                if (changedVal){
+                if (changedVal && DataAndMethods.image != null){
                     displayGraphic(confirmButton, "Guidance");
                 }
             }
@@ -97,11 +98,13 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                     return true;
 
                 case "OK":
-                    DataAndMethods.displayGraphic(confirmButton, "Guidance");
+                    if (DataAndMethods.image!= null)
+                        DataAndMethods.displayGraphic(confirmButton, "Guidance");
                     return false;
 
                 case "CANCEL":
-                    DataAndMethods.displayGraphic(backButton, "Guidance");
+                    if (DataAndMethods.image!= null)
+                        DataAndMethods.displayGraphic(backButton, "Guidance");
                     return false;
                 default:
                     Log.d("KEY EVENT", event.toString());

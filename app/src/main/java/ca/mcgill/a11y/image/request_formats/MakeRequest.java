@@ -38,4 +38,5 @@ public interface MakeRequest {
     @Headers("Content-Type: application/json")
     @POST("render/")
     Call<ResponseFormat> makeMapRequest(@Body MapRequestFormat req);
+
 }
