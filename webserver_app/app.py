@@ -5,14 +5,13 @@ import hashlib
 import json
 
 app = Flask(__name__)
-app.config.from_object(__name__)
+app.config.from_pyfile('config.py')
 logging.basicConfig(filename='pattern_design.log', encoding='utf-8', level=logging.DEBUG, format='%(message)s')
 
 CORS(
     app, resources={r"/*": {"origins": "*"}}
 )  # CORS allowed for all domains on all routes
 
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 class SVG():
     svg_data={}
@@ -57,7 +56,7 @@ def display(id):
             app.logger.debug(svgData.svg_data[id]["data"])
             response= Response()
             response.mimetype = "application/json"
-            response.set_data(json.dumps({"data":svgData.svg_data[id]["data"], "layer": svgData.svg_data[id]["layer"]}))
+            response.set_data(json.dumps({"renderings":[{"data":{"graphic":svgData.svg_data[id]["data"], "layer": svgData.svg_data[id]["layer"]}}]}))
             response.add_etag(hashlib.md5((svgData.svg_data[id]["data"]+svgData.svg_data[id]["layer"]).encode()))
             response.make_conditional(request)
             return response
