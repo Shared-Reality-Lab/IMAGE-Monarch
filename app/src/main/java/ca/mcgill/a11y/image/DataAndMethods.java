@@ -1,5 +1,6 @@
 package ca.mcgill.a11y.image;
 
+import static android.text.TextUtils.isEmpty;
 import static android.view.KeyEvent.KEYCODE_DPAD_DOWN;
 import static android.view.KeyEvent.KEYCODE_DPAD_LEFT;
 import static android.view.KeyEvent.KEYCODE_DPAD_RIGHT;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,6 +86,8 @@ public class DataAndMethods {
     Integer presentGuidance=0;
     static boolean labelFill=true;
     static boolean ttsEnabled=true;
+
+    static boolean showAll = false;
 
     static boolean zoomingIn=false, zoomingOut=false;
     static Integer layerCount=0, targetCount;
@@ -358,13 +362,15 @@ public class DataAndMethods {
     }
 
     public static byte[][] getGuidanceBitmaps(Document doc, int presentGuidance) throws XPathExpressionException, IOException, ParserConfigurationException, SAXException {
+        showAll = false;
+        String tag = "";
         XPath xPath = XPathFactory.newInstance().newXPath();
 
         /*NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-target]", doc, XPathConstants.NODESET);
         targetCount=nodeslist.getLength();
         */
         if (targetCount ==0){
-            speaker("No guidance mode available");
+            speaker("No guidance mode available. Defaulting to exploration mode");
             return data;
         }
         else if (presentTarget<=0 ){
@@ -394,6 +400,25 @@ public class DataAndMethods {
 
         byte[] mask = docToBitmap(doc);
         doc = getTargetLayer(getfreshDoc());
+        Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
+        if (((Element)targetLayer).hasAttribute("aria-labelledby")) {
+            tag= doc.getElementById(((Element) targetLayer).getAttribute("aria-labelledby")).getTextContent();
+            //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
+        }
+        else{
+            tag=((Element)targetLayer).getAttribute("aria-label");
+            //Log.d("GETTING TAGS", "Otherwise here!");
+        }
+        Node node = ((NodeList) xPath.evaluate("//*[ancestor-or-self::*[@data-image-target = '"+presentTarget+"']]", doc, XPathConstants.NODESET)).item(0);
+        if (((Element)node).hasAttribute("aria-labelledby")) {
+            tag += "\n" + doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+            //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent()));
+        }
+        else{
+            tag += "\n" + ((Element)node).getAttribute("aria-label");
+            //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
+        }
+        speaker("Layer: " + tag);
         /*
         Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
         //Log.d("TARGET Layer", String.valueOf(((Element) targetLayer).getAttribute("data-image-layer")));
@@ -506,6 +531,26 @@ public class DataAndMethods {
     public static byte[][] displayTargetLayer(Document doc) throws XPathExpressionException, IOException {
         doc = getTargetLayer(doc);
         byte[] byteArray = docToBitmap(doc);
+        final Handler handler = new Handler(Looper.getMainLooper());
+        Document finalDoc = doc;
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getDescriptions(finalDoc);
+                    //Log.d("DESCRIPTIONS", "Description loaded");
+                    // This ping plays when the descriptions (i.e. TTS labels) are loaded.
+                    // Generally occurs with a little delay following the tactile rendering
+                    showAll = true;
+                    pingsPlayer(R.raw.ping);
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
         byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
             dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
@@ -747,8 +792,8 @@ public class DataAndMethods {
         int x = svg.getWidth();
         int y = svg.getHeight();
         // padding bitmap to fit to pin array size
+        //Log.d("PARAMS", x+","+y+","+brailleServiceObj.getDotPerLineCount());
         Bitmap svgScaled=padBitmap(svg, brailleServiceObj.getDotPerLineCount()-x, brailleServiceObj.getDotLineCount()-y);
-        svg.recycle();
         // extracting only the alpha value of bitmap to convert it into a byte array
         Bitmap alphas=svgScaled.extractAlpha();
         int size = alphas.getRowBytes() * alphas.getHeight();
@@ -836,20 +881,22 @@ public class DataAndMethods {
             @Override
             public void onResponse(Call<ResponseFormat> call, Response<ResponseFormat> response) {
                 try {
-                    ResponseFormat resource= response.body();
-                    //ResponseFormat.Rendering[] renderings = resource.renderings;
-                    image= (resource.graphic).replaceFirst("data:.+,", "");
-                    //Log.d("RESPONSE", image);
-                    byte[] data = image.getBytes("UTF-8");
-                    data = Base64.decode(data, Base64.DEFAULT);
-                    image = new String(data, "UTF-8");
-                    pingsPlayer(R.raw.image_results_arrived);
-                    //Reset layer count to 0 before new file is loaded
-                    layerCount = 0;
-                    //count guidance targets
-                    targetCounts();
-                    // Enabling the up button again when the response has been received.
-                    view.findViewById(R.id.ones).setEnabled(true);
+
+                        ResponseFormat resource = response.body();
+                        ResponseFormat.Rendering[] renderings = resource.renderings;
+                        image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
+                        //Log.d("RESPONSE", image);
+                        byte[] data = image.getBytes("UTF-8");
+                        data = Base64.decode(data, Base64.DEFAULT);
+                        image = new String(data, "UTF-8");
+                        pingsPlayer(R.raw.image_results_arrived);
+                        //Reset layer count to 0 before new file is loaded
+                        layerCount = 0;
+                        //count guidance targets
+                        targetCounts();
+                        // Enabling the up button again when the response has been received.
+                        view.findViewById(R.id.ones).setEnabled(true);
+
                 }
                 catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);

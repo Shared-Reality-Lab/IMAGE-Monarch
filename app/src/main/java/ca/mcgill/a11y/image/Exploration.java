@@ -121,6 +121,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
         brailleServiceObj = DataAndMethods.brailleServiceObj;
         DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
 
+        /*
         ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -161,7 +162,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                         // Display current layer
                         DataAndMethods.ttsEnabled=true;
                         DataAndMethods.presentLayer++;
-                        if (DataAndMethods.presentLayer==DataAndMethods.layerCount+1)
+                        if (DataAndMethods.presentLayer>=DataAndMethods.layerCount)
                             DataAndMethods.presentLayer=0;
                         DataAndMethods.displayOn = true;
                         brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
@@ -226,7 +227,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
             public void onClick(View view) {
                 debugSwitch.setChecked(!debugSwitch.isChecked());
             }
-        });
+        });*/
     }
 /*
     @Override

@@ -20,6 +20,9 @@ package ca.mcgill.a11y.image;
 import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
 import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
+import static ca.mcgill.a11y.image.DataAndMethods.brailleServiceObj;
+import static ca.mcgill.a11y.image.DataAndMethods.showAll;
+
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.hardware.input.InputManager;
@@ -52,8 +55,6 @@ import javax.xml.xpath.XPathExpressionException;
 public class Guidance extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
     // keyCode of confirm button as per current standard
-    int confirmButton = 504;
-    int backButton = 503;
 
     private GestureDetectorCompat mDetector;
 
@@ -114,7 +115,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
         };
         brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
         */
-
+        /*
         ((Button) findViewById(R.id.zeros)).setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View view, int i, KeyEvent keyEvent) {
@@ -217,7 +218,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
             public void onClick(View view) {
                 debugSwitch.setChecked(!debugSwitch.isChecked());
             }
-        });
+        });*/
     }
 
     /*
@@ -289,14 +290,14 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
             int action = event.getActionMasked();
             if (action==MotionEvent.ACTION_UP)
             {
-                //ArrayList<String[][]> tags = DataAndMethods.tags;
+                ArrayList<String[][]> tags = DataAndMethods.tags;
                 Integer [] pins=DataAndMethods.pinCheck(event.getX(), event.getY());
                 try{
                     // Check if zooming mode is enabled
                     if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
                         DataAndMethods.zoom(pins, "Guidance");
                     }
-                    /*else {
+                    else if (showAll){
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
@@ -304,7 +305,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                         } else {
                             DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
                         }
-                    }*/
+                    }
                 }
                 catch(RuntimeException ex){
                     Log.d("TTS ERROR", String.valueOf(ex));
@@ -363,14 +364,14 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
     @Override
     public boolean onDoubleTap(MotionEvent event) {
         Log.d("GESTURE!", "onDoubleTap: " + event.toString());
-        return true;
-    }
-
-    @Override
-    public boolean onDoubleTapEvent(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
         try {
-            brailleServiceObj.display(DataAndMethods.displayTargetLayer(DataAndMethods.getfreshDoc()));
+            if (!DataAndMethods.showAll)
+                brailleServiceObj.display(DataAndMethods.displayTargetLayer(DataAndMethods.getfreshDoc()));
+            else {
+                brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentTarget));
+                DataAndMethods.showAll = !DataAndMethods.showAll;
+            }
+            //DataAndMethods.showAll = !DataAndMethods.showAll;
         } catch (XPathExpressionException e) {
             throw new RuntimeException(e);
         } catch (ParserConfigurationException e) {
@@ -380,6 +381,12 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
         } catch (SAXException e) {
             throw new RuntimeException(e);
         }
+        return true;
+    }
+
+    @Override
+    public boolean onDoubleTapEvent(MotionEvent event) {
+        Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
         return true;
     }
 

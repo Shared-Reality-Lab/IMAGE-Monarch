@@ -31,7 +31,7 @@ import retrofit2.http.POST;
 // Defines functions to be called to make photo or map requests
 public interface MakeRequest {
     @Headers("Content-Type: application/json")
-    @GET("display")
+    @GET("display/263773")
 
     Call<ResponseFormat> checkForUpdates();
 }

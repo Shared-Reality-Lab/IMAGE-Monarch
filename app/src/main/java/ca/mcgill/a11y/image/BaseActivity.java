@@ -8,6 +8,8 @@ import static android.view.KeyEvent.KEYCODE_MENU;
 import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
 import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
+import static ca.mcgill.a11y.image.DataAndMethods.brailleServiceObj;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -122,25 +124,75 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         try {
+            Intent myIntent = null;
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
-                put(421, "UP");
-                put(420, "DOWN");
-                put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
+                put(420, "UP");
+                put(421, "DOWN");
+                put(504, "NXT_LYR");
+                put(503, "PRV_LYR");
+                /*put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
                 put(KEYCODE_ZOOM_IN, "ZOOM IN");
                 put(KEYCODE_DPAD_UP, "DPAD UP");
                 put(KEYCODE_DPAD_DOWN, "DPAD DOWN");
                 put(KEYCODE_DPAD_LEFT, "DPAD LEFT");
                 put(KEYCODE_DPAD_RIGHT, "DPAD RIGHT");
-                put(KEYCODE_MENU, "MENU");
+                put(KEYCODE_MENU, "MENU");*/
             }};
             switch (keyMapping.getOrDefault(keyCode, "default")) {
                 // Navigating between files
                 case "UP":
                     Log.d("KEY EVENT", event.toString());
-                    DataAndMethods.changeFile(++DataAndMethods.fileSelected);
+                    DataAndMethods.changeFile(DataAndMethods.fileSelected);
+                    DataAndMethods.presentLayer = -1;
+                    DataAndMethods.presentTarget = 0;
                     return true;
-                // Navigating between files
                 case "DOWN":
+                    brailleServiceObj.display(DataAndMethods.data);
+                    DataAndMethods.presentTarget =0;
+                    DataAndMethods.presentLayer=-1;
+                    DataAndMethods.displayOn= false;
+                    if (getLocalClassName().equals("Exploration")) {
+                        myIntent = new Intent(this, Guidance.class);
+                        DataAndMethods.speaker("Switching to Guidance mode");
+                    }
+                    else{
+                        myIntent = new Intent(this, Exploration.class);
+                        DataAndMethods.speaker("Switching to Exploration mode");
+                    }
+                    this.startActivity(myIntent);
+                    return true;
+                case "NXT_LYR":
+                    DataAndMethods.ttsEnabled=true;
+                    DataAndMethods.displayOn= true;
+                    if (getLocalClassName().equals("Exploration")) {
+                        DataAndMethods.presentLayer++;
+                        if (DataAndMethods.presentLayer>=DataAndMethods.layerCount)
+                            DataAndMethods.presentLayer=0;
+                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                    } else{
+                        //Log.d("MODE", "HERE!");
+                        DataAndMethods.presentTarget++;
+                        //Log.d("PRESENT TARGET", String.valueOf(DataAndMethods.presentTarget));
+                        brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentTarget));
+                    }
+                    return true;
+                case "PRV_LYR":
+                    DataAndMethods.ttsEnabled=true;
+                    DataAndMethods.displayOn= true;
+                    //Log.d("MODE", getLocalClassName());
+                    if (getLocalClassName().equals("Exploration")) {
+                        DataAndMethods.presentLayer--;
+                        if (DataAndMethods.presentLayer<0)
+                            DataAndMethods.presentLayer= DataAndMethods.layerCount-1;
+                        brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                    } else{
+                        DataAndMethods.presentTarget--;
+                        //Log.d("PRESENT TARGET", String.valueOf(DataAndMethods.presentTarget));
+                        brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentTarget));
+                    }
+                    return true;
+                /*// Navigating between files
+                
                     Log.d("KEY EVENT", event.toString());
                     DataAndMethods.changeFile(--DataAndMethods.fileSelected);
                     return true;
@@ -181,13 +233,12 @@ public class BaseActivity extends AppCompatActivity {
                     DataAndMethods.pingsPlayer(R.raw.blip);
                     speechRecognizer.startListening(speechRecognizerIntent);
                     return false;
+                */
                 default:
                     Log.d("KEY EVENT", event.toString());
                     return false;
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (JSONException e) {
+        } catch (IOException | JSONException e) {
             throw new RuntimeException(e);
         } catch (XPathExpressionException e) {
             throw new RuntimeException(e);
