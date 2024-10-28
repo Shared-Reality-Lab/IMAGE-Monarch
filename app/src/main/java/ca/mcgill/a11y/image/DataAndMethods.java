@@ -99,6 +99,7 @@ public class DataAndMethods {
     static View view;
 
     static String zoomBox = "";
+    static String layerTitle = "";
 
     public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view){
         DataAndMethods.brailleServiceObj = brailleServiceObj;
@@ -149,7 +150,7 @@ public class DataAndMethods {
                         }
                     });
                 }
-            }});
+            }}, "com.google.android.tts");
     }
 
     public static Bitmap padBitmap(Bitmap bitmap, int padX, int padY)
@@ -217,6 +218,7 @@ public class DataAndMethods {
                     tag=((Element)node).getAttribute("aria-label");
                     //Log.d("GETTING TAGS", "Otherwise here!");
                 }
+                layerTitle = "Layer: " +tag;
                 if (readCaption) {
                     speaker("Layer: " + tag);
                 }
@@ -400,7 +402,7 @@ public class DataAndMethods {
 
         byte[] mask = docToBitmap(doc);
         doc = getTargetLayer(getfreshDoc());
-        Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
+        /*Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
         if (((Element)targetLayer).hasAttribute("aria-labelledby")) {
             tag= doc.getElementById(((Element) targetLayer).getAttribute("aria-labelledby")).getTextContent();
             //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
@@ -408,17 +410,19 @@ public class DataAndMethods {
         else{
             tag=((Element)targetLayer).getAttribute("aria-label");
             //Log.d("GETTING TAGS", "Otherwise here!");
-        }
+        }*/
         Node node = ((NodeList) xPath.evaluate("//*[ancestor-or-self::*[@data-image-target = '"+presentTarget+"']]", doc, XPathConstants.NODESET)).item(0);
         if (((Element)node).hasAttribute("aria-labelledby")) {
-            tag += "\n" + doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+            tag = doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
             //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent()));
         }
         else{
-            tag += "\n" + ((Element)node).getAttribute("aria-label");
+            tag = ((Element)node).getAttribute("aria-label");
             //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
         }
-        speaker("Layer: " + tag);
+        layerTitle = tag;
+        speaker(tag);
+        // guidanceTag = "Layer: " + tag;
         /*
         Node targetLayer = ((NodeList) xPath.evaluate("//*[(descendant-or-self::*[@data-image-target = '"+presentTarget+"']) and self::*[@data-image-layer]]", doc, XPathConstants.NODESET)).item(0);
         //Log.d("TARGET Layer", String.valueOf(((Element) targetLayer).getAttribute("data-image-layer")));
@@ -428,96 +432,36 @@ public class DataAndMethods {
             Node node = nodeslist.item(i);
             ((Element)node).setAttribute("display","none");
         }*/
+
         byte[] target = docToBitmap(doc);
 
         byte[] byteArray = new byte[mask.length];
         for (int i = 0; i < mask.length; i++) {
             byteArray[i] = (byte) (mask[i] * target[i]);
         }
+        //Log.d("BITMAP", Arrays.toString(byteArray));
 
-        /*
-        nodeslist = (NodeList) xPath.evaluate("//*[((self::*[@data-image-layer]) and not(descendant-or-self::*[@data-image-target='"+ presentGuidance +"'])) or (not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer] ) and not(self::*[@data-image-target='"+ presentGuidance +"']))]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            ((Element)node).setAttribute("display","none");
-        }
-
-        byte[] byteArray= docToBitmap(doc);
-         */
-        /*
-        NodeList nodeslist = (NodeList)xPath.evaluate("//*[@data-image-layer]", doc, XPathConstants.NODESET);
-        //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
-        layerCount=nodeslist.getLength();
-        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-            Node node = nodeslist.item(i);
-            // hide layers which are not the present layer
-            if (i!= presentLayer && presentLayer!=layerCount) {
-                ((Element)node).setAttribute("display","none");
-            }
-            // TTS output of layer description
-            if (i==presentLayer){
-                //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
-                String tag;
-                //Log.d("GETTING TAGS", node.getNodeName());
-                if (((Element)node).hasAttribute("aria-labelledby")) {
-                    tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
-                    //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
+        // the TTS tags are fetched in a separate thread.
+        final Handler handler = new Handler(Looper.getMainLooper());
+        Document finalDoc = doc;
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getGuidanceDescriptions(finalDoc, mask);
+                    //Log.d("DESCRIPTIONS", "Description loaded");
+                    // This ping plays when the descriptions (i.e. TTS labels) are loaded.
+                    // Generally occurs with a little delay following the tactile rendering
+                    pingsPlayer(R.raw.ping);
+                } catch (XPathExpressionException e) {
+                    throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-                else{
-                    tag=((Element)node).getAttribute("aria-label");
-                    //Log.d("GETTING TAGS", "Otherwise here!");
-                }
-
-                    speaker("Layer: " + tag);
-
             }
-        }
-        //If there is no tag as a layer, hide elements unless the full image is to be shown
-        if (presentLayer!=layerCount){
-
-            nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])] ", doc, XPathConstants.NODESET);
-            for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
-                Node node = nodeslist.item(i);
-                ((Element)node).setAttribute("display","none");
-            }
-        }
-
-            speaker("Full image");
+        });
 
 
-        NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
-        for(int i = 0 ; i < detail.getLength() ; i ++) {
-            Node node = detail.item(i);
-            Float zoomLevel= Float.valueOf(((Element)node).getAttribute("data-image-zoom"));
-            if (zoomVal<zoomLevel)
-                ((Element)node).setAttribute("display","none");
-        }
-        byte[] byteArray= docToBitmap(doc);
-        //getTarget(doc);
-           */
-
-            /*// hide layers which are not the present layer
-            if (i!= presentLayer && presentLayer!=layerCount) {
-                ((Element)node).setAttribute("display","none");
-            }
-            // TTS output of layer description
-            if (i==presentLayer){
-                //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
-                String tag;
-                //Log.d("GETTING TAGS", node.getNodeName());
-                if (((Element)node).hasAttribute("aria-labelledby")) {
-                    tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
-                    //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
-                }
-                else{
-                    tag=((Element)node).getAttribute("aria-label");
-                    //Log.d("GETTING TAGS", "Otherwise here!");
-                }
-                speaker("Layer: "+tag);
-            }*/
-
-
-        //byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
 
         byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
         for (int i = 0; i < data.length; ++i) {
@@ -783,6 +727,94 @@ public class DataAndMethods {
         }
         return;
     }
+
+    public static void getGuidanceDescriptions(Document doc, byte[] mask) throws XPathExpressionException, IOException {
+        //Log.d("GETTING TAGS", "Here!");
+        XPath xPath = XPathFactory.newInstance().newXPath();
+        // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
+        // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
+        String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
+        // temporary var for objects long descriptions
+        String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
+        //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
+        // initially hiding all elements filtered in the previous stage
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            Node node = nodeslist.item(i);
+            ((Element)node).setAttribute("display", "none");
+        }
+        for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
+            String tag, detailTag = null;
+            Node node = nodeslist.item(i);
+            // fetching the tag for each element
+            if (!((Element)node).hasAttribute("aria-label") && !((Element)node).hasAttribute("aria-labelledby")){
+                continue;
+            }
+            if (((Element)node).hasAttribute("aria-labelledby")) {
+                tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+            }
+            else{
+                tag=((Element)node).getAttribute("aria-label");
+            }
+            if (((Element)node).hasAttribute("aria-describedby")) {
+                detailTag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+            }
+            else{
+                // this returns an empty string even if the attribute doesn't exist i.e. if there is no long description
+                detailTag=((Element)node).getAttribute("aria-description");
+            }
+
+            if (labelFill) {
+                ((Element) node).setAttribute("fill", "black");
+            }
+
+            // showing the element whose tag is stored to obtain its bitmap mapping
+            ((Element)node).removeAttribute("display");
+            byte[] byteArray= docToBitmap(doc);
+            // using a 'for' loop to map since there are now 2 kinds of tags: label and detailed. Could possibly find a prettier way to do this Java objects
+            NodeList nl = (NodeList)xPath.evaluate("//*[@data-image-target='"+presentTarget+"' and @data-image-solo='true']", doc, XPathConstants.NODESET);
+            String defaultTag= null;
+            if (nl.getLength()>0){
+                defaultTag = ((Element) (nl.item(0))).getAttribute("aria-label");
+            }
+            for (int j=0; j<layerTags.length; j++){
+                if (byteArray[j]!=0){
+                    if (layerTags[j]==null){
+                        layerTags[j]=tag;
+                    }
+                    else {
+                        layerTags[j]= layerTags[j] + ", " + tag;
+                    }
+                    //check if detailTag is not blank string.
+                    if (!detailTag.equalsIgnoreCase("")){
+                        if (layerDesc[j]==null){
+                            layerDesc[j]=detailTag;
+                        }
+                        else {
+                            layerDesc[j]= layerDesc[j] + ", " + detailTag;
+                        }
+                    }
+                }
+                if (mask[j]==0){
+                    layerTags[j] = null;
+                    layerDesc[j] = null;
+                }
+                if (defaultTag!=null && layerTags[j]!=null){
+                    layerTags[j] = defaultTag;
+                }
+            }
+            // hiding element again so we can move on to the next element
+            ((Element)node).setAttribute("display", "none");
+        }
+
+        // converting string array into 2D array that maps to the pins
+        for (int i = 0; i < data.length; ++i) {
+            tags.get(0)[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+            tags.get(1)[i]=Arrays.copyOfRange(layerDesc, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+        }
+        return;
+    }
+
     // converts the xml doc to bitmap
     public static byte[] docToBitmap(Document doc) throws IOException {
 

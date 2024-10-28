@@ -297,7 +297,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                     if (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut){
                         DataAndMethods.zoom(pins, "Guidance");
                     }
-                    else if (showAll){
+                    else { //if (showAll){
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
@@ -306,6 +306,9 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                             DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
                         }
                     }
+                    /*else{
+                        DataAndMethods.speaker(DataAndMethods.guidanceTag);
+                    }*/
                 }
                 catch(RuntimeException ex){
                     Log.d("TTS ERROR", String.valueOf(ex));
@@ -341,6 +344,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
     @Override
     public void onLongPress(MotionEvent event) {
         Log.d("GESTURE!", "onLongPress: " + event.toString());
+
     }
 
     @Override

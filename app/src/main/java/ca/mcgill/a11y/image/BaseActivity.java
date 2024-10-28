@@ -9,6 +9,8 @@ import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
 import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
 import static ca.mcgill.a11y.image.DataAndMethods.brailleServiceObj;
+import static ca.mcgill.a11y.image.DataAndMethods.layerTitle;
+import static ca.mcgill.a11y.image.DataAndMethods.speaker;
 
 import android.Manifest;
 import android.content.Intent;
@@ -130,6 +132,7 @@ public class BaseActivity extends AppCompatActivity {
                 put(421, "DOWN");
                 put(504, "NXT_LYR");
                 put(503, "PRV_LYR");
+                put(505, "SPACE");
                 /*put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
                 put(KEYCODE_ZOOM_IN, "ZOOM IN");
                 put(KEYCODE_DPAD_UP, "DPAD UP");
@@ -190,6 +193,9 @@ public class BaseActivity extends AppCompatActivity {
                         //Log.d("PRESENT TARGET", String.valueOf(DataAndMethods.presentTarget));
                         brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentTarget));
                     }
+                    return true;
+                case "SPACE":
+                    speaker(layerTitle);
                     return true;
                 /*// Navigating between files
                 
