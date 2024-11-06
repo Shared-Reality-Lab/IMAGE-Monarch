@@ -130,8 +130,10 @@ public class BaseActivity extends AppCompatActivity {
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(420, "UP");
                 put(421, "DOWN");
-                put(504, "NXT_LYR");
-                put(503, "PRV_LYR");
+                //put(504, "NXT_LYR");
+                put(KEYCODE_ZOOM_IN, "NXT_LYR");
+                //put(503, "PRV_LYR");
+                put(KEYCODE_ZOOM_OUT, "PRV_LYR");
                 put(505, "SPACE");
                 /*put(KEYCODE_ZOOM_OUT, "ZOOM OUT");
                 put(KEYCODE_ZOOM_IN, "ZOOM IN");
