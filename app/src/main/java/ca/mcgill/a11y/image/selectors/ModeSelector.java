@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -69,13 +70,13 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
         public void onFocusChange(View view, boolean b) {
             switch (view.getId()){
                 case R.id.classroom_mode:
-                    speaker("Classroom Mode");
+                    speaker("Classroom Mode", TextToSpeech.QUEUE_FLUSH);
                     break;
                 case R.id.photo_mode:
-                    speaker("Photo Mode");
+                    speaker("Photo Mode", TextToSpeech.QUEUE_FLUSH);
                     break;
                 case R.id.map_mode:
-                    speaker("Map Mode");
+                    speaker("Map Mode", TextToSpeech.QUEUE_FLUSH);
                     break;
                 // Code snippet 2
             }
@@ -89,16 +90,16 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
                 Intent myIntent = null;
                 if ((findViewById(R.id.classroom_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), ClassroomSelector.class);
-                    DataAndMethods.speaker("Switching to Classroom mode");
+                    DataAndMethods.speaker("Switching to Classroom mode", TextToSpeech.QUEUE_FLUSH);
                 }
                 else if ((findViewById(R.id.photo_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), PhotoSelector.class);
-                    DataAndMethods.speaker("Switching to Photo mode");
+                    DataAndMethods.speaker("Switching to Photo mode", TextToSpeech.QUEUE_FLUSH);
 
                 }
                 else if ((findViewById(R.id.map_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), MapSelector.class);
-                    DataAndMethods.speaker("Switching to Map mode");
+                    DataAndMethods.speaker("Switching to Map mode", TextToSpeech.QUEUE_FLUSH);
                 }
                 //Code snippet 3
                 myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -124,7 +125,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "ModeSelector Resumed");
-        DataAndMethods.speaker("Mode selector");
+        DataAndMethods.speaker("Mode selector", TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image = null;
         update.setValue(false);
         super.onResume();

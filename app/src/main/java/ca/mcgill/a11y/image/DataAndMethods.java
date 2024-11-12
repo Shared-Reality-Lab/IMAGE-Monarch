@@ -70,6 +70,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -162,6 +163,9 @@ public class DataAndMethods {
     static final int DISK_CACHE_SIZE = 10 * 1024 * 1024;
     //tracker to check whether new data has been received after server call
     public static MutableLiveData<Boolean> update = new MutableLiveData<>();
+    public static Boolean followup = false;
+
+    public static String tempImage = "";
     // mapping of keyCodes
     public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
         put(421, "UP");
@@ -276,9 +280,9 @@ public class DataAndMethods {
                     Log.d("SPEECHREC", String.valueOf(i));
                     switch (i) {
                         case SpeechRecognizer.ERROR_NO_MATCH:
-                            DataAndMethods.speaker("Failed to recognize text");
+                            DataAndMethods.speaker("Failed to recognize text", TextToSpeech.QUEUE_FLUSH);
                         default:
-                            DataAndMethods.speaker("Error occurred during speech recognition");
+                            DataAndMethods.speaker("Error occurred during speech recognition", TextToSpeech.QUEUE_FLUSH);
                     }
                 }
 
@@ -303,6 +307,17 @@ public class DataAndMethods {
         }
     }
 
+    public static void onShowFollowUp() throws IOException, XPathExpressionException, ParserConfigurationException, SAXException {
+        Intent myIntent = new Intent(DataAndMethods.context, ShowFollowUp.class);
+        myIntent.putExtra("image", image);
+        myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        byte[] data = (tempImage.replaceFirst("data:.+,", "")).getBytes("UTF-8");
+        data = Base64.decode(data, Base64.DEFAULT);
+        image = new String(data, "UTF-8");
+        resetGraphicParams();
+        setImageDims();
+        DataAndMethods.context.startActivity(myIntent);
+    }
 
     // handle voice recognition results()
     public static void onVoiceRecognitionResults(String results){
@@ -312,7 +327,6 @@ public class DataAndMethods {
             myIntent.putExtra("query", results);
             myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             DataAndMethods.context.startActivity(myIntent);
-
         }else
             Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
     }
@@ -394,19 +408,20 @@ public class DataAndMethods {
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
         Integer layerCount=nodeslist.getLength();
         //Log.d("PRESENT LAYER", DataAndMethods.presentLayer+","+layerCount);
-        if (DataAndMethods.presentLayer>= layerCount+1)
-            DataAndMethods.presentLayer= 0;
-        else if (DataAndMethods.presentLayer<0)
-            DataAndMethods.presentLayer= layerCount;
+        if (presentLayer>= layerCount+1)
+            presentLayer= 0;
+        else if (presentLayer<0)
+            presentLayer= layerCount;
+        DataAndMethods.presentLayer = presentLayer;
         //Log.d("PRESENT LAYER", DataAndMethods.presentLayer+","+layerCount);
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i);
             // hide layers which are not the present layer
-            if (i!= DataAndMethods.presentLayer && DataAndMethods.presentLayer!=layerCount) {
+            if (i!= presentLayer && presentLayer!=layerCount) {
                 ((Element)node).setAttribute("display","none");
             }
             // TTS output of layer description
-            if (i==DataAndMethods.presentLayer){
+            if (i==presentLayer){
                 //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
                 String tag;
                 //Log.d("GETTING TAGS", node.getNodeName());
@@ -419,12 +434,12 @@ public class DataAndMethods {
                     //Log.d("GETTING TAGS", "Otherwise here!");
                 }
                 if (readCaption) {
-                    speaker("Layer: " + tag);
+                    speaker("Layer: " + tag, TextToSpeech.QUEUE_FLUSH);
                 }
             }
         }
         //If there is no tag as a layer, hide elements unless the full image is to be shown
-        if (DataAndMethods.presentLayer!=layerCount){
+        if (presentLayer!=layerCount){
 
             nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])] ", doc, XPathConstants.NODESET);
             for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
@@ -433,7 +448,7 @@ public class DataAndMethods {
             }
         }
         else if (readCaption){
-            speaker("Full image");
+            speaker("Full image", TextToSpeech.QUEUE_FLUSH);
         }
 
         NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
@@ -477,7 +492,7 @@ public class DataAndMethods {
         String tag = "";
         XPath xPath = XPathFactory.newInstance().newXPath();
         if (targetCount ==0){
-            speaker("No guidance mode available");
+            speaker("No guidance mode available", TextToSpeech.QUEUE_FLUSH);
             return data;
         }
         else if (presentTarget<=0 ){
@@ -522,7 +537,7 @@ public class DataAndMethods {
             //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
         }
         if (readCaption){
-        speaker("Layer: " + tag);}
+        speaker("Layer: " + tag, TextToSpeech.QUEUE_FLUSH);}
 
         byte[] target = docToBitmap(doc);
 
@@ -830,7 +845,24 @@ public class DataAndMethods {
                         else{
                             // this is where followup response is handled
                             //Log.d("FOLLOW UP", "Found followup field");
-                            history.setResponse("This is the followup query response");
+                            String furesponse = "";
+                            //for (int i=0; i< renderings.length; i++){
+                            if (renderings[0].type_id.contains("Text")){
+                                furesponse = renderings[0].data.text;
+                                speaker(furesponse, TextToSpeech.QUEUE_ADD);
+                            }
+                            else if(renderings[0].type_id.contains("TactileSVG")){
+                                furesponse = renderings[0].data.graphic;
+                                tempImage = furesponse;
+                                speaker("Tactile response received. Press confirm to view it. Press cancel to ignore", TextToSpeech.QUEUE_ADD);
+                                followup = true;
+                            }
+                            else{
+                                furesponse = "Response received in type that is not handled yet";
+                            }
+                                // Log.d("RESPONSE", furesponse);
+                            //}
+                            history.setResponse(furesponse);
                         }
                         history.setHistory(true);
                         pingsPlayer(R.raw.image_results_arrived);
@@ -1012,7 +1044,7 @@ public class DataAndMethods {
         }
         else{
             if (zoomVal <= 100){
-                speaker("Oops! Cannot zoom out further");
+                speaker("Oops! Cannot zoom out further", TextToSpeech.QUEUE_FLUSH);
             }
             else {
                 zoomVal-= 25;
@@ -1165,8 +1197,8 @@ public class DataAndMethods {
     }
 
     // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
-    public static void speaker(String text, String... utterId){
-        tts.speak (text, TextToSpeech.QUEUE_FLUSH, null, utterId.length > 0 ? utterId[0]  : "000000");
+    public static void speaker(String text, int queue, String... utterId){
+        tts.speak (text, queue, null, utterId.length > 0 ? utterId[0]  : "000000");
         return;
     }
 
@@ -1247,8 +1279,8 @@ public class DataAndMethods {
     // make follow up query to server
     public static void sendFollowUpQuery(String query, Integer[] region) throws JSONException, IOException {
         Float[] focus = null;
-        Retrofit retrofit = requestBuilder(60, 60, // "https://unicorn.cim.mcgill.ca/image/" );
-                "https://image.a11y.mcgill.ca/");
+        Retrofit retrofit = requestBuilder(60, 60, "https://unicorn.cim.mcgill.ca/image/" );
+                //"https://image.a11y.mcgill.ca/");
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call = null;
 
@@ -1292,6 +1324,9 @@ public class DataAndMethods {
             req.setValues(base64, dims);
             //Log.d("HISTORY", history.type);
             req.setFollowupValues(query,focus);
+            req.setRoute("followup");
+            req.optionalSetRenderers(new String[] {"ca.mcgill.a11y.image.renderer.Text",
+                    "ca.mcgill.a11y.image.renderer.TactileSVG"});
             if (history.request.has("followup")){
                 String[][] previous = setPrevious();
                 req.setPrevious(previous);
@@ -1305,6 +1340,9 @@ public class DataAndMethods {
             Double lon = history.request.getJSONObject("coordinates").getDouble("longitude");
             req.setValues(lat, lon);
             req.setFollowupValues(query,focus);
+            req.setRoute("followup");
+            req.optionalSetRenderers(new String[] {"ca.mcgill.a11y.image.renderer.Text",
+                    "ca.mcgill.a11y.image.renderer.TactileSVG"});
             if (history.request.has("followup")){
                 String[][] previous = setPrevious();
                 req.setPrevious(previous);

@@ -21,17 +21,20 @@ package ca.mcgill.a11y.image.renderers;
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 
 import androidx.core.view.GestureDetectorCompat;
+import androidx.lifecycle.Observer;
 
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import org.xml.sax.SAXException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
@@ -60,10 +63,32 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
         super.onKeyDown(keyCode, event);
         switch (keyMapping.getOrDefault(keyCode, "default")) {
             case "OK":
-                DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
+                if (DataAndMethods.followup){
+                    try {
+                        DataAndMethods.onShowFollowUp();
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (XPathExpressionException e) {
+                        throw new RuntimeException(e);
+                    } catch (ParserConfigurationException e) {
+                        throw new RuntimeException(e);
+                    } catch (SAXException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                else {
+                    DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
+                }
                 return true;
             case "CANCEL":
+                if (DataAndMethods.followup){
+                    DataAndMethods.followup = false;
+                }
+                else{
                 DataAndMethods.displayGraphic(DataAndMethods.backButton, "Exploration");
+                }
                 return true;
             case "MENU":
                 DataAndMethods.pingsPlayer(R.raw.blip);
@@ -97,10 +122,10 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
-                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH, "ping");
                         } else {
                             //Log.d("CHECKING!", tags.get(0)[pins[1]][pins[0]]);
-                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
                         }
                     }
                 }
@@ -139,7 +164,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
         Integer [] pins= DataAndMethods.pinCheck(event.getX(), event.getY());
         try{
             // Speak out detailed description based on finger location
-            DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]]);
+            DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
         }
         catch(RuntimeException ex){
             Log.d("TTS ERROR", String.valueOf(ex));
