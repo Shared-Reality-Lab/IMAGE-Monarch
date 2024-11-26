@@ -20,6 +20,7 @@ import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 import static ca.mcgill.a11y.image.DataAndMethods.resetGraphicParams;
 import static ca.mcgill.a11y.image.DataAndMethods.setImageDims;
 import static ca.mcgill.a11y.image.DataAndMethods.showRegion;
+import static ca.mcgill.a11y.image.DataAndMethods.titleRead;
 
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -62,6 +63,7 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
             case "OK":
                 return true;
             case "CANCEL":
+                titleRead = false;
                 finish();
                 return true;
             default:

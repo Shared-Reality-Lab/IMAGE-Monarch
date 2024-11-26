@@ -18,6 +18,7 @@ package ca.mcgill.a11y.image;
 
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 import static ca.mcgill.a11y.image.DataAndMethods.showRegion;
+import static ca.mcgill.a11y.image.DataAndMethods.titleRead;
 
 import androidx.core.view.GestureDetectorCompat;
 
@@ -95,6 +96,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                         } catch (JSONException | IOException e) {
                             throw new RuntimeException(e);
                         }
+                        titleRead = false;
                         finish();
                         break;
                     default:

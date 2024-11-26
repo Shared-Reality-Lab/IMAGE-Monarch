@@ -165,6 +165,7 @@ public class DataAndMethods {
     public static MutableLiveData<Boolean> update = new MutableLiveData<>();
     public static Boolean followup = false;
 
+    public static Boolean titleRead = true;
     public static String tempImage = "";
     // mapping of keyCodes
     public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
@@ -402,7 +403,13 @@ public class DataAndMethods {
     // get present layer and the description tags from the doc
     public static byte[][] getBitmaps(Document doc, int presentLayer, boolean readCaption) throws IOException, XPathExpressionException {
         //Log.d("LAYER!", String.valueOf(presentLayer));
+        String caption = null;
         XPath xPath = XPathFactory.newInstance().newXPath();
+        // get the caption from the title node
+        Element title = ((Element) ((NodeList) xPath.evaluate("//title", doc, XPathConstants.NODESET)).item(0));
+        if (title!=null){
+            caption = title.getTextContent();
+        }
         // get list of layers; Uses default ordering which is expected to be 'document order' but the return type is node-set which is unordered!
         NodeList nodeslist = (NodeList)xPath.evaluate("//*[self::*[@data-image-layer] and not(ancestor::metadata)]", doc, XPathConstants.NODESET);
         //Log.d("XPATH", String.valueOf(nodeslist.getLength()));
@@ -434,7 +441,16 @@ public class DataAndMethods {
                     //Log.d("GETTING TAGS", "Otherwise here!");
                 }
                 if (readCaption) {
-                    speaker("Layer: " + tag, TextToSpeech.QUEUE_FLUSH);
+                    if(i==0 && caption!=null && titleRead){
+                        // Read the caption along with layer tag for the first layer
+                        speaker(caption + ". Layer: " + tag, TextToSpeech.QUEUE_FLUSH);
+                    }
+                    else{
+                        speaker("Layer: "+tag, TextToSpeech.QUEUE_FLUSH);
+                    }
+                }
+                if (!titleRead){
+                    titleRead = true;
                 }
             }
         }
@@ -673,7 +689,8 @@ public class DataAndMethods {
         PhotoRequestFormat req= new PhotoRequestFormat();
         req.setValues(base64, dims);*/
         PhotoRequestFormat req = createPhotoRequest(folderName);
-        Retrofit retrofit = requestBuilder(60, 60, "https://image.a11y.mcgill.ca/");
+        Retrofit retrofit = requestBuilder(60, 60, "https://unicorn.cim.mcgill.ca/image/");
+                //"https://image.a11y.mcgill.ca/");
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makePhotoRequest(req);
