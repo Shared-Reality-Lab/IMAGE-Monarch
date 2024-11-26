@@ -18,6 +18,7 @@ package ca.mcgill.a11y.image;
 
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 import static ca.mcgill.a11y.image.DataAndMethods.showRegion;
+import static ca.mcgill.a11y.image.DataAndMethods.titleRead;
 
 import androidx.core.view.GestureDetectorCompat;
 
@@ -25,6 +26,7 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -67,15 +69,15 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                          SAXException e) {
                     throw new RuntimeException(e);
                 }
-                DataAndMethods.speaker("Query received: "+query+" ...Double click on top left corner of region of interest or press confirm to query without selection");
+                DataAndMethods.speaker("Query received: "+query+" ...Double click on top left corner of region of interest or press confirm to query without selection", TextToSpeech.QUEUE_FLUSH);
                 break;
             case 1:
                 //Log.d("STATE", "State 1");
-                DataAndMethods.speaker("Double click on bottom right corner of region of interest or press confirm to proceed without selection. Press cancel to return");
+                DataAndMethods.speaker("Double click on bottom right corner of region of interest or press confirm to proceed without selection. Press cancel to return", TextToSpeech.QUEUE_FLUSH);
                 break;
             case 2:
                 //Log.d("STATE", "State 2");
-                DataAndMethods.speaker("Press confirm to query for selected region. Press cancel to return to region selection");
+                DataAndMethods.speaker("Press confirm to query for selected region. Press cancel to return to region selection", TextToSpeech.QUEUE_FLUSH);
                 break;
         }
     }
@@ -94,6 +96,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                         } catch (JSONException | IOException e) {
                             throw new RuntimeException(e);
                         }
+                        titleRead = false;
                         finish();
                         break;
                     default:
@@ -137,10 +140,10 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
-                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH,"ping");
                         } else {
                             //Log.d("CHECKING!", tags.get(0)[pins[1]][pins[0]]);
-                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
                         }
                     }
                 }
@@ -184,7 +187,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
         Integer [] pins= DataAndMethods.pinCheck(event.getX(), event.getY());
         try{
             // Speak out detailed description based on finger location
-            DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]]);
+            DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
         }
         catch(RuntimeException ex){
             Log.d("TTS ERROR", String.valueOf(ex));

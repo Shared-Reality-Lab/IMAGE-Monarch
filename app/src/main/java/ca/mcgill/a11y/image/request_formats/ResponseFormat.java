@@ -40,5 +40,8 @@ public class ResponseFormat {
         public String graphic;
         @SerializedName("layer")
         public String layer;
+
+        @SerializedName("text")
+        public String text;
     }
 }
