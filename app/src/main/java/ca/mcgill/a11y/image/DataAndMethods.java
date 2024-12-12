@@ -73,6 +73,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -82,6 +83,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -844,10 +852,11 @@ public class DataAndMethods {
                         if (history.temp_request == null || !history.temp_request.has("followup")){
                             image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
                             //Log.d("RESPONSE", image);
-                            byte[] data = image.getBytes("UTF-8");
-                            data = Base64.decode(data, Base64.DEFAULT);
-                            image = new String(data, "UTF-8");
-                            // Log.d("IMAGE", image);
+                            image = decrypt(image, context.getString(R.string.password));//.replaceFirst("data:.+,", "");
+                            //byte[] data = image.getBytes("UTF-8");
+                            //data = Base64.decode(data, Base64.DEFAULT);
+                            //image = new String(data, "UTF-8");
+                            //Log.d("IMAGE", image);
                             // gets viewBox dims for current image
                             resetGraphicParams();
                             setImageDims();
@@ -897,6 +906,8 @@ public class DataAndMethods {
                 } catch (ArrayIndexOutOfBoundsException | NullPointerException e){
                     pingsPlayer(R.raw.image_error);
                     history.setHistory(false);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
             }
 
@@ -1409,4 +1420,52 @@ public class DataAndMethods {
                         "\n<ellipse fill=\"none\" stroke=\"#000000\" stroke-width=\"0.885\" id=\"path358\" " +
                         "cx=\"48\" cy=\"20\" rx=\"15\" ry=\"15\" /> </g> \n</svg>";
     }
+
+    public static String decrypt(String encryptedBase64, String password) throws Exception {
+            // Convert the Base64-encoded encrypted data and IV to byte arrays
+            byte[] encrypted = Base64.decode(encryptedBase64, Base64.NO_WRAP);
+
+            byte[] salt = Arrays.copyOfRange(encrypted, 0, 16);
+            byte[] iv = Arrays.copyOfRange(encrypted, 16, 32);
+            byte[] encryptedData = Arrays.copyOfRange(encrypted, 32, encrypted.length);
+            // byte[] iv = Base64.decode(ivBase64, Base64.NO_WRAP);
+            //Log.d("DECODED", convertToUnsignedBytes(iv));
+            //Log.d("DECODED DATA", convertToUnsignedBytes(encryptedData));
+
+            // Derive the AES key from the password using PBKDF2
+            //byte[] salt = Base64.decode(saltBase64, Base64.NO_WRAP);  // Use the same salt used in encryption
+            SecretKey key = deriveKey(password, salt);
+
+            // Create the AES key from the password
+            SecretKeySpec secretKey = new SecretKeySpec(key.getEncoded(), "AES");
+
+            // Create Cipher instance for AES in CBC mode
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+
+            // Setup the IvParameterSpec with the IV for decryption
+            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
+            // Decrypt the data
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
+            byte[] decryptedData = cipher.doFinal(encryptedData);
+
+            // Convert the decrypted byte array back to a string
+            return new String(decryptedData, StandardCharsets.UTF_8);
+        }
+        public static String convertToUnsignedBytes(byte[] bytes) {
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append((b & 0xFF)).append(", ");
+            }
+            return sb.toString();
+        }
+
+        // Derive the AES key from the password using PBKDF2
+        private static SecretKey deriveKey(String password, byte[] salt) throws Exception {
+            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 100000, 256);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] key = factory.generateSecret(spec).getEncoded();
+            return new javax.crypto.spec.SecretKeySpec(key, "AES");
+        }
+
 }

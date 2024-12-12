@@ -59,7 +59,7 @@ import ca.mcgill.a11y.image.renderers.Exploration;
 import ca.mcgill.a11y.image.renderers.Guidance;
 
 public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
-    public static String channelSubscribed = "263773"; // make this the place the request takes it from
+    public static String channelSubscribed = "514446"; // make this the place the request takes it from
 
     @SuppressLint("WrongConstant")
     @Override
