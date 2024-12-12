@@ -25,6 +25,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -62,7 +63,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
             case "UP":
                 Log.d("KEY EVENT", event.toString());
                 try {
-                    DataAndMethods.speaker(DataAndMethods.getFile(++fileSelected));
+                    DataAndMethods.speaker(DataAndMethods.getFile(++fileSelected), TextToSpeech.QUEUE_FLUSH);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (JSONException e) {
@@ -72,7 +73,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
             case "DOWN":
                 Log.d("KEY EVENT", event.toString());
                 try {
-                    DataAndMethods.speaker(DataAndMethods.getFile(--fileSelected));
+                    DataAndMethods.speaker(DataAndMethods.getFile(--fileSelected), TextToSpeech.QUEUE_FLUSH);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 } catch (JSONException e) {
@@ -109,7 +110,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "PhotoSelector Resumed");
-        DataAndMethods.speaker("Photo selector");
+        DataAndMethods.speaker("Photo selector", TextToSpeech.QUEUE_FLUSH);
         try {
             // might want to read file name here
             DataAndMethods.getFile(++DataAndMethods.fileSelected);

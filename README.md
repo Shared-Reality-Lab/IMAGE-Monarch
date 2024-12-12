@@ -31,7 +31,7 @@ You might will also need to do some (or all) of the following (especially for a 
 - Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
 - Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
 - Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
-
+- You may be asked for microphone permissions on the Monarch. For this, it is best to download [ScreenCopy](https://github.com/Genymobile/scrcpy) to navigate through the permissions setup.
 
 
 ## Details...

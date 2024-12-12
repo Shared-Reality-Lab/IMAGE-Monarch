@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -75,7 +76,7 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
                     Double longitude= Double.parseDouble(((EditText) findViewById(R.id.longitude)).getText().toString());
                     DataAndMethods.getMap(latitude, longitude);
                 } catch (NumberFormatException e){
-                    speaker("Invalid coordinates");
+                    speaker("Invalid coordinates", TextToSpeech.QUEUE_FLUSH);
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
@@ -105,7 +106,7 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "MapSelector Resumed");
-        DataAndMethods.speaker("Map selector");
+        DataAndMethods.speaker("Map selector", TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image= null;
         super.onResume();
     }

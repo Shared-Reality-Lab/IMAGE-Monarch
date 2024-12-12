@@ -30,6 +30,9 @@
             android:name=".FollowUpQuery"
             android:exported="false" />
         <activity
+            android:name=".ShowFollowUp"
+            android:exported="false" />
+        <activity
             android:name=".RendererBaseActivity"
             android:exported="false" />
         <activity

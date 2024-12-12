@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -80,10 +81,10 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
         public void onFocusChange(View view, boolean b) {
             switch (view.getId()){
                 case R.id.exploration_mode:
-                    speaker("Exploration Mode");
+                    speaker("Exploration Mode", TextToSpeech.QUEUE_FLUSH);
                     break;
                 case R.id.guidance_mode:
-                    speaker("Guidance Mode");
+                    speaker("Guidance Mode", TextToSpeech.QUEUE_FLUSH);
                     break;
             }
         }
@@ -96,11 +97,11 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
                 Intent myIntent = null;
                 if ((findViewById(R.id.exploration_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), Exploration.class);
-                    DataAndMethods.speaker("Switching to Exploration mode");
+                    DataAndMethods.speaker("Switching to Exploration mode", TextToSpeech.QUEUE_FLUSH);
                 }
                 else if ((findViewById(R.id.guidance_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), Guidance.class);
-                    DataAndMethods.speaker("Switching to Guidance mode");
+                    DataAndMethods.speaker("Switching to Guidance mode", TextToSpeech.QUEUE_FLUSH);
                 }
                 //Code snippet 3
                 myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -147,7 +148,7 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Classroom Selector Resumed");
-        DataAndMethods.speaker("Classroom Selector");
+        DataAndMethods.speaker("Classroom Selector", TextToSpeech.QUEUE_FLUSH);
         //startService(new Intent(getApplicationContext(), PollingService.class));
         super.onResume();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 IMAGE Project, Shared Reality Lab, McGill University
+ * Copyright (c) 2024 IMAGE Project, Shared Reality Lab, McGill University
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -14,14 +14,13 @@
  * and our Additional Terms along with this program.
  * If not, see <https://github.com/Shared-Reality-Lab/IMAGE-Monarch/LICENSE>.
  */
-
-package ca.mcgill.a11y.image.renderers;
-
+package ca.mcgill.a11y.image;
 
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
-
-import androidx.core.view.GestureDetectorCompat;
-import androidx.lifecycle.Observer;
+import static ca.mcgill.a11y.image.DataAndMethods.resetGraphicParams;
+import static ca.mcgill.a11y.image.DataAndMethods.setImageDims;
+import static ca.mcgill.a11y.image.DataAndMethods.showRegion;
+import static ca.mcgill.a11y.image.DataAndMethods.titleRead;
 
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -32,28 +31,27 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+
+import androidx.core.view.GestureDetectorCompat;
+
+import org.json.JSONException;
 import org.xml.sax.SAXException;
+
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
-import ca.mcgill.a11y.image.BaseActivity;
-import ca.mcgill.a11y.image.DataAndMethods;
-import ca.mcgill.a11y.image.R;
-
-// renders graphic currently stored in string 'image'
-public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener  {
-
-    private BrailleDisplay brailleServiceObj = null;
-
+public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
+    Intent intent;
+    String mainGraphic;
     private GestureDetectorCompat mDetector;
-
+    private BrailleDisplay brailleServiceObj = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("ACTIVITY", "FollowUpQuery Created");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_basic_photo_renderer);
         brailleServiceObj = DataAndMethods.brailleServiceObj;
 
     }
@@ -63,47 +61,17 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
         super.onKeyDown(keyCode, event);
         switch (keyMapping.getOrDefault(keyCode, "default")) {
             case "OK":
-                if (DataAndMethods.followup){
-                    try {
-                        DataAndMethods.onShowFollowUp();
-                    } catch (UnsupportedEncodingException e) {
-                        throw new RuntimeException(e);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (XPathExpressionException e) {
-                        throw new RuntimeException(e);
-                    } catch (ParserConfigurationException e) {
-                        throw new RuntimeException(e);
-                    } catch (SAXException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                else {
-                    DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
-                }
                 return true;
             case "CANCEL":
-                if (DataAndMethods.followup){
-                    DataAndMethods.followup = false;
-                }
-                else{
-                DataAndMethods.displayGraphic(DataAndMethods.backButton, "Exploration");
-                }
-                return true;
-            case "MENU":
-                DataAndMethods.pingsPlayer(R.raw.blip);
-                DataAndMethods.speechRecognizer.startListening(DataAndMethods.speechRecognizerIntent);
+                titleRead = false;
+                finish();
                 return true;
             default:
                 Log.d("KEY EVENT", event.toString());
-                return true;
+                return false;
         }
     }
 
-    @Override
-    public void onCompletion(MediaPlayer mediaPlayer) {
-        mediaPlayer.release();
-    }
     @Override
     public boolean onTouchEvent(MotionEvent event){
         if (this.mDetector.onTouchEvent(event)) {
@@ -122,7 +90,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
-                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH, "ping");
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH,"ping");
                         } else {
                             //Log.d("CHECKING!", tags.get(0)[pins[1]][pins[0]]);
                             DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
@@ -143,6 +111,11 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
             }
         }
         return true;
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+        mediaPlayer.release();
     }
 
     @Override
@@ -209,25 +182,32 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
         return true;
     }
 
-
-
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "Exploration Resumed");
-
-        DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
-
+        Log.d("ACTIVITY", "FollowUpQuery Resumed");
+        intent = getIntent();
+        mainGraphic = intent.getStringExtra("image");
+        try {
+            brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), 0, true));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        }
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
 
         DataAndMethods.handler = e -> {
-            if(DataAndMethods.ttsEnabled){
                 try{
                     onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
                     Log.d("MOTION EVENT", String.valueOf(ex));
-                }}
+                }
 
             return false;
         };
@@ -236,7 +216,23 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "BasicPhotoMapRenderer Paused");
+        Log.d("ACTIVITY", "FollowUpQuery Paused");
+        DataAndMethods.image = mainGraphic;
+        resetGraphicParams();
+        try {
+            setImageDims();
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException(e);
+        }
+        DataAndMethods.tempImage = "";
+        DataAndMethods.followup = false;
+        DataAndMethods.presentLayer--;
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }

@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -132,10 +133,10 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
-                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], "ping");
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH, "ping");
                         } else {
                             //Log.d("CHECKING!", tags.get(0)[pins[1]][pins[0]]);
-                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]]);
+                            DataAndMethods.speaker(tags.get(0)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
                         }
                     }
                 }
@@ -174,7 +175,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
         Integer [] pins= DataAndMethods.pinCheck(event.getX(), event.getY());
         try{
             // Speak out detailed description based on finger location
-            DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]]);
+            DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
         }
         catch(RuntimeException ex){
             Log.d("TTS ERROR", String.valueOf(ex));
@@ -228,7 +229,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
-        DataAndMethods.speaker("Exploration mode");
+        DataAndMethods.speaker("Exploration mode", TextToSpeech.QUEUE_FLUSH);
         startService(new Intent(getApplicationContext(), PollingService.class));
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
