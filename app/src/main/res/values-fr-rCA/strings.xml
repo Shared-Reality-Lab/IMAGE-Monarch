@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IMAGE Client Monarch</string>
+    <string name="server_url">https://monarch.unicorn.cim.mcgill.ca/</string>
+</resources>
