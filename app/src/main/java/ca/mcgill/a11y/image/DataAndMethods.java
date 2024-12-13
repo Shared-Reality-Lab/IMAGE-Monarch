@@ -9,6 +9,7 @@ import static android.view.KeyEvent.KEYCODE_DPAD_UP;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
@@ -34,12 +35,19 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Locale;
@@ -74,7 +82,7 @@ public class DataAndMethods {
     static int selectObj=-1;
     static String[] selectedIds = null;
     static int tagType = 0;
-    static String[] tagTypes = new String[]{"aria-label", "aria-description"};
+    static String[] tagTypes = new String[]{"data-image-label", "data-image-description"};
     static String speechTag = null;
     static float[] target=null;
 
@@ -212,12 +220,12 @@ public class DataAndMethods {
                 //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
                 String tag;
                 //Log.d("GETTING TAGS", node.getNodeName());
-                if (((Element)node).hasAttribute("aria-labelledby")) {
-                    tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+                if (((Element)node).hasAttribute("data-image-labelledby")) {
+                    tag= doc.getElementById(((Element) node).getAttribute("data-image-labelledby")).getTextContent();
                     //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
                 }
                 else{
-                    tag=((Element)node).getAttribute("aria-label");
+                    tag=((Element)node).getAttribute("data-image-label");
                     //Log.d("GETTING TAGS", "Otherwise here!");
                 }
                 layerTitle = "Layer: " +tag;
@@ -298,12 +306,12 @@ public class DataAndMethods {
                 //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
                 String tag;
                 //Log.d("GETTING TAGS", node.getNodeName());
-                if (((Element)node).hasAttribute("aria-labelledby")) {
-                    tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+                if (((Element)node).hasAttribute("data-image-labelledby")) {
+                    tag= doc.getElementById(((Element) node).getAttribute("data-image-labelledby")).getTextContent();
                     //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent()));
                 }
                 else{
-                    tag=((Element)node).getAttribute("aria-label");
+                    tag=((Element)node).getAttribute("data-image-label");
                     //Log.d("GETTING TAGS", "Otherwise here!");
                 }
                 if (readCaption) {
@@ -414,12 +422,12 @@ public class DataAndMethods {
             //Log.d("GETTING TAGS", "Otherwise here!");
         }*/
         Node node = ((NodeList) xPath.evaluate("//*[ancestor-or-self::*[@data-image-target = '"+presentTarget+"']]", doc, XPathConstants.NODESET)).item(0);
-        if (((Element)node).hasAttribute("aria-labelledby")) {
-            tag = doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+        if (((Element)node).hasAttribute("data-image-labelledby")) {
+            tag = doc.getElementById(((Element) node).getAttribute("data-image-labelledby")).getTextContent();
             //Log.d("GETTING TAGS", (doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent()));
         }
         else{
-            tag = ((Element)node).getAttribute("aria-label");
+            tag = ((Element)node).getAttribute("data-image-label");
             //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
         }
         layerTitle = tag;
@@ -660,7 +668,7 @@ public class DataAndMethods {
         XPath xPath = XPathFactory.newInstance().newXPath();
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
         // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@data-image-labelledby] or self::*[@data-image-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
         String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
         // temporary var for objects long descriptions
         String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
@@ -674,21 +682,21 @@ public class DataAndMethods {
             String tag, detailTag = null;
             Node node = nodeslist.item(i);
             // fetching the tag for each element
-            if (!((Element)node).hasAttribute("aria-label") && !((Element)node).hasAttribute("aria-labelledby")){
+            if (!((Element)node).hasAttribute("data-image-label") && !((Element)node).hasAttribute("data-image-labelledby")){
                 continue;
             }
-            if (((Element)node).hasAttribute("aria-labelledby")) {
-                tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+            if (((Element)node).hasAttribute("data-image-labelledby")) {
+                tag= doc.getElementById(((Element) node).getAttribute("data-image-labelledby")).getTextContent();
             }
             else{
-                tag=((Element)node).getAttribute("aria-label");
+                tag=((Element)node).getAttribute("data-image-label");
             }
-            if (((Element)node).hasAttribute("aria-describedby")) {
-                detailTag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+            if (((Element)node).hasAttribute("data-image-describedby")) {
+                detailTag= doc.getElementById(((Element) node).getAttribute("data-image-describedby")).getTextContent();
             }
             else{
                 // this returns an empty string even if the attribute doesn't exist i.e. if there is no long description
-                detailTag=((Element)node).getAttribute("aria-description");
+                detailTag=((Element)node).getAttribute("data-image-description");
             }
 
             if (labelFill) {
@@ -735,7 +743,7 @@ public class DataAndMethods {
         XPath xPath = XPathFactory.newInstance().newXPath();
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
         // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@data-image-labelledby] or self::*[@data-image-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
         String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
         // temporary var for objects long descriptions
         String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
@@ -749,21 +757,21 @@ public class DataAndMethods {
             String tag, detailTag = null;
             Node node = nodeslist.item(i);
             // fetching the tag for each element
-            if (!((Element)node).hasAttribute("aria-label") && !((Element)node).hasAttribute("aria-labelledby")){
+            if (!((Element)node).hasAttribute("data-image-label") && !((Element)node).hasAttribute("data-image-labelledby")){
                 continue;
             }
-            if (((Element)node).hasAttribute("aria-labelledby")) {
-                tag= doc.getElementById(((Element) node).getAttribute("aria-labelledby")).getTextContent();
+            if (((Element)node).hasAttribute("data-image-labelledby")) {
+                tag= doc.getElementById(((Element) node).getAttribute("data-image-labelledby")).getTextContent();
             }
             else{
-                tag=((Element)node).getAttribute("aria-label");
+                tag=((Element)node).getAttribute("data-image-label");
             }
-            if (((Element)node).hasAttribute("aria-describedby")) {
-                detailTag= doc.getElementById(((Element) node).getAttribute("aria-describedby")).getTextContent();
+            if (((Element)node).hasAttribute("data-image-describedby")) {
+                detailTag= doc.getElementById(((Element) node).getAttribute("data-image-describedby")).getTextContent();
             }
             else{
                 // this returns an empty string even if the attribute doesn't exist i.e. if there is no long description
-                detailTag=((Element)node).getAttribute("aria-description");
+                detailTag=((Element)node).getAttribute("data-image-description");
             }
 
             if (labelFill) {
@@ -777,7 +785,7 @@ public class DataAndMethods {
             NodeList nl = (NodeList)xPath.evaluate("//*[@data-image-target='"+presentTarget+"' and @data-image-solo='true']", doc, XPathConstants.NODESET);
             String defaultTag= null;
             if (nl.getLength()>0){
-                defaultTag = ((Element) (nl.item(0))).getAttribute("aria-label");
+                defaultTag = ((Element) (nl.item(0))).getAttribute("data-image-label");
             }
             for (int j=0; j<layerTags.length; j++){
                 if (byteArray[j]!=0){
@@ -838,8 +846,8 @@ public class DataAndMethods {
     }
 
     // fetching the file to read from; returns file contents as String and also the file name
-    public static String[] getFile(int fileNumber) throws IOException, JSONException {
-        /*String folderName= "/sdcard/IMAGE/client/";
+    public static String[] getFile(int fileNumber) throws IOException, JSONException, XPathExpressionException, ParserConfigurationException, SAXException {
+        String folderName= "/sdcard/IMAGE/study/";
         File directory = new File(folderName);
         File[] files = directory.listFiles();
 
@@ -849,6 +857,25 @@ public class DataAndMethods {
         else if (fileNumber<0)
             fileSelected=filecount-1;
 
+        File myExternalFile= new File(folderName, files[fileSelected].getName());
+        String myData = "";
+
+        FileInputStream fis = new FileInputStream(myExternalFile);
+        DataInputStream in = new DataInputStream(fis);
+        BufferedReader br =
+                new BufferedReader(new InputStreamReader(in));
+        String strLine;
+        while ((strLine = br.readLine()) != null) {
+            myData = myData + strLine;
+        }
+        in.close();
+        Log.d("IMAGE", myData);
+        image = myData;
+        layerCount = 0;
+        //count guidance targets
+        targetCounts();
+        view.findViewById(R.id.ones).setEnabled(true);
+        /*
         Bitmap bitmap = BitmapFactory.decodeFile(folderName+files[fileSelected].getName());
         byte[] imageBytes = Files.readAllBytes(Paths.get(folderName + files[fileSelected].getName()));
 
@@ -861,7 +888,7 @@ public class DataAndMethods {
         //HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
         //logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-
+        /*
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
                 //Need next 2 lines when server response is slow
                 .readTimeout(60, TimeUnit.SECONDS)
@@ -879,6 +906,7 @@ public class DataAndMethods {
         Call<ResponseFormat> call= makereq.checkForUpdates();
         image= makeServerCall(call);
         // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
+        */
         return new String[]{image, ""};
     }
 
@@ -968,7 +996,7 @@ public class DataAndMethods {
     }
 
     //similar to getFile. To be used when TTS read out of file name is required. Could possibly replace getFile entirely
-    public static void changeFile(int fileNumber) throws JSONException, IOException {
+    public static void changeFile(int fileNumber) throws JSONException, IOException, XPathExpressionException, ParserConfigurationException, SAXException {
         presentLayer=0;
         brailleServiceObj.display(data);
         String[] output=getFile(fileNumber);
@@ -1056,10 +1084,10 @@ public class DataAndMethods {
             DataAndMethods.tagType = 0;
         }
         switch (DataAndMethods.tagTypes[DataAndMethods.tagType]){
-            case "aria-label":
+            case "data-image-label":
                 DataAndMethods.speaker("Editing label");
                 break;
-            case "aria-description":
+            case "data-image-description":
                 DataAndMethods.speaker("Editing description");
                 break;
             default:

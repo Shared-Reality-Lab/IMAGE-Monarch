@@ -93,6 +93,12 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                 throw new RuntimeException(e);
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException(e);
+            } catch (ParserConfigurationException e) {
+                throw new RuntimeException(e);
+            } catch (SAXException e) {
+                throw new RuntimeException(e);
             }
         }
         else{
