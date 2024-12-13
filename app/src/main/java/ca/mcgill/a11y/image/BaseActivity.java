@@ -158,7 +158,7 @@ public class BaseActivity extends AppCompatActivity {
                     DataAndMethods.displayOn= false;
                     if (getLocalClassName().equals("Exploration")) {
                         myIntent = new Intent(this, Guidance.class);
-                        DataAndMethods.speaker("Switching to Guidance mode");
+                        DataAndMethods.speaker("Switching to Sequential mode");
                     }
                     else{
                         myIntent = new Intent(this, Exploration.class);

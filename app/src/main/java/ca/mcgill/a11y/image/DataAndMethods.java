@@ -128,6 +128,8 @@ public class DataAndMethods {
                     Log.e("error", "Initialization Failed!"+status);
                 }
                 else {
+                    //Locale locale = new Locale("fr");
+                    //tts.setLanguage(locale);
                     tts.setLanguage(Locale.getDefault());
                     tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                         @Override
