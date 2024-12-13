@@ -1,4 +1,39 @@
 <resources>
     <string name="app_name">IMAGE Monarch Client</string>
     <string name="server_url">https://monarch.unicorn.cim.mcgill.ca/</string>
+
+    <!-- App Modes -->
+    <!-- "[Classroom|Photo|Map] Mode" -->
+        <string name="classroom_mode">Classroom Mode</string>
+        <string name="photo_mode">Photo Mode</string>
+        <string name="map_mode">Map Mode</string>
+
+    <!-- "[Exploration|Guidance] Mode" -->
+        <string name="exploration_mode">Exploration Mode</string>
+        <string name="guidance_mode">Guidance Mode</string>
+
+    <!-- Switching to "[classroom|photo|map] Mode" -->
+        <string name="swi_classroom_mode">Switching to classroom mode</string>
+        <string name="swi_photo_mode">Switching to photo mode</string>
+        <string name="swi_map_mode">Switching to map mode</string>
+
+    <!-- "Switching to [exploration|guidance] mode" -->
+        <string name="swi_exploration_mode">Switching to exploration mode</string>
+        <string name="swi_guidance_mode">Switching to guidance mode</string>
+
+    <!-- Mode navigation -->
+    <!-- "[Classroom|Map|Photo] Selector" -->
+        <string name="mode_selector">Mode Selector</string>
+        <string name="classroom_selector">Classroom Selector</string>
+        <string name="map_selector">Map Selector</string>
+        <string name="photo_selector">Photo Selector</string>
+
+    <!-- MapSelector.java -->
+        <string name="invalid_coord">Invalid coordinates</string>
+
+    <!-- BaseActivity.java -->
+        <string name="on_zoom_mode">Zoom mode enabled</string>
+        <string name="off_zoom_mode">Zoom mode disabled</string>
+
+
 </resources>

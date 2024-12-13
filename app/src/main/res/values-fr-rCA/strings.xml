@@ -2,4 +2,56 @@
 <resources>
     <string name="app_name">IMAGE Client Monarch</string>
     <string name="server_url">https://monarch.unicorn.cim.mcgill.ca/</string>
+
+    <!-- App Modes -->
+    <!-- "[Classroom|Photo|Map] Mode" -->
+        <string name="classroom_mode">Mode Classe</string>
+        <string name="photo_mode">Mode Photos</string>
+        <string name="map_mode">Mode Map</string>
+
+    <!-- "[Exploration|Guidance] Mode" -->
+        <string name="exploration_mode">Mode Exploration</string>
+        <string name="guidance_mode">Mode Conseils</string>
+
+    <!-- Switching to "[classroom|photo|map] Mode" -->
+        <string name="swi_classroom_mode">Passer en mode classe</string>
+        <string name="swi_photo_mode">Passer en mode photo</string>
+        <string name="swi_map_mode">Passer en mode map</string>
+
+    <!-- "Switching to [exploration|guidance] mode" -->
+        <string name="swi_exploration_mode">Passer en mode exploration</string>
+        <string name="swi_guidance_mode">Passer en mode conseils</string>
+
+    <!-- Mode navigation -->
+    <!-- "[Classroom|Map|Photo] Selector" -->
+        <string name="mode_selector">Sélecteur de mode</string>
+        <string name="classroom_selector">Sélecteur de classe</string>
+        <string name="map_selector">Sélecteur de carte</string>
+        <string name="photo_selector">Sélecteur de photo</string>
+
+    <!-- MapSelector.java -->
+        <string name="invalid_coord">Coordonnées non valides</string>
+
+    <!-- BaseActivity.java -->
+        <string name="on_zoom_mode">Mode zoom activé</string>
+        <string name="off_zoom_mode">Mode zoom désactivé</string>
+
+
+    <!--
+    In DataAndMethods.java
+    "Oops! Cannot zoom out further" il est impossible de faire un zoom arrière plus que cela
+    "Failed to recognize text" Le texte n'est pas reconnu
+    "Error occurred during speech recognition"
+    "Layer"
+    "Full image"
+    "No guidance mode available"
+    "Tactile response received. Press confirm to view it. Press cancel to ignore"
+    "Response received in type that is not handled yet"
+
+    FollowUpQuery
+    "Query received: "
+    "Double click on top left corner of region of interest or press confirm to query without selection""
+    "Double click on bottom right corner of region of interest or press confirm to proceed without selection. Press cancel to return"
+    Press confirm to query for selected region. Press cancel to return to region selection"
+    -->
 </resources>
