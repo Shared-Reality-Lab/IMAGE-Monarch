@@ -221,7 +221,7 @@ public class DataAndMethods {
                 public void onInit(int status) {
 
                     if (status != TextToSpeech.SUCCESS) {
-                        Log.e("error", "Initialization Failed!" + status);
+                        Log.e("error", "Initialization Failed!" + -status);
                     } else {
                         tts.setLanguage(Locale.getDefault());
                         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
@@ -850,13 +850,19 @@ public class DataAndMethods {
                         ResponseFormat resource = response.body();
                         ResponseFormat.Rendering[] renderings = resource.renderings;
                         if (history.temp_request == null || !history.temp_request.has("followup")){
-                            image =(renderings[0].data.graphic).replaceFirst("data:.+,", "");
-                            //Log.d("RESPONSE", image);
-                            image = decrypt(image, context.getString(R.string.password));//.replaceFirst("data:.+,", "");
-                            //byte[] data = image.getBytes("UTF-8");
-                            //data = Base64.decode(data, Base64.DEFAULT);
-                            //image = new String(data, "UTF-8");
-                            //Log.d("IMAGE", image);
+                            image =(renderings[0].data.graphic);
+                            // Check if data is encrypted or contains data:image...
+                            // and process accordingly
+                            if (image.contains("data:")){
+                                image = image.replaceFirst("data:.+,", "");
+                                byte[] data = image.getBytes("UTF-8");
+                                data = Base64.decode(data, Base64.DEFAULT);
+                                image = new String(data, "UTF-8");
+                                //Log.d("IMAGE", image);
+                            }
+                            else{
+                                image = decrypt(image, context.getString(R.string.password));
+                            }
                             // gets viewBox dims for current image
                             resetGraphicParams();
                             setImageDims();
