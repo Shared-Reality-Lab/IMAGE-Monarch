@@ -26,6 +26,8 @@ public class ResponseFormat {
     public long timestamp;
     @SerializedName("renderings")
     public Rendering[] renderings=null;
+    @SerializedName("graphicBlob")
+    public String graphicBlob;
 
     public class Rendering{
         @SerializedName("description")

@@ -20,6 +20,7 @@ package ca.mcgill.a11y.image.renderers;
 import static ca.mcgill.a11y.image.DataAndMethods.backButton;
 import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
 import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
+import static ca.mcgill.a11y.image.DataAndMethods.followingUp;
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 import static ca.mcgill.a11y.image.DataAndMethods.update;
 
@@ -51,6 +52,7 @@ import androidx.lifecycle.MutableLiveData;
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.PollingService;
+import ca.mcgill.a11y.image.R;
 
 public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
@@ -77,6 +79,15 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                 }
             }
 
+        });
+
+        followingUp.observe(this,new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean changedVal) {
+                if (!changedVal){
+                    startService(new Intent(getApplicationContext(), PollingService.class));
+                }
+            }
         });
     }
 
@@ -110,6 +121,10 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
                     if (DataAndMethods.image!= null)
                         DataAndMethods.displayGraphic(backButton, "Exploration");
                     return false;
+                case "MENU":
+                    DataAndMethods.pingsPlayer(R.raw.blip);
+                    DataAndMethods.speechRecognizer.startListening(DataAndMethods.speechRecognizerIntent);
+                    return true;
                 default:
                     Log.d("KEY EVENT", event.toString());
                     return false;
@@ -230,7 +245,9 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
         DataAndMethods.speaker("Exploration mode", TextToSpeech.QUEUE_FLUSH);
-        startService(new Intent(getApplicationContext(), PollingService.class));
+        if (!followingUp.getValue()) {
+            startService(new Intent(getApplicationContext(), PollingService.class));
+        }
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
 

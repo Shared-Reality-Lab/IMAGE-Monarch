@@ -103,6 +103,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import ca.mcgill.a11y.image.renderers.Exploration;
 import ca.mcgill.a11y.image.request_formats.BaseRequestFormat;
 import ca.mcgill.a11y.image.request_formats.MakeRequest;
 import ca.mcgill.a11y.image.request_formats.MapRequestFormat;
@@ -155,6 +156,7 @@ public class DataAndMethods {
     public static BrailleDisplay.MotionEventHandler handler;
     // keep track of current request to server
     private static Call<ResponseFormat> ongoingCall;
+    public static MutableLiveData<Boolean> followingUp = new MutableLiveData<>(false);
     // TTS engine instance
     static TextToSpeech tts = null;
     // application context
@@ -175,6 +177,7 @@ public class DataAndMethods {
 
     public static Boolean titleRead = true;
     public static String tempImage = "";
+    public static String forceSpeak = null;
     // mapping of keyCodes
     public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
         put(421, "UP");
@@ -236,6 +239,12 @@ public class DataAndMethods {
                                 // plays ping when TTS readout is completed based on utteranceId
                                 if (s.equals("ping")) {
                                     pingsPlayer(R.raw.blip);
+                                } else if (s.equals("forceSpeak")) {
+                                    forceSpeak = null;
+                                }
+                                if (forceSpeak!= null){
+                                    speaker(forceSpeak, TextToSpeech.QUEUE_FLUSH);
+                                    forceSpeak = null;
                                 }
                             }
 
@@ -861,6 +870,15 @@ public class DataAndMethods {
                                 //Log.d("IMAGE", image);
                             }
                             else{
+                                // Log.d("graphicBlob", resource.graphicBlob);
+                                String srcGraphic = decrypt(resource.graphicBlob, "abc");
+                                byte[] decodedBytes = Base64.decode(srcGraphic.replaceFirst("data:.+,", ""), Base64.DEFAULT);
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                                Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
+                                PhotoRequestFormat req= new PhotoRequestFormat();
+                                req.setValues(srcGraphic, dims);
+                                // Log.d("HISTORY", String.valueOf(history.temp_request));
+                                history.updateHistory(req);
                                 image = decrypt(image, context.getString(R.string.password));
                             }
                             // gets viewBox dims for current image
@@ -881,7 +899,10 @@ public class DataAndMethods {
                             //for (int i=0; i< renderings.length; i++){
                             if (renderings[0].type_id.contains("Text")){
                                 furesponse = renderings[0].data.text;
-                                speaker(furesponse, TextToSpeech.QUEUE_ADD);
+                                // Log.d("FOLLOW UP", furesponse);
+                                forceSpeak = furesponse;
+                                speaker(furesponse, TextToSpeech.QUEUE_ADD, "forceSpeak");
+                                followingUp.setValue(false);
                             }
                             else if(renderings[0].type_id.contains("TactileSVG")){
                                 furesponse = renderings[0].data.graphic;
@@ -911,6 +932,9 @@ public class DataAndMethods {
                     throw new RuntimeException(e);
                 } catch (ArrayIndexOutOfBoundsException | NullPointerException e){
                     pingsPlayer(R.raw.image_error);
+                    if (followingUp.getValue()){
+                        followingUp.setValue(false);
+                    }
                     history.setHistory(false);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -1366,6 +1390,7 @@ public class DataAndMethods {
                 req.setPrevious(previous);
             }
             history.updateHistory(req);
+            followingUp.setValue(true);
             call= makereq.makePhotoRequest(req);
         }
         else if (history.type.equals("Map")){
