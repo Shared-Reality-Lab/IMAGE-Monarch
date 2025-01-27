@@ -70,7 +70,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
             @Override
             public void onChanged(Boolean changedVal) {
                 if (changedVal && DataAndMethods.image != null){
-                    displayGraphic(confirmButton, "Guidance");
+                    displayGraphic(confirmButton, "Guidance", false);
                 }
             }
 
@@ -100,12 +100,12 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
                 case "OK":
                     if (DataAndMethods.image!= null)
-                        DataAndMethods.displayGraphic(confirmButton, "Guidance");
+                        DataAndMethods.displayGraphic(confirmButton, "Guidance", false);
                     return false;
 
                 case "CANCEL":
                     if (DataAndMethods.image!= null)
-                        DataAndMethods.displayGraphic(backButton, "Guidance");
+                        DataAndMethods.displayGraphic(backButton, "Guidance", false);
                     return false;
                 default:
                     Log.d("KEY EVENT", event.toString());

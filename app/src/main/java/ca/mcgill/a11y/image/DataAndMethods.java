@@ -28,6 +28,7 @@ import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
 import static ca.mcgill.a11y.image.selectors.ClassroomSelector.channelSubscribed;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -178,6 +179,7 @@ public class DataAndMethods {
     public static Boolean titleRead = true;
     public static String tempImage = "";
     public static String forceSpeak = null;
+    public static Boolean silentStart = false;
     // mapping of keyCodes
     public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
         put(421, "UP");
@@ -345,11 +347,12 @@ public class DataAndMethods {
             myIntent.putExtra("query", results);
             myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             DataAndMethods.context.startActivity(myIntent);
+            //((Activity)DataAndMethods.context).startActivityForResult(myIntent, 1);
         }else
             Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
     }
     //check mode and display appropriate layer
-    public static void displayGraphic(int keyCode, String mode){
+    public static void displayGraphic(int keyCode, String mode, Boolean silentStart){
         try{if (mode=="Exploration"){
 
                 DataAndMethods.ttsEnabled=true;
@@ -359,7 +362,7 @@ public class DataAndMethods {
                 else{
                     -- DataAndMethods.presentLayer;
                 }
-                brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, !silentStart));
 
 
 
@@ -371,7 +374,7 @@ public class DataAndMethods {
             else{
                 -- DataAndMethods.presentTarget;
             }
-            brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), true));
+            brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), !silentStart));
         }}
         catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
             throw new RuntimeException(e);
@@ -1417,6 +1420,7 @@ public class DataAndMethods {
 
         // need to make a separate function so that 'image' is not replaced
         makeServerCall(call);
+        pingsPlayer(R.raw.image_request_sent);
 
     }
     
