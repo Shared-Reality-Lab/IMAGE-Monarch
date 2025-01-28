@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Console;
+import java.util.Iterator;
 
 // keeping track of requests history
 public class History{
@@ -18,7 +19,7 @@ public class History{
 
     String response;
 
-    public void updateHistory(Object req) throws JSONException {
+    /*public void updateHistory(Object req) throws JSONException {
         Gson gson = new Gson();
         String json = gson.toJson(req);
         JSONObject jsonObject = new JSONObject(json);
@@ -37,6 +38,22 @@ public class History{
         this.temp_type = null;
         this.temp_request = null;
         // Log.d("HISTORY", history() );
+    }*/
+    public void updateHistory(JSONObject jsonObject) throws JSONException {
+        if (jsonObject.has("graphic")){
+            this.type = "Photo";
+        } else if (jsonObject.has("coordinates")) {
+            this.type = "Map";
+        }
+        this.request = jsonObject;
+
+        /*Iterator<String> iterator = jsonObject.keys(); // Your Iterator<String> object
+        StringBuilder sb = new StringBuilder();
+
+        while (iterator.hasNext()) {
+            sb.append(iterator.next()).append(", "); // Append each element
+        }
+        Log.d("KEYS", sb.toString());*/
     }
 
     // public String history(){

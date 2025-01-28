@@ -122,6 +122,10 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                         break;
                 }
                 return true;
+            case "BACK":
+                DataAndMethods.update.setValue(true);
+                finish();
+                return true;
             default:
                 Log.d("KEY EVENT", event.toString());
                 return false;
