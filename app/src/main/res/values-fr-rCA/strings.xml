@@ -37,7 +37,6 @@
         <string name="on_zoom_mode">Mode zoom activé</string>
         <string name="off_zoom_mode">Mode zoom désactivé</string>
 
-
     <!--In DataAndMethods.java-->
     <string name="zoom_error">Il est impossible de faire un zoom arrière plus que cela</string>
     <string name="text_error">Le text n'est pas reconnu"</string>
@@ -53,4 +52,5 @@
     <string name="received_query_1">Double-cliquez sur le coin supérieur gauche de la région qui vous intéresse ou appuyez sur la touche de confirmation pour lancer une requête sans sélection.</string>
     <string name="state_1">Double-cliquer sur le coin inférieur droit de la région d'intérêt ou appuyer sur confirmer pour procéder sans sélection. Appuyez sur Annuler pour revenir à la page précédente.</string>
     <string name="state_2">Appuyer sur \'confirm\' pour demander la région sélectionnée. Appuyer sur « cancel » pour revenir à la sélection de la région</string>
+
 </resources>
