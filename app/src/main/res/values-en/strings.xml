@@ -39,12 +39,11 @@
 
     <!--In DataAndMethods.java-->
     <string name="zoom_error">Oops! Cannot zoom out further</string>
-    <string name="text_recognition_error">"Failed to recognize text"</string>
-    <string name="speech_recognition_error">"Error occurred during speech recognition"</string>
+    <string name="text_error">"Failed to recognize text"</string>
+    <string name="speech_error">"Error occurred during speech recognition"</string>
     <string name="layer">"Layer"</string>
     <string name="full_image">"Full image"</string>
     <string name="guidance_unavailable">"No guidance mode available"</string>
-    <string name="layer">"Layer"</string>
     <string name="tactile_response">Tactile response received. Press confirm to view it. Press cancel to ignore."</string>
     <string name="unknown_type">Response received in type that is not handled yet.</string>
 

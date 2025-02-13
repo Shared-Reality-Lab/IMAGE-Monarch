@@ -39,18 +39,17 @@
 
     <!--In DataAndMethods.java-->
     <string name="zoom_error">Il est impossible de faire un zoom arrière plus que cela</string>
-    <string name="text_error">Le text n'est pas reconnu"</string>
-    <string name="speech_error">une erreur s'est produite lors de la reconnaissance vocale</string>
+    <string name="text_error">Le text n\'est pas reconnu"</string>
+    <string name="speech_error">une erreur s\'est produite lors de la reconnaissance vocale</string>
     <string name="layer">Strate</string>
     <string name="full_image">graphique complète</string>
     <string name="guidance_unavailable">Aucun mode de conseils disponible</string>
-    <string name="tactile_response">Réponse tactile reçue. Appuyez sur la touche de confirmation pour l'afficher. Appuyer sur annuler pour l'ignorer.</string>
-    <string name="unknown_type">Réponse reçue dans un type qui n'est pas encore traité</string>
+    <string name="tactile_response">Réponse tactile reçue. Appuyez sur la touche de confirmation pour l\'afficher. Appuyer sur annuler pour l\'ignorer.</string>
+    <string name="unknown_type">Réponse reçue dans un type qui n\'est pas encore traité</string>
     <!--
     FollowUpQuery-->
     <string name="received_query_0">Requête reçue: "</string>
     <string name="received_query_1">Double-cliquez sur le coin supérieur gauche de la région qui vous intéresse ou appuyez sur la touche de confirmation pour lancer une requête sans sélection.</string>
-    <string name="state_1">Double-cliquer sur le coin inférieur droit de la région d'intérêt ou appuyer sur confirmer pour procéder sans sélection. Appuyez sur Annuler pour revenir à la page précédente.</string>
+    <string name="state_1">Double-cliquer sur le coin inférieur droit de la région d\'intérêt ou appuyer sur confirmer pour procéder sans sélection. Appuyez sur Annuler pour revenir à la page précédente.</string>
     <string name="state_2">Appuyer sur \'confirm\' pour demander la région sélectionnée. Appuyer sur « cancel » pour revenir à la sélection de la région</string>
-
 </resources>
