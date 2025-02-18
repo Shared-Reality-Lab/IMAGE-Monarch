@@ -20,10 +20,13 @@ package ca.mcgill.a11y.image.renderers;
 import static ca.mcgill.a11y.image.DataAndMethods.backButton;
 import static ca.mcgill.a11y.image.DataAndMethods.confirmButton;
 import static ca.mcgill.a11y.image.DataAndMethods.displayGraphic;
+//import static ca.mcgill.a11y.image.DataAndMethods.followingUp;
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
+import static ca.mcgill.a11y.image.DataAndMethods.silentStart;
 import static ca.mcgill.a11y.image.DataAndMethods.update;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
@@ -33,6 +36,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.widget.Toast;
 
 import androidx.core.view.GestureDetectorCompat;
 import androidx.lifecycle.MutableLiveData;
@@ -51,6 +55,7 @@ import androidx.lifecycle.MutableLiveData;
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.PollingService;
+import ca.mcgill.a11y.image.R;
 
 public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
@@ -73,11 +78,22 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
             @Override
             public void onChanged(Boolean changedVal) {
                 if (changedVal && DataAndMethods.image != null){
-                    displayGraphic(confirmButton, "Exploration");
+                    displayGraphic(confirmButton, "Exploration", silentStart);
+                    if (silentStart)
+                        silentStart = false;
                 }
             }
 
         });
+
+        /*followingUp.observe(this,new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean changedVal) {
+                if (!changedVal){
+                    startService(new Intent(getApplicationContext(), PollingService.class));
+                }
+            }
+        });*/
     }
 
 
@@ -103,13 +119,17 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 
                 case "OK":
                     if (DataAndMethods.image!= null)
-                        DataAndMethods.displayGraphic(confirmButton, "Exploration");
+                        DataAndMethods.displayGraphic(confirmButton, "Exploration", false);
                     return false;
 
                 case "CANCEL":
                     if (DataAndMethods.image!= null)
-                        DataAndMethods.displayGraphic(backButton, "Exploration");
+                        DataAndMethods.displayGraphic(backButton, "Exploration", false);
                     return false;
+                case "MENU":
+                    DataAndMethods.pingsPlayer(R.raw.blip);
+                    DataAndMethods.speechRecognizer.startListening(DataAndMethods.speechRecognizerIntent);
+                    return true;
                 default:
                     Log.d("KEY EVENT", event.toString());
                     return false;
@@ -225,12 +245,15 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
         mediaPlayer.release();
     }
 
-
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
-        DataAndMethods.speaker("Exploration mode", TextToSpeech.QUEUE_FLUSH);
-        startService(new Intent(getApplicationContext(), PollingService.class));
+        if (!silentStart)
+            DataAndMethods.speaker("Exploration mode", TextToSpeech.QUEUE_FLUSH);
+
+        //if (!followingUp.getValue()) {
+            startService(new Intent(getApplicationContext(), PollingService.class));
+        //}
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);
 

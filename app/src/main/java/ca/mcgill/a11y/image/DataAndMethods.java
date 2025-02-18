@@ -28,6 +28,7 @@ import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
 import static ca.mcgill.a11y.image.selectors.ClassroomSelector.channelSubscribed;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -103,6 +104,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import ca.mcgill.a11y.image.renderers.Exploration;
 import ca.mcgill.a11y.image.request_formats.BaseRequestFormat;
 import ca.mcgill.a11y.image.request_formats.MakeRequest;
 import ca.mcgill.a11y.image.request_formats.MapRequestFormat;
@@ -110,7 +112,9 @@ import ca.mcgill.a11y.image.request_formats.PhotoRequestFormat;
 import ca.mcgill.a11y.image.request_formats.ResponseFormat;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 import okhttp3.logging.HttpLoggingInterceptor;
+import okio.Buffer;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -155,6 +159,8 @@ public class DataAndMethods {
     public static BrailleDisplay.MotionEventHandler handler;
     // keep track of current request to server
     private static Call<ResponseFormat> ongoingCall;
+    private static Call<ResponseFormat> ongoingFollowUp;
+    //public static MutableLiveData<Boolean> followingUp = new MutableLiveData<>(false);
     // TTS engine instance
     static TextToSpeech tts = null;
     // application context
@@ -175,6 +181,8 @@ public class DataAndMethods {
 
     public static Boolean titleRead = true;
     public static String tempImage = "";
+    public static String forceSpeak = null;
+    public static Boolean silentStart = false;
     // mapping of keyCodes
     public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
         put(421, "UP");
@@ -227,7 +235,9 @@ public class DataAndMethods {
                         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                             @Override
                             public void onStart(String s) {
-
+                                if (s.equals("forceSpeak")) {
+                                    forceSpeak = null;
+                                }
                             }
 
                             @Override
@@ -236,6 +246,10 @@ public class DataAndMethods {
                                 // plays ping when TTS readout is completed based on utteranceId
                                 if (s.equals("ping")) {
                                     pingsPlayer(R.raw.blip);
+                                }
+                                if (forceSpeak!= null){
+                                    speaker(forceSpeak, TextToSpeech.QUEUE_FLUSH, "forceSpeak");
+                                    //forceSpeak = null;
                                 }
                             }
 
@@ -336,11 +350,12 @@ public class DataAndMethods {
             myIntent.putExtra("query", results);
             myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             DataAndMethods.context.startActivity(myIntent);
+            //((Activity)DataAndMethods.context).startActivityForResult(myIntent, 1);
         }else
             Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
     }
     //check mode and display appropriate layer
-    public static void displayGraphic(int keyCode, String mode){
+    public static void displayGraphic(int keyCode, String mode, Boolean silentStart){
         try{if (mode=="Exploration"){
 
                 DataAndMethods.ttsEnabled=true;
@@ -350,7 +365,7 @@ public class DataAndMethods {
                 else{
                     -- DataAndMethods.presentLayer;
                 }
-                brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, true));
+                brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, !silentStart));
 
 
 
@@ -362,7 +377,7 @@ public class DataAndMethods {
             else{
                 -- DataAndMethods.presentTarget;
             }
-            brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), true));
+            brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), !silentStart));
         }}
         catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
             throw new RuntimeException(e);
@@ -702,8 +717,8 @@ public class DataAndMethods {
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makePhotoRequest(req);
-        history.updateHistory(req);
-        makeServerCall(call);
+        //history.updateHistory(req);
+        makeServerCall(call, false);
         // The regex expression in replaceFirst removes everything following the '.' i.e. .jpg, .png etc.
         return files[fileSelected].getName().replaceFirst("\\.[^.]*$", "");
     }
@@ -759,8 +774,8 @@ public class DataAndMethods {
                 "https://image.a11y.mcgill.ca/");
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makeMapRequest(req);
-        history.updateHistory(req);
-        makeServerCall(call);
+        //history.updateHistory(req);
+        makeServerCall(call, false);
     }
 
     // fetches updates from server if they exist
@@ -769,7 +784,7 @@ public class DataAndMethods {
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.checkForUpdates(context.getString(R.string.server_url)+"display/"+channelSubscribed);
-        makeServerCall(call);
+        makeServerCall(call, false);
     }
 
     // initializes dims, zoomBox and origDims for new graphic
@@ -836,10 +851,17 @@ public class DataAndMethods {
     }
 
     // makes async call to serevr
-    public static void makeServerCall(Call<ResponseFormat> call){
+    public static void makeServerCall(Call<ResponseFormat> call, Boolean isFollowup){
         // Cancelling any ongoing requests that haven't been completed
-        if (ongoingCall!=null){
-            ongoingCall.cancel();
+        if (isFollowup){
+            if (ongoingFollowUp!=null){
+                ongoingFollowUp.cancel();
+            }
+        }
+        else{
+            if (ongoingCall!=null){
+                ongoingCall.cancel();
+            }
         }
         update.setValue(false);
         call.enqueue(new Callback<ResponseFormat>() {
@@ -849,7 +871,14 @@ public class DataAndMethods {
                     if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED || image == null) {
                         ResponseFormat resource = response.body();
                         ResponseFormat.Rendering[] renderings = resource.renderings;
-                        if (history.temp_request == null || !history.temp_request.has("followup")){
+                        //if (history.temp_request == null || !history.temp_request.has("followup")){
+                        //Log.d("REQ_BODY", String.valueOf(call.request().body()));
+                        // only log history if request body exists; this is false for classroom mode
+                        if (call.request().body() != null){
+                            JSONObject req = new JSONObject(requestBodyToString(call.request().body()));
+                            history.updateHistory(req);
+                        }
+                        if (!isFollowup){
                             image =(renderings[0].data.graphic);
                             // Check if data is encrypted or contains data:image...
                             // and process accordingly
@@ -861,6 +890,19 @@ public class DataAndMethods {
                                 //Log.d("IMAGE", image);
                             }
                             else{
+                                // Log.d("graphicBlob", resource.graphicBlob);
+                                String srcGraphic = decrypt(resource.graphicBlob, "abc");
+                                // log history for classroom mode
+                                byte[] decodedBytes = Base64.decode(srcGraphic.replaceFirst("data:.+,", ""), Base64.DEFAULT);
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                                Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
+                                PhotoRequestFormat rq= new PhotoRequestFormat();
+                                rq.setValues(srcGraphic, dims);
+                                // Log.d("HISTORY", String.valueOf(history.temp_request));
+                                Gson gson = new Gson();
+                                String json = gson.toJson(rq);
+                                JSONObject request = new JSONObject(json);
+                                history.updateHistory(request);
                                 image = decrypt(image, context.getString(R.string.password));
                             }
                             // gets viewBox dims for current image
@@ -881,7 +923,10 @@ public class DataAndMethods {
                             //for (int i=0; i< renderings.length; i++){
                             if (renderings[0].type_id.contains("Text")){
                                 furesponse = renderings[0].data.text;
-                                speaker(furesponse, TextToSpeech.QUEUE_ADD);
+                                // Log.d("FOLLOW UP", furesponse);
+                                forceSpeak = furesponse;
+                                speaker(furesponse, TextToSpeech.QUEUE_ADD, "forceSpeak");
+                                //followingUp.setValue(false);
                             }
                             else if(renderings[0].type_id.contains("TactileSVG")){
                                 furesponse = renderings[0].data.graphic;
@@ -896,7 +941,7 @@ public class DataAndMethods {
                             //}
                             history.setResponse(furesponse);
                         }
-                        history.setHistory(true);
+                        //history.setHistory(true);
                         pingsPlayer(R.raw.image_results_arrived);
                         update.setValue(true);
                     }
@@ -907,11 +952,14 @@ public class DataAndMethods {
                 // This occurs when there is no rendering returned
                 catch (IOException | ParserConfigurationException | SAXException |
                        XPathExpressionException e) {
-                    history.setHistory(false);
+                    //history.setHistory(false);
                     throw new RuntimeException(e);
                 } catch (ArrayIndexOutOfBoundsException | NullPointerException e){
                     pingsPlayer(R.raw.image_error);
-                    history.setHistory(false);
+                    /*if (followingUp.getValue()){
+                        followingUp.setValue(false);
+                    }*/
+                    //history.setHistory(false);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -932,7 +980,10 @@ public class DataAndMethods {
             }
         });
         // Saving the in-progress call to allow interruption if needed
-        ongoingCall=call;
+        if (isFollowup)
+            ongoingFollowUp = call;
+        else
+            ongoingCall = call;
     }
 
     // resets zoom and dimension related variables for new graphics
@@ -1365,7 +1416,8 @@ public class DataAndMethods {
                 String[][] previous = setPrevious();
                 req.setPrevious(previous);
             }
-            history.updateHistory(req);
+            //history.updateHistory(req);
+            //followingUp.setValue(true);
             call= makereq.makePhotoRequest(req);
         }
         else if (history.type.equals("Map")){
@@ -1381,7 +1433,7 @@ public class DataAndMethods {
                 String[][] previous = setPrevious();
                 req.setPrevious(previous);
             }
-            history.updateHistory(req);
+            //history.updateHistory(req);
             call = makereq.makeMapRequest(req);
         }
 
@@ -1391,7 +1443,8 @@ public class DataAndMethods {
 
 
         // need to make a separate function so that 'image' is not replaced
-        makeServerCall(call);
+        makeServerCall(call, true);
+        pingsPlayer(R.raw.image_request_sent);
 
     }
     
@@ -1415,7 +1468,130 @@ public class DataAndMethods {
         return previous.toArray(new String[][]{});
     }
 
+    /*
+    public static void makeFollowUpServerCall(Call<ResponseFormat> call) throws IOException, JSONException {
+        // Cancelling any ongoing requests that haven't been completed
+        if (ongoingFollowUp!=null){
+            ongoingFollowUp.cancel();
+        }
+        update.setValue(false);
+        call.enqueue(new Callback<ResponseFormat>() {
+            @Override
+            public void onResponse(Call<ResponseFormat> call, Response<ResponseFormat> response) {
+                try {
+                    if (response.raw().networkResponse().code() != HttpURLConnection.HTTP_NOT_MODIFIED || image == null) {
+                        ResponseFormat resource = response.body();
+                        ResponseFormat.Rendering[] renderings = resource.renderings;
+                        // this is where followup response is handled
+                        //Log.d("FOLLOW UP", "Found followup field");
+                        String furesponse = "";
+                        //for (int i=0; i< renderings.length; i++){
+                        if (renderings[0].type_id.contains("Text")){
+                            furesponse = renderings[0].data.text;
+                            // Log.d("FOLLOW UP", furesponse);
+                            forceSpeak = furesponse;
+                            speaker(furesponse, TextToSpeech.QUEUE_ADD, "forceSpeak");
+                            //followingUp.setValue(false);
+                        }
+                        else if(renderings[0].type_id.contains("TactileSVG")){
+                            furesponse = renderings[0].data.graphic;
+                            tempImage = furesponse;
+                            speaker("Tactile response received. Press confirm to view it. Press cancel to ignore", TextToSpeech.QUEUE_ADD);
+                            followup = true;
+                        }
+                        else{
+                            furesponse = "Response received in type that is not handled yet";
+                        }
+                        history.setResponse(furesponse);
+                        history.setHistory(true);
+                        update.setValue(true);
+                        pingsPlayer(R.raw.image_results_arrived);
+                    }
+                    else{
+                        Log.d("CACHE", "Fetching from cache!");
+                    }
+                }
+                // This occurs when there is no rendering returned
+                catch (ArrayIndexOutOfBoundsException | NullPointerException e){
+                    pingsPlayer(R.raw.image_error);
+                    history.setHistory(false);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
+            //onFailure is called both when a request is cancelled (i.e. interrupted with another request)
+            // AND when it fails to give a valid response
+            @Override
+            public void onFailure(Call<ResponseFormat> call, Throwable t) {
+                // Ensure that a request was cancelled before playing error ping
+                // This text is not read out when a request is cancelled as there is expected to be
+                // an ongoing request and can be confused as a result of that request.
+                // Causes interrupted requests to die silently!
+                Log.d("RESPONSE", "FAILED!");
+                if (!call.isCanceled()){
+                    pingsPlayer(R.raw.image_error);
+                }
+            }
+        });
+        // Saving the in-progress call to allow interruption if needed
+        ongoingFollowUp=call;
+        Log.d("CALL", requestBodyToString(call.request().body()));
+        JSONObject mainObject = new JSONObject(requestBodyToString(call.request().body()));
+    }*/
+
+
+    public static String requestBodyToString(RequestBody requestBody) throws IOException {
+        Buffer buffer = new Buffer();
+        requestBody.writeTo(buffer);
+        return buffer.readUtf8();
+    }
+    public static String decrypt(String encryptedBase64, String password) throws Exception {
+        // Convert the Base64-encoded encrypted data and IV to byte arrays
+        byte[] encrypted = Base64.decode(encryptedBase64, Base64.NO_WRAP);
+
+        byte[] salt = Arrays.copyOfRange(encrypted, 0, 16);
+        byte[] iv = Arrays.copyOfRange(encrypted, 16, 32);
+        byte[] encryptedData = Arrays.copyOfRange(encrypted, 32, encrypted.length);
+        // byte[] iv = Base64.decode(ivBase64, Base64.NO_WRAP);
+        //Log.d("DECODED", convertToUnsignedBytes(iv));
+        //Log.d("DECODED DATA", convertToUnsignedBytes(encryptedData));
+
+        // Derive the AES key from the password using PBKDF2
+        //byte[] salt = Base64.decode(saltBase64, Base64.NO_WRAP);  // Use the same salt used in encryption
+        SecretKey key = deriveKey(password, salt);
+
+        // Create the AES key from the password
+        SecretKeySpec secretKey = new SecretKeySpec(key.getEncoded(), "AES");
+
+        // Create Cipher instance for AES in CBC mode
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+
+        // Setup the IvParameterSpec with the IV for decryption
+        IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
+        // Decrypt the data
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
+        byte[] decryptedData = cipher.doFinal(encryptedData);
+
+        // Convert the decrypted byte array back to a string
+        return new String(decryptedData, StandardCharsets.UTF_8);
+    }
+    public static String convertToUnsignedBytes(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append((b & 0xFF)).append(", ");
+        }
+        return sb.toString();
+    }
+
+    // Derive the AES key from the password using PBKDF2
+    private static SecretKey deriveKey(String password, byte[] salt) throws Exception {
+        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 100000, 256);
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        byte[] key = factory.generateSecret(spec).getEncoded();
+        return new javax.crypto.spec.SecretKeySpec(key, "AES");
+    }
 
     // this is used to replicate what the outcome of a server call is for the demo example
     public static void makePseudoServerCall(){
@@ -1426,52 +1602,4 @@ public class DataAndMethods {
                         "\n<ellipse fill=\"none\" stroke=\"#000000\" stroke-width=\"0.885\" id=\"path358\" " +
                         "cx=\"48\" cy=\"20\" rx=\"15\" ry=\"15\" /> </g> \n</svg>";
     }
-
-    public static String decrypt(String encryptedBase64, String password) throws Exception {
-            // Convert the Base64-encoded encrypted data and IV to byte arrays
-            byte[] encrypted = Base64.decode(encryptedBase64, Base64.NO_WRAP);
-
-            byte[] salt = Arrays.copyOfRange(encrypted, 0, 16);
-            byte[] iv = Arrays.copyOfRange(encrypted, 16, 32);
-            byte[] encryptedData = Arrays.copyOfRange(encrypted, 32, encrypted.length);
-            // byte[] iv = Base64.decode(ivBase64, Base64.NO_WRAP);
-            //Log.d("DECODED", convertToUnsignedBytes(iv));
-            //Log.d("DECODED DATA", convertToUnsignedBytes(encryptedData));
-
-            // Derive the AES key from the password using PBKDF2
-            //byte[] salt = Base64.decode(saltBase64, Base64.NO_WRAP);  // Use the same salt used in encryption
-            SecretKey key = deriveKey(password, salt);
-
-            // Create the AES key from the password
-            SecretKeySpec secretKey = new SecretKeySpec(key.getEncoded(), "AES");
-
-            // Create Cipher instance for AES in CBC mode
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
-
-            // Setup the IvParameterSpec with the IV for decryption
-            IvParameterSpec ivSpec = new IvParameterSpec(iv);
-
-            // Decrypt the data
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
-            byte[] decryptedData = cipher.doFinal(encryptedData);
-
-            // Convert the decrypted byte array back to a string
-            return new String(decryptedData, StandardCharsets.UTF_8);
-        }
-        public static String convertToUnsignedBytes(byte[] bytes) {
-            StringBuilder sb = new StringBuilder();
-            for (byte b : bytes) {
-                sb.append((b & 0xFF)).append(", ");
-            }
-            return sb.toString();
-        }
-
-        // Derive the AES key from the password using PBKDF2
-        private static SecretKey deriveKey(String password, byte[] salt) throws Exception {
-            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 100000, 256);
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            byte[] key = factory.generateSecret(spec).getEncoded();
-            return new javax.crypto.spec.SecretKeySpec(key, "AES");
-        }
-
 }

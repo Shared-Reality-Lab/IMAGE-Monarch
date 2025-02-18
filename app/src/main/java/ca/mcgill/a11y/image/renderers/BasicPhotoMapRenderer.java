@@ -19,10 +19,12 @@ package ca.mcgill.a11y.image.renderers;
 
 
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
+import static ca.mcgill.a11y.image.DataAndMethods.silentStart;
 
 import androidx.core.view.GestureDetectorCompat;
 import androidx.lifecycle.Observer;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
@@ -79,7 +81,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                     }
                 }
                 else {
-                    DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
+                    DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration", false);
                 }
                 return true;
             case "CANCEL":
@@ -87,7 +89,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                     DataAndMethods.followup = false;
                 }
                 else{
-                DataAndMethods.displayGraphic(DataAndMethods.backButton, "Exploration");
+                DataAndMethods.displayGraphic(DataAndMethods.backButton, "Exploration", false);
                 }
                 return true;
             case "MENU":
@@ -209,13 +211,12 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
         return true;
     }
 
-
-
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
 
-        DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration");
+        DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration", silentStart);
+        silentStart = false;
 
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);

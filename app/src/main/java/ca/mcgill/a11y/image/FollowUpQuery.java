@@ -18,10 +18,13 @@ package ca.mcgill.a11y.image;
 
 import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 import static ca.mcgill.a11y.image.DataAndMethods.showRegion;
+import static ca.mcgill.a11y.image.DataAndMethods.silentStart;
+import static ca.mcgill.a11y.image.DataAndMethods.speaker;
 import static ca.mcgill.a11y.image.DataAndMethods.titleRead;
 
 import androidx.core.view.GestureDetectorCompat;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
@@ -97,6 +100,9 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                             throw new RuntimeException(e);
                         }
                         titleRead = false;
+                        silentStart = true;
+                        // cut the speech
+                        speaker("", TextToSpeech.QUEUE_FLUSH);
                         finish();
                         break;
                     default:
@@ -115,6 +121,10 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                         DataAndMethods.pingsPlayer(R.raw.image_error);
                         break;
                 }
+                return true;
+            case "BACK":
+                DataAndMethods.update.setValue(true);
+                finish();
                 return true;
             default:
                 Log.d("KEY EVENT", event.toString());
