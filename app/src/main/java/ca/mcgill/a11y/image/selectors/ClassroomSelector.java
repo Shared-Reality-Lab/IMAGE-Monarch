@@ -59,13 +59,14 @@ import ca.mcgill.a11y.image.renderers.Exploration;
 import ca.mcgill.a11y.image.renderers.Guidance;
 
 public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
-    public static String channelSubscribed = "514446"; // make this the place the request takes it from
+    public static String channelSubscribed; // make this the place the request takes it from
 
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_classroom_selector);
+        channelSubscribed = getApplicationContext().getString(R.string.share_code);
 
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
 
