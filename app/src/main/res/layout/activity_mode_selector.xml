@@ -20,7 +20,7 @@
                 android:id="@+id/classroom_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Classroom Mode" />
+                android:text="@string/classroom_mode" />
         </TableRow>
 
         <TableRow

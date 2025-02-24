@@ -14,13 +14,14 @@ android {
         compileSdkVersion 31
         versionCode 1
         versionName "1.0"
+        resConfigs "en", "fr-rCA"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
         }
     }
 
-    buildTypes {
+        buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -35,6 +36,7 @@ android {
     }
     externalNativeBuild {
     }
+
 }
 
 
@@ -56,4 +58,6 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
     implementation "com.squareup.retrofit2:converter-scalars:2.9.0"
     implementation 'com.squareup.okhttp3:logging-interceptor:3.9.0'
+    // Locale
+    implementation 'androidx.appcompat:appcompat:1.6.0-alpha01'
 }

@@ -35,6 +35,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.BrailleDisplay;
 import android.os.Build;
 import android.os.Bundle;
@@ -50,12 +51,15 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Switch;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.os.LocaleListCompat;
 import androidx.core.view.GestureDetectorCompat;
 
 import org.json.JSONException;
@@ -78,6 +82,13 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        /*Configuration newConfig = new Configuration();
+        newConfig.setLocale(Locale.forLanguageTag("fr-CA"));
+        onConfigurationChanged(newConfig);*/
+        LocaleListCompat appLocale = LocaleListCompat.forLanguageTags(getApplicationContext().getString(R.string.locale));
+        AppCompatDelegate.setApplicationLocales(appLocale);
+
         // View Actions
         setContentView(R.layout.activity_main);
         if(ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
@@ -182,4 +193,11 @@ public class BaseActivity extends AppCompatActivity {
         super.onResume();
     }
 
+    /*@Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        setContentView(R.layout.activity_main);
+        setTitle(R.string.app_name);
+        Log.d("CONFIG", getApplicationContext().getString(R.string.app_name));
+    }*/
 }

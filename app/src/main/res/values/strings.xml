@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">IMAGE Monarch Client</string>
-    <string name="server_url">https://monarch.unicorn.cim.mcgill.ca/</string>
+    <string name="classroom_mode">Classroom Mode</string>
 </resources>
