@@ -134,23 +134,23 @@ public class BaseActivity extends AppCompatActivity {
                 case "ZOOM OUT":
                     Log.d("KEY EVENT", event.toString());
                     if (!DataAndMethods.zoomingOut) {
-                        DataAndMethods.speaker("Zoom mode enabled", TextToSpeech.QUEUE_FLUSH);
+                        DataAndMethods.speaker(getResources().getString(R.string.on_zoom_mode), TextToSpeech.QUEUE_FLUSH);
                         DataAndMethods.zoomingOut = true;
                         DataAndMethods.zoomingIn = false;
                     } else {
                         DataAndMethods.zoomingOut = false;
-                        DataAndMethods.speaker("Zoom mode disabled", TextToSpeech.QUEUE_FLUSH);
+                        DataAndMethods.speaker(getResources().getString(R.string.off_zoom_mode), TextToSpeech.QUEUE_FLUSH);
                     }
                     return true;
                 case "ZOOM IN":
                     Log.d("KEY EVENT", event.toString());
                     if (!DataAndMethods.zoomingIn) {
-                        DataAndMethods.speaker("Zoom mode enabled", TextToSpeech.QUEUE_FLUSH);
+                        DataAndMethods.speaker(getResources().getString(R.string.on_zoom_mode), TextToSpeech.QUEUE_FLUSH);
                         DataAndMethods.zoomingIn = true;
                         DataAndMethods.zoomingOut = false;
                     } else {
                         DataAndMethods.zoomingIn = false;
-                        DataAndMethods.speaker("Zoom mode disabled", TextToSpeech.QUEUE_FLUSH);
+                        DataAndMethods.speaker(getResources().getString(R.string.off_zoom_mode), TextToSpeech.QUEUE_FLUSH);
                     }
                     return true;
                 case "DPAD UP":

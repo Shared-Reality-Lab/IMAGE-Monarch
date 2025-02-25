@@ -72,15 +72,15 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                          SAXException e) {
                     throw new RuntimeException(e);
                 }
-                DataAndMethods.speaker("Query received: "+query+" ...Double click on top left corner of region of interest or press confirm to query without selection", TextToSpeech.QUEUE_FLUSH);
+                DataAndMethods.speaker(getResources().getString(R.string.received_query_0)+query+getResources().getString(R.string.received_query_1), TextToSpeech.QUEUE_FLUSH);
                 break;
             case 1:
                 //Log.d("STATE", "State 1");
-                DataAndMethods.speaker("Double click on bottom right corner of region of interest or press confirm to proceed without selection. Press cancel to return", TextToSpeech.QUEUE_FLUSH);
+                DataAndMethods.speaker(getResources().getString(R.string.state_1), TextToSpeech.QUEUE_FLUSH);
                 break;
             case 2:
                 //Log.d("STATE", "State 2");
-                DataAndMethods.speaker("Press confirm to query for selected region. Press cancel to return to region selection", TextToSpeech.QUEUE_FLUSH);
+                DataAndMethods.speaker(getResources().getString(R.string.state_2), TextToSpeech.QUEUE_FLUSH);
                 break;
         }
     }

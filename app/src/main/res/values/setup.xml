@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="server_url" translatable="false">https://monarch.unicorn.cim.mcgill.ca/</string>
-    <string name="locale" translatable="false">en-US</string>
+    <string name="locale" translatable="false">fr</string>
     <string name="share_code" translatable="false">812486</string>
 </resources>

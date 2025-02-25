@@ -76,7 +76,7 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
                     Double longitude= Double.parseDouble(((EditText) findViewById(R.id.longitude)).getText().toString());
                     DataAndMethods.getMap(latitude, longitude);
                 } catch (NumberFormatException e){
-                    speaker("Invalid coordinates", TextToSpeech.QUEUE_FLUSH);
+                    speaker(getResources().getString(R.string.invalid_coord), TextToSpeech.QUEUE_FLUSH);
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
@@ -106,7 +106,7 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "MapSelector Resumed");
-        DataAndMethods.speaker("Map selector", TextToSpeech.QUEUE_FLUSH);
+        DataAndMethods.speaker(getResources().getString(R.string.res_map_selector), TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image= null;
         super.onResume();
     }

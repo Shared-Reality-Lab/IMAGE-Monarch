@@ -1,4 +1,57 @@
 <resources>
     <string name="app_name">IMAGE Monarch Client</string>
+    <string name="selected_language">English</string>
+
+    <!-- App Modes -->
+    <!-- "[Classroom|Photo|Map] Mode" -->
     <string name="classroom_mode">Classroom Mode</string>
+    <string name="photo_mode">Photo Mode</string>
+    <string name="map_mode">Map Mode</string>
+
+    <!-- "[Exploration|Guidance] Mode" -->
+    <string name="exploration_mode">Exploration Mode</string>
+    <string name="guidance_mode">Guidance Mode</string>
+
+    <!-- Switching to "[classroom|photo|map] Mode" -->
+    <string name="swi_classroom_mode">Switching to classroom mode</string>
+    <string name="swi_photo_mode">Switching to photo mode</string>
+    <string name="swi_map_mode">Switching to map mode</string>
+
+    <!-- "Switching to [exploration|guidance] mode" -->
+    <string name="swi_exploration_mode">Switching to exploration mode</string>
+    <string name="swi_guidance_mode">Switching to guidance mode</string>
+
+    <!-- Mode navigation -->
+    <!-- "[Classroom|Map|Photo] Selector" -->
+    <string name="mode_selector">Mode Selector</string>
+    <string name="classroom_selector">Classroom Selector</string>
+    <string name="map_selector">Map Selector</string>
+    <string name="photo_selector">Photo Selector</string>
+    <string name="res_mode_selector">Mode Selector resumed</string>
+    <string name="res_classroom_selector">Classroom Selector resumed</string>
+    <string name="res_photo_selector">Photo Selector resumed</string>
+    <string name="res_map_selector">Map Selector resumed</string>
+
+    <!-- MapSelector.java -->
+    <string name="invalid_coord">Invalid coordinates</string>
+
+    <!-- BaseActivity.java -->
+    <string name="on_zoom_mode">Zoom mode enabled</string>
+    <string name="off_zoom_mode">Zoom mode disabled</string>
+
+    <!--In DataAndMethods.java-->
+    <string name="zoom_error">Oops! Cannot zoom out further</string>
+    <string name="text_error">Failed to recognize text"</string>
+    <string name="speech_error">Error occurred during speech recognition</string>
+    <string name="layer">"Layer"</string>
+    <string name="full_image">Full image</string>
+    <string name="guidance_unavailable">No guidance mode available</string>
+    <string name="tactile_response">Tactile response received. Press confirm to view it. Press cancel to ignore.</string>
+    <string name="unknown_type">Response received in type that is not handled yet.</string>
+
+    <!--FollowUpQuery-->
+    <string name="received_query_0">"Query received: "</string>
+    <string name="received_query_1">Double-click on top left corner of region of interest or press confirm to query without selection</string>
+    <string name="state_1">Double-click on bottom right corner of region of interest or press confirm to proceed without selection. Press cancel to return"</string>
+    <string name="state_2">Press \'confirm\' to query for selected region. Press cancel to return to region selection"</string>
 </resources>

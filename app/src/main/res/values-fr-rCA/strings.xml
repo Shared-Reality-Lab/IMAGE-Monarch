@@ -1,4 +1,57 @@
 <resources>
     <string name="app_name">IMAGE Monarch Client en français</string>
-    <string name="classroom_mode">Mode salle de classe</string>
+    <string name="selected_language">Français</string>
+
+    <!-- App Modes -->
+    <!-- "[Classroom|Photo|Map] Mode" -->
+    <string name="classroom_mode">Mode Classe</string>
+    <string name="photo_mode">Mode Photos</string>
+    <string name="map_mode">Mode Map</string>
+
+    <!-- "[Exploration|Guidance] Mode" -->
+    <string name="exploration_mode">Mode Exploration</string>
+    <string name="guidance_mode">Mode Conseils</string>
+
+    <!-- Switching to "[classroom|photo|map] Mode" -->
+    <string name="swi_classroom_mode">Passer en mode classe</string>
+    <string name="swi_photo_mode">Passer en mode photo</string>
+    <string name="swi_map_mode">Passer en mode map</string>
+
+    <!-- "Switching to [exploration|guidance] mode" -->
+    <string name="swi_exploration_mode">Passer en mode exploration</string>
+    <string name="swi_guidance_mode">Passer en mode conseils</string>
+
+    <!-- Mode navigation -->
+    <!-- "[Classroom|Map|Photo] Selector" -->
+    <string name="mode_selector">Sélecteur de mode</string>
+    <string name="classroom_selector">Sélecteur de classe</string>
+    <string name="map_selector">Sélecteur de carte</string>
+    <string name="photo_selector">Sélecteur de photo</string>
+    <string name="res_mode_selector">Sélecteur de mode a repris</string>
+    <string name="res_classroom_selector">Sélecteur de classe a repris</string>
+    <string name="res_photo_selector">Sélecteur de photo a repris</string>
+    <string name="res_map_selector">Sélecteur de carte a repris</string>
+
+    <!-- MapSelector.java -->
+    <string name="invalid_coord">Coordonnées non valides</string>
+
+    <!-- BaseActivity.java -->
+    <string name="on_zoom_mode">Mode zoom activé</string>
+    <string name="off_zoom_mode">Mode zoom désactivé</string>
+
+    <!--In DataAndMethods.java-->
+    <string name="zoom_error">Il est impossible de faire un zoom arrière plus que cela</string>
+    <string name="text_error">Le text n\'est pas reconnu"</string>
+    <string name="speech_error">une erreur s\'est produite lors de la reconnaissance vocale</string>
+    <string name="layer">Strate</string>
+    <string name="full_image">graphique complète</string>
+    <string name="guidance_unavailable">Aucun mode de conseils disponible</string>
+    <string name="tactile_response">Réponse tactile reçue. Appuyez sur la touche de confirmation pour l\'afficher. Appuyer sur annuler pour l\'ignorer.</string>
+    <string name="unknown_type">Réponse reçue dans un type qui n\'est pas encore traité</string>
+    <!--
+    FollowUpQuery-->
+    <string name="received_query_0">Requête reçue: "</string>
+    <string name="received_query_1">Double-cliquez sur le coin supérieur gauche de la région qui vous intéresse ou appuyez sur la touche de confirmation pour lancer une requête sans sélection.</string>
+    <string name="state_1">Double-cliquer sur le coin inférieur droit de la région d\'intérêt ou appuyer sur confirmer pour procéder sans sélection. Appuyez sur Annuler pour revenir à la page précédente.</string>
+    <string name="state_2">Appuyer sur \'confirm\' pour demander la région sélectionnée. Appuyer sur « cancel » pour revenir à la sélection de la région</string>
 </resources>
