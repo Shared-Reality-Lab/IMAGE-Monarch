@@ -303,9 +303,9 @@ public class DataAndMethods {
                     Log.d("SPEECHREC", String.valueOf(i));
                     switch (i) {
                         case SpeechRecognizer.ERROR_NO_MATCH:
-                            DataAndMethods.speaker("Failed to recognize text", TextToSpeech.QUEUE_FLUSH);
+                            DataAndMethods.speaker(context.getString(R.string.text_error), TextToSpeech.QUEUE_FLUSH);
                         default:
-                            DataAndMethods.speaker("Error occurred during speech recognition", TextToSpeech.QUEUE_FLUSH);
+                            DataAndMethods.speaker(context.getString(R.string.speech_error), TextToSpeech.QUEUE_FLUSH);
                     }
                 }
 
@@ -466,10 +466,10 @@ public class DataAndMethods {
                 if (readCaption) {
                     if(i==0 && caption!=null && titleRead){
                         // Read the caption along with layer tag for the first layer
-                        speaker(caption + ". Layer: " + tag, TextToSpeech.QUEUE_FLUSH);
+                        speaker(caption + context.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);
                     }
                     else{
-                        speaker("Layer: "+tag, TextToSpeech.QUEUE_FLUSH);
+                        speaker(context.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);
                     }
                 }
                 if (!titleRead){
@@ -487,7 +487,7 @@ public class DataAndMethods {
             }
         }
         else if (readCaption){
-            speaker("Full image", TextToSpeech.QUEUE_FLUSH);
+            speaker(context.getString(R.string.full_image), TextToSpeech.QUEUE_FLUSH);
         }
 
         NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
@@ -531,7 +531,7 @@ public class DataAndMethods {
         String tag = "";
         XPath xPath = XPathFactory.newInstance().newXPath();
         if (targetCount ==0){
-            speaker("No guidance mode available", TextToSpeech.QUEUE_FLUSH);
+            speaker(context.getString(R.string.guidance_unavailable), TextToSpeech.QUEUE_FLUSH);
             return data;
         }
         else if (presentTarget<=0 ){
@@ -576,7 +576,7 @@ public class DataAndMethods {
             //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
         }
         if (readCaption){
-        speaker("Layer: " + tag, TextToSpeech.QUEUE_FLUSH);}
+        speaker(context.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);}
 
         byte[] target = docToBitmap(doc);
 
@@ -931,7 +931,7 @@ public class DataAndMethods {
                             else if(renderings[0].type_id.contains("TactileSVG")){
                                 furesponse = renderings[0].data.graphic;
                                 tempImage = furesponse;
-                                speaker("Tactile response received. Press confirm to view it. Press cancel to ignore", TextToSpeech.QUEUE_ADD);
+                                speaker(context.getString(R.string.tactile_response), TextToSpeech.QUEUE_ADD);
                                 followup = true;
                             }
                             else{
@@ -1129,7 +1129,7 @@ public class DataAndMethods {
         }
         else{
             if (zoomVal <= 100){
-                speaker("Oops! Cannot zoom out further", TextToSpeech.QUEUE_FLUSH);
+                speaker(context.getString(R.string.zoom_error), TextToSpeech.QUEUE_FLUSH);
             }
             else {
                 zoomVal-= 25;
