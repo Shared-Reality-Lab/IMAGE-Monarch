@@ -97,11 +97,11 @@ public class BaseActivity extends AppCompatActivity {
 
         if (DataAndMethods.brailleServiceObj==null) {
             brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
-            DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+            DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content), getResources());
         }
         else{
             brailleServiceObj = DataAndMethods.brailleServiceObj;
-            DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
+            DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content), getResources());
         }
         /*OnBackPressedCallback onBackPressedCallback = new OnBackPressedCallback(true) {
 

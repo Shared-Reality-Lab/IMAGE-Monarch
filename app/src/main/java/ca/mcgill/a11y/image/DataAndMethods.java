@@ -31,6 +31,7 @@ import static ca.mcgill.a11y.image.selectors.ClassroomSelector.channelSubscribed
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -202,12 +203,13 @@ public class DataAndMethods {
     // speech recognizer stuff
     public static SpeechRecognizer speechRecognizer = null;
     public static Intent speechRecognizerIntent;
-
+    public static Resources res;
     // initializes the Braille display, TTS and other common components in newly created activity
-    public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view) {
+    public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view, Resources res) {
         DataAndMethods.brailleServiceObj = brailleServiceObj;
         DataAndMethods.context = context;
         DataAndMethods.view = view;
+        DataAndMethods.res = res;
 
         // sets array with dimensions of pin array to 0s; used to refresh the pins when required
         data = new byte[brailleServiceObj.getDotLineCount()][];
@@ -231,7 +233,7 @@ public class DataAndMethods {
                     if (status != TextToSpeech.SUCCESS) {
                         Log.e("error", "Initialization Failed!" + status);
                     } else {
-                        tts.setLanguage(Locale.forLanguageTag(context.getString(R.string.locale)));
+                        tts.setLanguage(Locale.forLanguageTag(res.getString(R.string.locale)));
                         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                             @Override
                             public void onStart(String s) {
@@ -303,9 +305,9 @@ public class DataAndMethods {
                     Log.d("SPEECHREC", String.valueOf(i));
                     switch (i) {
                         case SpeechRecognizer.ERROR_NO_MATCH:
-                            DataAndMethods.speaker(context.getString(R.string.text_error), TextToSpeech.QUEUE_FLUSH);
+                            DataAndMethods.speaker(res.getString(R.string.text_error), TextToSpeech.QUEUE_FLUSH);
                         default:
-                            DataAndMethods.speaker(context.getString(R.string.speech_error), TextToSpeech.QUEUE_FLUSH);
+                            DataAndMethods.speaker(res.getString(R.string.speech_error), TextToSpeech.QUEUE_FLUSH);
                     }
                 }
 
@@ -466,10 +468,10 @@ public class DataAndMethods {
                 if (readCaption) {
                     if(i==0 && caption!=null && titleRead){
                         // Read the caption along with layer tag for the first layer
-                        speaker(caption + context.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);
+                        speaker(caption + res.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);
                     }
                     else{
-                        speaker(context.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);
+                        speaker(res.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);
                     }
                 }
                 if (!titleRead){
@@ -487,7 +489,7 @@ public class DataAndMethods {
             }
         }
         else if (readCaption){
-            speaker(context.getString(R.string.full_image), TextToSpeech.QUEUE_FLUSH);
+            speaker(res.getString(R.string.full_image), TextToSpeech.QUEUE_FLUSH);
         }
 
         NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
@@ -531,7 +533,7 @@ public class DataAndMethods {
         String tag = "";
         XPath xPath = XPathFactory.newInstance().newXPath();
         if (targetCount ==0){
-            speaker(context.getString(R.string.guidance_unavailable), TextToSpeech.QUEUE_FLUSH);
+            speaker(res.getString(R.string.guidance_unavailable), TextToSpeech.QUEUE_FLUSH);
             return data;
         }
         else if (presentTarget<=0 ){
@@ -576,7 +578,7 @@ public class DataAndMethods {
             //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
         }
         if (readCaption){
-        speaker(context.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);}
+        speaker(res.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);}
 
         byte[] target = docToBitmap(doc);
 
@@ -931,11 +933,11 @@ public class DataAndMethods {
                             else if(renderings[0].type_id.contains("TactileSVG")){
                                 furesponse = renderings[0].data.graphic;
                                 tempImage = furesponse;
-                                speaker(context.getString(R.string.tactile_response), TextToSpeech.QUEUE_ADD);
+                                speaker(res.getString(R.string.tactile_response), TextToSpeech.QUEUE_ADD);
                                 followup = true;
                             }
                             else{
-                                furesponse = "Response received in type that is not handled yet";
+                                furesponse = res.getString(R.string.unknown_type);
                             }
                                 // Log.d("RESPONSE", furesponse);
                             //}
@@ -1129,7 +1131,7 @@ public class DataAndMethods {
         }
         else{
             if (zoomVal <= 100){
-                speaker(context.getString(R.string.zoom_error), TextToSpeech.QUEUE_FLUSH);
+                speaker(res.getString(R.string.zoom_error), TextToSpeech.QUEUE_FLUSH);
             }
             else {
                 zoomVal-= 25;
