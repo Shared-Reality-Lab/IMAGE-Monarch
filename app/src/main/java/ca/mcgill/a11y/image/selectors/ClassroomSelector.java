@@ -66,6 +66,8 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_classroom_selector);
+
+
         channelSubscribed = getApplicationContext().getString(R.string.share_code);
 
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));

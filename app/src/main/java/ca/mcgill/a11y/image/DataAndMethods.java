@@ -231,7 +231,7 @@ public class DataAndMethods {
                     if (status != TextToSpeech.SUCCESS) {
                         Log.e("error", "Initialization Failed!" + status);
                     } else {
-                        tts.setLanguage(Locale.getDefault());
+                        tts.setLanguage(Locale.forLanguageTag(context.getString(R.string.locale)));
                         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                             @Override
                             public void onStart(String s) {
