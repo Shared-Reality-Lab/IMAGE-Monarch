@@ -468,10 +468,10 @@ public class DataAndMethods {
                 if (readCaption) {
                     if(i==0 && caption!=null && titleRead){
                         // Read the caption along with layer tag for the first layer
-                        speaker(caption + res.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);
+                        speaker(caption + ". " + res.getString(R.string.layer) + ": " + tag, TextToSpeech.QUEUE_FLUSH);
                     }
                     else{
-                        speaker(res.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);
+                        speaker(res.getString(R.string.layer) + ": " + tag, TextToSpeech.QUEUE_FLUSH);
                     }
                 }
                 if (!titleRead){
