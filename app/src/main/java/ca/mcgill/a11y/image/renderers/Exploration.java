@@ -28,7 +28,6 @@ import static ca.mcgill.a11y.image.DataAndMethods.update;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
@@ -250,7 +249,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
         if (!silentStart)
-            DataAndMethods.speaker(getResources().getString(R.string.exploration_mode), TextToSpeech.QUEUE_FLUSH);
+            DataAndMethods.speaker(getString(R.string.exploration_mode), TextToSpeech.QUEUE_FLUSH);
 
         //if (!followingUp.getValue()) {
             startService(new Intent(getApplicationContext(), PollingService.class));

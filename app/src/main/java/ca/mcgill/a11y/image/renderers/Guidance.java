@@ -24,7 +24,6 @@ import static ca.mcgill.a11y.image.DataAndMethods.keyMapping;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.media.MediaPlayer;
 import android.os.BrailleDisplay;
 import android.os.Bundle;
@@ -49,6 +48,7 @@ import javax.xml.xpath.XPathExpressionException;
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.PollingService;
+
 import ca.mcgill.a11y.image.R;
 
 public class Guidance extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
@@ -245,7 +245,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Guidance Resumed");
-        DataAndMethods.speaker(getResources().getString(R.string.guidance_mode), TextToSpeech.QUEUE_FLUSH);
+        DataAndMethods.speaker(getString(R.string.guidance_mode), TextToSpeech.QUEUE_FLUSH);
         startService(new Intent(getApplicationContext(), PollingService.class));
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);

@@ -90,3 +90,6 @@ lint/tmp/
 
 #password file
 app/src/main/res/values/secret.xml
+.idea/compiler.xml
+.idea/misc.xml
+app/src/main/java/ca/mcgill/a11y/image/DataAndMethods.java
