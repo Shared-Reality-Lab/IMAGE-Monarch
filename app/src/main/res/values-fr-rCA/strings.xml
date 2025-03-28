@@ -6,7 +6,7 @@
     <!-- "[Classroom|Photo|Map] Mode" -->
     <string name="classroom_mode">Mode Classe</string>
     <string name="photo_mode">Mode Photos</string>
-    <string name="map_mode">Mode Map</string>
+    <string name="map_mode">Mode Cartes</string>
 
     <!-- "[Exploration|Guidance] Mode" -->
     <string name="exploration_mode">Mode Exploration</string>
@@ -15,7 +15,7 @@
     <!-- Switching to "[classroom|photo|map] Mode" -->
     <string name="swi_classroom_mode">Passer en mode classe</string>
     <string name="swi_photo_mode">Passer en mode photo</string>
-    <string name="swi_map_mode">Passer en mode map</string>
+    <string name="swi_map_mode">Passer en mode cartes</string>
 
     <!-- "Switching to [exploration|guidance] mode" -->
     <string name="swi_exploration_mode">Passer en mode exploration</string>
