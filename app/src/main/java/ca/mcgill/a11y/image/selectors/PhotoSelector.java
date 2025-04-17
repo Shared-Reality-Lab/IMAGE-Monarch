@@ -110,7 +110,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "PhotoSelector Resumed");
-        DataAndMethods.speaker("Photo selector", TextToSpeech.QUEUE_FLUSH);
+        DataAndMethods.speaker(getResources().getString(R.string.res_photo_selector), TextToSpeech.QUEUE_FLUSH);
         try {
             // might want to read file name here
             DataAndMethods.getFile(++DataAndMethods.fileSelected);

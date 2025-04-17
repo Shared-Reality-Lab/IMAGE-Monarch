@@ -249,7 +249,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     protected void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
         if (!silentStart)
-            DataAndMethods.speaker("Exploration mode", TextToSpeech.QUEUE_FLUSH);
+            DataAndMethods.speaker(getString(R.string.exploration_mode), TextToSpeech.QUEUE_FLUSH);
 
         //if (!followingUp.getValue()) {
             startService(new Intent(getApplicationContext(), PollingService.class));

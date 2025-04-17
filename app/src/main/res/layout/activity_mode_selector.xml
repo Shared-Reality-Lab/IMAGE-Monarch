@@ -7,42 +7,49 @@
     tools:context=".selectors.ModeSelector">
 
     <TableLayout
-        android:layout_width="409dp"
-        android:layout_height="729dp"
-        tools:layout_editor_absoluteX="1dp"
-        tools:layout_editor_absoluteY="1dp">
+        android:id="@+id/tableLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginEnd="1dp"
+        android:layout_marginBottom="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TableRow
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent">
 
             <Button
                 android:id="@+id/classroom_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Classroom Mode" />
+                android:text="@string/classroom_mode" />
         </TableRow>
 
         <TableRow
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent">
 
             <Button
                 android:id="@+id/photo_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Photo Mode" />
+                android:text="@string/photo_mode" />
         </TableRow>
 
         <TableRow
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent">
 
             <Button
                 android:id="@+id/map_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Map Mode" />
+                android:text="@string/map_mode" />
         </TableRow>
     </TableLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

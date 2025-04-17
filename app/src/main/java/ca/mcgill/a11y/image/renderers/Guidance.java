@@ -49,6 +49,8 @@ import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.PollingService;
 
+import ca.mcgill.a11y.image.R;
+
 public class Guidance extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
     private GestureDetectorCompat mDetector;
@@ -243,7 +245,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Guidance Resumed");
-        DataAndMethods.speaker("Guidance mode", TextToSpeech.QUEUE_FLUSH);
+        DataAndMethods.speaker(getString(R.string.guidance_mode), TextToSpeech.QUEUE_FLUSH);
         startService(new Intent(getApplicationContext(), PollingService.class));
         mDetector = new GestureDetectorCompat(this,this);
         mDetector.setOnDoubleTapListener(this);

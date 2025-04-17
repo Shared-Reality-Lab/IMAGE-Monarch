@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="server_url" translatable="false">https://monarch.unicorn.cim.mcgill.ca/</string>
+    <string name="locale" translateable="false">en</string>
+    <!-- Uncomment for French: <string name="locale" translatable="false">fr-CA</string>-->
+    <string name="share_code" translatable="false">362826</string>
+</resources>

@@ -59,13 +59,16 @@ import ca.mcgill.a11y.image.renderers.Exploration;
 import ca.mcgill.a11y.image.renderers.Guidance;
 
 public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
-    public static String channelSubscribed = "514446"; // make this the place the request takes it from
+    public static String channelSubscribed; // make this the place the request takes it from
 
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_classroom_selector);
+
+
+        channelSubscribed = getApplicationContext().getString(R.string.share_code);
 
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
 
@@ -81,10 +84,10 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
         public void onFocusChange(View view, boolean b) {
             switch (view.getId()){
                 case R.id.exploration_mode:
-                    speaker("Exploration Mode", TextToSpeech.QUEUE_FLUSH);
+                    speaker(getResources().getString(R.string.exploration_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
                 case R.id.guidance_mode:
-                    speaker("Guidance Mode", TextToSpeech.QUEUE_FLUSH);
+                    speaker(getResources().getString(R.string.guidance_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
             }
         }
@@ -97,11 +100,11 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
                 Intent myIntent = null;
                 if ((findViewById(R.id.exploration_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), Exploration.class);
-                    DataAndMethods.speaker("Switching to Exploration mode", TextToSpeech.QUEUE_FLUSH);
+                    DataAndMethods.speaker(getResources().getString(R.string.swi_exploration_mode), TextToSpeech.QUEUE_FLUSH);
                 }
                 else if ((findViewById(R.id.guidance_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), Guidance.class);
-                    DataAndMethods.speaker("Switching to Guidance mode", TextToSpeech.QUEUE_FLUSH);
+                    DataAndMethods.speaker(getResources().getString(R.string.swi_guidance_mode), TextToSpeech.QUEUE_FLUSH);
                 }
                 //Code snippet 3
                 myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -148,7 +151,7 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "Classroom Selector Resumed");
-        DataAndMethods.speaker("Classroom Selector", TextToSpeech.QUEUE_FLUSH);
+        DataAndMethods.speaker(getResources().getString(R.string.res_classroom_selector), TextToSpeech.QUEUE_FLUSH);
         //startService(new Intent(getApplicationContext(), PollingService.class));
         super.onResume();
     }

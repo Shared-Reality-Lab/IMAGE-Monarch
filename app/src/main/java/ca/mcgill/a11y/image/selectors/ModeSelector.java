@@ -32,7 +32,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.os.LocaleListCompat;
 import androidx.core.view.GestureDetectorCompat;
+
+import java.util.Locale;
 
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
@@ -48,7 +52,6 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
     @SuppressLint("WrongConstant")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Intent intent = getIntent();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mode_selector);
 
@@ -70,13 +73,13 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
         public void onFocusChange(View view, boolean b) {
             switch (view.getId()){
                 case R.id.classroom_mode:
-                    speaker("Classroom Mode", TextToSpeech.QUEUE_FLUSH);
+                    speaker(getResources().getString(R.string.classroom_mode),TextToSpeech.QUEUE_FLUSH);
                     break;
                 case R.id.photo_mode:
-                    speaker("Photo Mode", TextToSpeech.QUEUE_FLUSH);
+                    speaker(getResources().getString(R.string.photo_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
                 case R.id.map_mode:
-                    speaker("Map Mode", TextToSpeech.QUEUE_FLUSH);
+                    speaker(getResources().getString(R.string.map_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
                 // Code snippet 2
             }
@@ -90,16 +93,16 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
                 Intent myIntent = null;
                 if ((findViewById(R.id.classroom_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), ClassroomSelector.class);
-                    DataAndMethods.speaker("Switching to Classroom mode", TextToSpeech.QUEUE_FLUSH);
+                    DataAndMethods.speaker(getResources().getString(R.string.swi_classroom_mode), TextToSpeech.QUEUE_FLUSH);
                 }
                 else if ((findViewById(R.id.photo_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), PhotoSelector.class);
-                    DataAndMethods.speaker("Switching to Photo mode", TextToSpeech.QUEUE_FLUSH);
+                    DataAndMethods.speaker(getResources().getString(R.string.swi_photo_mode), TextToSpeech.QUEUE_FLUSH);
 
                 }
                 else if ((findViewById(R.id.map_mode)).hasFocus()){
                     myIntent = new Intent(getApplicationContext(), MapSelector.class);
-                    DataAndMethods.speaker("Switching to Map mode", TextToSpeech.QUEUE_FLUSH);
+                    DataAndMethods.speaker(getResources().getString(R.string.swi_map_mode), TextToSpeech.QUEUE_FLUSH);
                 }
                 //Code snippet 3
                 myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -125,7 +128,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
     @Override
     protected void onResume() {
         Log.d("ACTIVITY", "ModeSelector Resumed");
-        DataAndMethods.speaker("Mode selector", TextToSpeech.QUEUE_FLUSH);
+        DataAndMethods.speaker(getResources().getString(R.string.res_mode_selector), TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image = null;
         update.setValue(false);
         super.onResume();
