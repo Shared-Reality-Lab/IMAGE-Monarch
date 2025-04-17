@@ -346,16 +346,27 @@ public class DataAndMethods {
 
     // handle voice recognition results()
     public static void onVoiceRecognitionResults(String results){
-        if (history.type.equals("Photo")|| history.type.equals("Map")){
-            // Log.d("VOICE_REC", results);
-            Intent myIntent = new Intent(DataAndMethods.context, FollowUpQuery.class);
-            myIntent.putExtra("query", results);
-            myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            DataAndMethods.context.startActivity(myIntent);
-            //((Activity)DataAndMethods.context).startActivityForResult(myIntent, 1);
-        }else
+        if (history.type != null )
+        {
+            if (history.type.equals("Photo")) {
+                // Log.d("VOICE_REC", results);
+                Intent myIntent = new Intent(DataAndMethods.context, FollowUpQuery.class);
+                myIntent.putExtra("query", results);
+                myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                DataAndMethods.context.startActivity(myIntent);
+                //((Activity)DataAndMethods.context).startActivityForResult(myIntent, 1);
+            }
+            else if (history.type.equals("Map")) {
+                speaker(context.getString(R.string.followup_no_support_maps), TextToSpeech.QUEUE_FLUSH);
+                Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
+            }
+        }
+        else {
             Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
+            speaker(context.getString(R.string.followup_no_support), TextToSpeech.QUEUE_FLUSH);
+        }
     }
+
     //check mode and display appropriate layer
     public static void displayGraphic(int keyCode, String mode, Boolean silentStart){
         try{if (mode=="Exploration"){
@@ -892,19 +903,32 @@ public class DataAndMethods {
                                 //Log.d("IMAGE", image);
                             }
                             else{
-                                // Log.d("graphicBlob", resource.graphicBlob);
-                                String srcGraphic = decrypt(resource.graphicBlob, "abc");
-                                // log history for classroom mode
-                                byte[] decodedBytes = Base64.decode(srcGraphic.replaceFirst("data:.+,", ""), Base64.DEFAULT);
-                                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
-                                Integer[] dims= new Integer[] {bitmap.getWidth(), bitmap.getHeight()};
-                                PhotoRequestFormat rq= new PhotoRequestFormat();
-                                rq.setValues(srcGraphic, dims);
-                                // Log.d("HISTORY", String.valueOf(history.temp_request));
-                                Gson gson = new Gson();
-                                String json = gson.toJson(rq);
-                                JSONObject request = new JSONObject(json);
-                                history.updateHistory(request);
+                                if (resource.graphicBlob != null || resource.coords != null || resource.placeID != null) {
+                                    Gson gson = new Gson();
+                                    String json = null;
+                                    if (resource.graphicBlob != null) {
+                                        String srcGraphic = decrypt(resource.graphicBlob, context.getString(R.string.password));
+                                        // log history for classroom mode
+                                        byte[] decodedBytes = Base64.decode(srcGraphic.replaceFirst("data:.+,", ""), Base64.DEFAULT);
+                                        Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+                                        Integer[] dims = new Integer[]{bitmap.getWidth(), bitmap.getHeight()};
+                                        PhotoRequestFormat rq = new PhotoRequestFormat();
+                                        rq.setValues(srcGraphic, dims);
+                                        json = gson.toJson(rq);
+                                    } else if (resource.coords != null) {
+                                        MapRequestFormat rq = new MapRequestFormat();
+                                        Double lat = Double.valueOf(decrypt(resource.coords.lat, context.getString(R.string.password)));
+                                        Double lon = Double.valueOf(decrypt(resource.coords.lon, context.getString(R.string.password)));
+                                        rq.setValues(lat, lon);
+                                        json = gson.toJson(rq);
+                                    } else if ( resource.placeID != null) {
+                                        MapRequestFormat rq = new MapRequestFormat();
+                                        rq.setPlaceID(decrypt(resource.placeID, context.getString(R.string.password)));
+                                        json = gson.toJson(rq);
+                                    }
+                                    JSONObject request = new JSONObject(json);
+                                    history.updateHistory(request);
+                                }
                                 image = decrypt(image, context.getString(R.string.password));
                             }
                             // gets viewBox dims for current image
@@ -1551,7 +1575,6 @@ public class DataAndMethods {
     public static String decrypt(String encryptedBase64, String password) throws Exception {
         // Convert the Base64-encoded encrypted data and IV to byte arrays
         byte[] encrypted = Base64.decode(encryptedBase64, Base64.NO_WRAP);
-
         byte[] salt = Arrays.copyOfRange(encrypted, 0, 16);
         byte[] iv = Arrays.copyOfRange(encrypted, 16, 32);
         byte[] encryptedData = Arrays.copyOfRange(encrypted, 32, encrypted.length);

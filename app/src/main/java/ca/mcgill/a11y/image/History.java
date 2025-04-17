@@ -19,7 +19,7 @@ public class History{
     public void updateHistory(JSONObject jsonObject) throws JSONException {
         if (jsonObject.has("graphic")){
             this.type = "Photo";
-        } else if (jsonObject.has("coordinates")) {
+        } else if (jsonObject.has("coordinates") || jsonObject.has("placeID")) {
             this.type = "Map";
         }
         this.request = jsonObject;

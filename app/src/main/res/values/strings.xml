@@ -48,6 +48,8 @@
     <string name="guidance_unavailable">No guidance mode available</string>
     <string name="tactile_response">Tactile response received. Press confirm to view it. Press cancel to ignore.</string>
     <string name="unknown_type">Response received in type that is not handled yet.</string>
+    <string name="followup_no_support">Follow up request is not yet supported for this graphic.</string>
+    <string name="followup_no_support_maps">Follow up request is not yet supported for maps.</string>
 
     <!--FollowUpQuery-->
     <string name="received_query_0">"Query received: "</string>
