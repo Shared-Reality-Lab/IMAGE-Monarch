@@ -578,7 +578,7 @@ public class DataAndMethods {
             //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
         }
         if (readCaption){
-        speaker(res.getString(R.string.layer) + tag, TextToSpeech.QUEUE_FLUSH);}
+        speaker(res.getString(R.string.layer) + ": " + tag, TextToSpeech.QUEUE_FLUSH);}
 
         byte[] target = docToBitmap(doc);
 
