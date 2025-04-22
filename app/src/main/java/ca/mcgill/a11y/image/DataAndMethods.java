@@ -928,6 +928,8 @@ public class DataAndMethods {
                                     }
                                     JSONObject request = new JSONObject(json);
                                     history.updateHistory(request);
+                                } else {
+                                    history.clearHistory();
                                 }
                                 image = decrypt(image, context.getString(R.string.password));
                             }

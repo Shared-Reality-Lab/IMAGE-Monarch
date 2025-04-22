@@ -29,4 +29,8 @@ public class History{
         this.response = response;
     }
 
+    public void clearHistory() {
+        this.type = null;
+        this.request = null;
+    }
 }
