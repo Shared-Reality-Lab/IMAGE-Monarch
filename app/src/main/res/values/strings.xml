@@ -54,4 +54,9 @@
     <string name="received_query_1">Double-click on top left corner of region of interest or press confirm to query without selection</string>
     <string name="state_1">Double-click on bottom right corner of region of interest or press confirm to proceed without selection. Press cancel to return"</string>
     <string name="state_2">Press \'confirm\' to query for selected region. Press cancel to return to region selection"</string>
+
+    <!--Temporary FollowUpQuery strings-->
+    <string name="received_query_1_temp">Press confirm to make query. Press cancel to exit</string>
+
+
 </resources>
