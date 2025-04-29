@@ -55,6 +55,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.scand.svg.SVGHelper;
 
 import org.json.JSONArray;
@@ -917,9 +918,12 @@ public class DataAndMethods {
                                         json = gson.toJson(rq);
                                     } else if (resource.coords != null) {
                                         MapRequestFormat rq = new MapRequestFormat();
-                                        Double lat = Double.valueOf(decrypt(resource.coords.lat, context.getString(R.string.password)));
-                                        Double lon = Double.valueOf(decrypt(resource.coords.lon, context.getString(R.string.password)));
-                                        rq.setValues(lat, lon);
+                                        //Double lat = Double.valueOf(decrypt(resource.coords.lat, context.getString(R.string.password)));
+                                        String coords = decrypt(resource.coords, context.getString(R.string.password));
+                                        //Double lon = Double.valueOf(decrypt(resource.coords.lon, context.getString(R.string.password)));
+                                        JsonObject obj = new JsonParser().parse(coords).getAsJsonObject();
+                                        rq.setValues(Double.valueOf(String.valueOf(obj.get("latitude"))),
+                                                Double.valueOf(String.valueOf(obj.get("longitude"))));
                                         json = gson.toJson(rq);
                                     } else if ( resource.placeID != null) {
                                         MapRequestFormat rq = new MapRequestFormat();
@@ -1086,7 +1090,7 @@ public class DataAndMethods {
                 Node n = nodeslist.item(i);
                 ((Element)n).setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
             }
-            nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])and not(ancestor::metadata)] ", doc, XPathConstants.NODESET);
+            nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@data-image-layer]) and not(descendant::*[@data-image-layer])and not(ancestor::metadata) and not(self::svg)] ", doc, XPathConstants.NODESET);
             for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
                 Node n = nodeslist.item(i);
                 ((Element)n).setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");

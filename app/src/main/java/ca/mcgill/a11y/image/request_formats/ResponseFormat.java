@@ -29,7 +29,7 @@ public class ResponseFormat {
     @SerializedName("graphicBlob")
     public String graphicBlob;
     @SerializedName("coordinates")
-    public Coordinates coords= null;
+    public String coords;
     @SerializedName("placeID")
     public String placeID;
 
@@ -51,10 +51,4 @@ public class ResponseFormat {
         public String text;
     }
 
-    public class Coordinates{
-        @SerializedName("latitude")
-        public String lat;
-        @SerializedName("longitude")
-        public String lon;
-    }
 }
