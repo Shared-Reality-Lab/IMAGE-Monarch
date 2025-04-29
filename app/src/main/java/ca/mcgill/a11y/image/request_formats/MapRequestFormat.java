@@ -26,6 +26,8 @@ public class MapRequestFormat extends BaseRequestFormat {
     private Coordinates coords=new Coordinates();
     @SerializedName("url")
     private String url= "https://example-map-url.com";
+    @SerializedName("placeID")
+    public String placeID;
 
     public class Coordinates{
         @SerializedName("latitude")
@@ -36,5 +38,8 @@ public class MapRequestFormat extends BaseRequestFormat {
     public void setValues(Double lat, Double lon) throws JSONException {
         this.coords.lat = lat;
         this.coords.lon = lon;
+    }
+    public void setPlaceID(String placeID){
+        this.placeID = placeID;
     }
 }

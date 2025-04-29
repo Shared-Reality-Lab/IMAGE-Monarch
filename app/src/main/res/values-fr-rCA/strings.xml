@@ -48,6 +48,8 @@
     <string name="guidance_unavailable">Aucun mode de conseils disponible</string>
     <string name="tactile_response">Réponse tactile reçue. Appuyez sur la touche de confirmation pour l\'afficher. Appuyer sur annuler pour l\'ignorer.</string>
     <string name="unknown_type">Réponse reçue dans un type qui n\'est pas encore traité</string>
+    <string name="followup_no_support">La demande de suivi n\'est pas encore prise en charge pour cette image.</string>
+    <string name="followup_no_support_maps">La demande de suivi n\'est pas encore prise en charge pour les cartes.</string>
     <!--
     FollowUpQuery-->
     <string name="received_query_0">Requête reçue: "</string>

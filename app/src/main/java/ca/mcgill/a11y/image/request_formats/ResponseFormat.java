@@ -28,6 +28,10 @@ public class ResponseFormat {
     public Rendering[] renderings=null;
     @SerializedName("graphicBlob")
     public String graphicBlob;
+    @SerializedName("coordinates")
+    public String coords;
+    @SerializedName("placeID")
+    public String placeID;
 
     public class Rendering{
         @SerializedName("description")
@@ -46,4 +50,5 @@ public class ResponseFormat {
         @SerializedName("text")
         public String text;
     }
+
 }
