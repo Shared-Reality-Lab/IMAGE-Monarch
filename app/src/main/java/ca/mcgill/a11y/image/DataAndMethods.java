@@ -128,9 +128,9 @@ public class DataAndMethods {
                     Log.e("error", "Initialization Failed!"+status);
                 }
                 else {
-                    //Locale locale = new Locale("fr");
-                    //tts.setLanguage(locale);
-                    tts.setLanguage(Locale.getDefault());
+                    Locale locale = new Locale("fr");
+                    tts.setLanguage(locale);
+                    //tts.setLanguage(Locale.getDefault());
                     tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                         @Override
                         public void onStart(String s) {
@@ -239,7 +239,7 @@ public class DataAndMethods {
             speaker("Full image");
         }
 
-        NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
+        NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none']) and not(descendant::*[@display = 'none']) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
         for(int i = 0 ; i < detail.getLength() ; i ++) {
             Node node = detail.item(i);
             Float zoomLevel= Float.valueOf(((Element)node).getAttribute("data-image-zoom"));
@@ -324,7 +324,7 @@ public class DataAndMethods {
             speaker("Full image");
         }
 
-        NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
+        NodeList detail= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none']) and not(descendant::*[@display = 'none']) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
         for(int i = 0 ; i < detail.getLength() ; i ++) {
             Node node = detail.item(i);
             Float zoomLevel= Float.valueOf(((Element)node).getAttribute("data-image-zoom"));
@@ -514,7 +514,7 @@ public class DataAndMethods {
             Node node = nodeslist.item(i);
             ((Element)node).setAttribute("display","none");
         }
-        nodeslist= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
+        nodeslist= (NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none']) and not(descendant::*[@display = 'none']) and (self::*[@data-image-zoom])]", doc, XPathConstants.NODESET);
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i);
             Float zoomLevel= Float.valueOf(((Element)node).getAttribute("data-image-zoom"));
@@ -528,7 +528,7 @@ public class DataAndMethods {
         XPath xPath = XPathFactory.newInstance().newXPath();
         Document doccopy = doc;
 
-        NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and ((self::*[@data-image-target]))]", doccopy, XPathConstants.NODESET);
+        NodeList nodeslist = (NodeList) xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none']) and not(descendant::*[@display = 'none']) and ((self::*[@data-image-target]))]", doccopy, XPathConstants.NODESET);
         /*for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
             Node node = nodeslist.item(i);
             ((Element)node).setAttribute("display", "none");
@@ -613,7 +613,7 @@ public class DataAndMethods {
     //get positions of various elements within the svg
     public static void getOccupancy(Document doc) throws XPathExpressionException, IOException {
         XPath xPath = XPathFactory.newInstance().newXPath();
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display=none]) and not(descendant::*[@display=none]) and (parent::*[@data-image-layer] or (self::*[@data-image-layer] and not(child::*)))]", doc, XPathConstants.NODESET);
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none']) and not(descendant::*[@display = 'none']) and (parent::*[@data-image-layer] or (self::*[@data-image-layer] and not(child::*)))]", doc, XPathConstants.NODESET);
         String[] occTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
 
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
@@ -660,7 +660,7 @@ public class DataAndMethods {
         XPath xPath = XPathFactory.newInstance().newXPath();
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
         // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none']) and not(descendant::*[@display = 'none']) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
         String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
         // temporary var for objects long descriptions
         String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
@@ -735,7 +735,7 @@ public class DataAndMethods {
         XPath xPath = XPathFactory.newInstance().newXPath();
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
         // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
-        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display]) and not(descendant::*[@display]) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
+        NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none']) and not(descendant::*[@display = 'none']) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
         String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
         // temporary var for objects long descriptions
         String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];

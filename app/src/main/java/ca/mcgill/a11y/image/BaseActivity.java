@@ -5,6 +5,7 @@ import static android.view.KeyEvent.KEYCODE_DPAD_LEFT;
 import static android.view.KeyEvent.KEYCODE_DPAD_RIGHT;
 import static android.view.KeyEvent.KEYCODE_DPAD_UP;
 import static android.view.KeyEvent.KEYCODE_MENU;
+import static android.view.KeyEvent.KEYCODE_NUMPAD_2;
 import static android.view.KeyEvent.KEYCODE_ZOOM_IN;
 import static android.view.KeyEvent.KEYCODE_ZOOM_OUT;
 
@@ -129,7 +130,8 @@ public class BaseActivity extends AppCompatActivity {
             Intent myIntent = null;
             Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
                 put(420, "UP");
-                put(421, "DOWN");
+                //put(421, "DOWN");
+                put(KEYCODE_NUMPAD_2, "DOWN");
                 //put(504, "NXT_LYR");
                 put(KEYCODE_ZOOM_IN, "NXT_LYR");
                 //put(503, "PRV_LYR");
