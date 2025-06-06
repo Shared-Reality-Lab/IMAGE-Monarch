@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--<string name="server_url" translatable="false">https://unicorn.cim.mcgill.ca/image/monarch/</string>-->
-    <string name="server_url" translatable="false">https://image.a11y.mcgill.ca/monarch/</string>
-    <!--<string name="server_url" translatable="false">http://15.222.182.10/monarch/</string>-->
+    <!--<string name="classroom_server_url" translatable="false">https://unicorn.cim.mcgill.ca/image/monarch/</string>-->
+    <string name="classroom_server_url" translatable="false">https://image.a11y.mcgill.ca/monarch/</string>
+    <!--<string name="classroom_server_url" translatable="false">http://15.222.182.10/monarch/</string>-->
+    <string name="followup_server_url" translatable="false">https://image.a11y.mcgill.ca/</string>
+    <string name="photos_server_url" translatable="false">https://image.a11y.mcgill.ca/</string>
+    <string name="maps_server_url" translatable="false">https://image.a11y.mcgill.ca/</string>
     <string name="locale" translateable="false">en</string>
     <!-- Uncomment for French: <string name="locale" translatable="false">fr-CA</string>-->
     <string name="share_code" translatable="false">766323</string>
