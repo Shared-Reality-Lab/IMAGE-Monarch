@@ -794,7 +794,7 @@ public class DataAndMethods {
         Retrofit retrofit = requestBuilder(60, 60, context.getString(R.string.classroom_server_url));
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
-        Call<ResponseFormat> call= makereq.checkForUpdates(context.getString(R.string.classroom_server_url)+"display/"+channelSubscribed);
+        Call<ResponseFormat> call= makereq.checkForUpdates(context.getString(R.string.classroom_server_url)+"monarch/display/"+channelSubscribed);
         makeServerCall(call, false);
     }
 
