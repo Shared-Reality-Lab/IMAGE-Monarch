@@ -726,9 +726,7 @@ public class DataAndMethods {
         PhotoRequestFormat req= new PhotoRequestFormat();
         req.setValues(base64, dims);*/
         PhotoRequestFormat req = createPhotoRequest(folderName);
-        Retrofit retrofit = requestBuilder(60, 60, "https://unicorn.cim.mcgill.ca/image/");
-                //"https://image.a11y.mcgill.ca/");
-
+        Retrofit retrofit = requestBuilder(60, 60, context.getString(R.string.photos_server_url));
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makePhotoRequest(req);
         //history.updateHistory(req);
@@ -784,8 +782,7 @@ public class DataAndMethods {
     public static void getMap(Double lat, Double lon) throws JSONException {
         MapRequestFormat req= new MapRequestFormat();
         req.setValues(lat, lon);
-        Retrofit retrofit = requestBuilder(60, 60, // "https://unicorn.cim.mcgill.ca/image/" );
-                "https://image.a11y.mcgill.ca/");
+        Retrofit retrofit = requestBuilder(60, 60, context.getString(R.string.maps_server_url));
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call= makereq.makeMapRequest(req);
         //history.updateHistory(req);
@@ -794,10 +791,10 @@ public class DataAndMethods {
 
     // fetches updates from server if they exist
     public static void checkForUpdate() throws IOException, JSONException {
-        Retrofit retrofit = requestBuilder(60, 60, context.getString(R.string.server_url));
+        Retrofit retrofit = requestBuilder(60, 60, context.getString(R.string.classroom_server_url));
 
         MakeRequest makereq= retrofit.create(MakeRequest.class);
-        Call<ResponseFormat> call= makereq.checkForUpdates(context.getString(R.string.server_url)+"display/"+channelSubscribed);
+        Call<ResponseFormat> call= makereq.checkForUpdates(context.getString(R.string.classroom_server_url)+"monarch/display/"+channelSubscribed);
         makeServerCall(call, false);
     }
 
@@ -1396,8 +1393,7 @@ public class DataAndMethods {
     // make follow up query to server
     public static void sendFollowUpQuery(String query, Integer[] region) throws JSONException, IOException {
         Float[] focus = null;
-        Retrofit retrofit = requestBuilder(60, 60, "https://unicorn.cim.mcgill.ca/image/" );
-                //"https://image.a11y.mcgill.ca/");
+        Retrofit retrofit = requestBuilder(60, 60, context.getString(R.string.followup_server_url));
         MakeRequest makereq= retrofit.create(MakeRequest.class);
         Call<ResponseFormat> call = null;
 
