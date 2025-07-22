@@ -35,6 +35,7 @@ import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.renderers.BasicPhotoMapRenderer;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.R;
+import timber.log.Timber;
 
 // generates photo request by navigating files in specified directory and allows for selecting among photo renderer(s)
 public class PhotoSelector extends BaseActivity implements MediaPlayer.OnCompletionListener{
@@ -61,7 +62,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
         switch (keyMapping.getOrDefault(keyCode, "default")) {
             // Navigating between files
             case "UP":
-                Log.d("KEY EVENT", event.toString());
+                //Log.d("KEY EVENT", event.toString());
                 try {
                     DataAndMethods.speaker(DataAndMethods.getFile(++fileSelected), TextToSpeech.QUEUE_FLUSH);
                 } catch (IOException e) {
@@ -71,7 +72,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
                 }
                 return true;
             case "DOWN":
-                Log.d("KEY EVENT", event.toString());
+                //Log.d("KEY EVENT", event.toString());
                 try {
                     DataAndMethods.speaker(DataAndMethods.getFile(--fileSelected), TextToSpeech.QUEUE_FLUSH);
                 } catch (IOException e) {
@@ -90,7 +91,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
                 finish();
                 return false;
             default:
-                Log.d("KEY EVENT", event.toString());
+                Timber.d("KEY EVENT: "+event.toString());
                 return false;
         }
     }
@@ -109,7 +110,6 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "PhotoSelector Resumed");
         DataAndMethods.speaker(getResources().getString(R.string.res_photo_selector), TextToSpeech.QUEUE_FLUSH);
         try {
             // might want to read file name here
@@ -123,7 +123,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "PhotoSelector Paused");
+        Timber.d("ACTIVITY: "+ "PhotoSelector Paused");
         super.onPause();
     }
 

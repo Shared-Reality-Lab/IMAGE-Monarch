@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+import timber.log.Timber;
+
 public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     Intent intent;
     String query;
@@ -55,7 +57,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
     private BrailleDisplay brailleServiceObj = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d("ACTIVITY", "FollowUpQuery Created");
+        Timber.d("ACTIVITY: "+ "FollowUpQuery Created");
         super.onCreate(savedInstanceState);
         brailleServiceObj = DataAndMethods.brailleServiceObj;
 
@@ -130,7 +132,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                 finish();
                 return true;
             default:
-                Log.d("KEY EVENT", event.toString());
+                Timber.d("KEY EVENT: "+ event.toString());
                 return false;
         }
     }
@@ -149,7 +151,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                         DataAndMethods.zoom(pins, "Exploration");
                     }
                     else {
-                        Log.d("TAGS", "ACCESS TTS");
+                        //Log.d("TAGS", "ACCESS TTS");
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
@@ -161,7 +163,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                     }
                 }
                 catch(RuntimeException ex){
-                    Log.d("TTS ERROR", String.valueOf(ex));
+                    Timber.d(ex, "TTS ERROR");
                 } catch (XPathExpressionException e) {
                     throw new RuntimeException(e);
                 } catch (ParserConfigurationException e) {
@@ -183,7 +185,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
 
     @Override
     public boolean onDown(MotionEvent event) {
-        Log.d("GESTURE!","onDown: " + event.toString());
+        //Log.d("GESTURE!","onDown: " + event.toString());
 
         return true;
     }
@@ -191,7 +193,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2,
                            float velocityX, float velocityY) {
-        Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
+        //Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
         return true;
     }
 
@@ -203,33 +205,33 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
             DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
         }
         catch(RuntimeException ex){
-            Log.d("TTS ERROR", String.valueOf(ex));
+            Timber.d(ex, "TTS ERROR");
         }
-        Log.d("GESTURE!", "onLongPress: " + event.toString());
+        // Log.d("GESTURE!", "onLongPress: " + event.toString());
 
     }
 
     @Override
     public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
                             float distanceY) {
-        Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
+        //Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
         return true;
     }
 
     @Override
     public void onShowPress(MotionEvent event) {
-        Log.d("GESTURE!", "onShowPress: " + event.toString());
+        //Log.d("GESTURE!", "onShowPress: " + event.toString());
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
-        Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
+        //Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onDoubleTap(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTap: " + event.toString());
+        Timber.d("GESTURE!: "+ "onDoubleTap: " + event.toString());
         Integer [] pins=DataAndMethods.pinCheck(event.getX(), event.getY());
         /*switch(state){
             case 0:
@@ -266,19 +268,19 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
 
     @Override
     public boolean onDoubleTapEvent(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
+        //Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onSingleTapConfirmed(MotionEvent event) {
-        Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
+        //Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
         return true;
     }
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "FollowUpQuery Resumed");
+        Timber.d("ACTIVITY: "+ "FollowUpQuery Resumed");
         intent = getIntent();
         query = intent.getStringExtra("query");
 
@@ -290,7 +292,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                     onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
-                    Log.d("MOTION EVENT", String.valueOf(ex));
+                    Timber.e(ex, "EXCEPTION");
                 }
 
             return false;
@@ -303,7 +305,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "FollowUpQuery Paused");
+        Timber.d("ACTIVITY: "+ "FollowUpQuery Paused");
         DataAndMethods.presentLayer--;
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();

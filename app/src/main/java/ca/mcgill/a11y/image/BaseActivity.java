@@ -75,6 +75,8 @@ import java.util.regex.Pattern;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+import timber.log.Timber;
+
 // Base activity which is extended by all other activities. Implements functionality common to all/most activities
 public class BaseActivity extends AppCompatActivity {
     static BrailleDisplay brailleServiceObj = null;
@@ -132,7 +134,7 @@ public class BaseActivity extends AppCompatActivity {
         try {
             switch (keyMapping.getOrDefault(keyCode, "default")) {
                 case "ZOOM OUT":
-                    Log.d("KEY EVENT", event.toString());
+                    Timber.d("KEY EVENT: "+ event.toString());
                     if (!DataAndMethods.zoomingOut) {
                         DataAndMethods.speaker(getResources().getString(R.string.on_zoom_mode), TextToSpeech.QUEUE_FLUSH);
                         DataAndMethods.zoomingOut = true;
@@ -143,7 +145,7 @@ public class BaseActivity extends AppCompatActivity {
                     }
                     return true;
                 case "ZOOM IN":
-                    Log.d("KEY EVENT", event.toString());
+                    Timber.d("KEY EVENT: "+ event.toString());
                     if (!DataAndMethods.zoomingIn) {
                         DataAndMethods.speaker(getResources().getString(R.string.on_zoom_mode), TextToSpeech.QUEUE_FLUSH);
                         DataAndMethods.zoomingIn = true;
@@ -158,7 +160,7 @@ public class BaseActivity extends AppCompatActivity {
                 case "DPAD LEFT":
                 case "DPAD RIGHT":
                     if (DataAndMethods.zoomVal > 100 && (DataAndMethods.zoomingIn || DataAndMethods.zoomingOut)) {
-                        Log.d("DPAD", String.valueOf(keyCode));
+                        Timber.d("DPAD: "+ String.valueOf(keyCode));
                         DataAndMethods.pan(keyCode, getLocalClassName());
                     }
                     return false;
@@ -169,7 +171,7 @@ public class BaseActivity extends AppCompatActivity {
                         finish();
                     return false;
                 default:
-                    Log.d("KEY EVENT", event.toString());
+                    Timber.d("KEY EVENT: "+ event.toString());
                     return false;
             }
         } catch (IOException e) {
