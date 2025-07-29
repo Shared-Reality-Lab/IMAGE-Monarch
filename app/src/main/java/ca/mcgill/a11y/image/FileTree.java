@@ -1,5 +1,7 @@
 package ca.mcgill.a11y.image;
 
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -36,7 +38,9 @@ public class FileTree extends Timber.Tree {
     private int processedCount = 0;
     private final String filePath;
     private Disposable logSubscription;
-    private static final long LOG_FILE_RETENTION = TimeUnit.DAYS.toMillis(7); // for example
+    // clear logs after 7 days
+    private static final long LOG_FILE_RETENTION = TimeUnit.DAYS.toMillis(7);
+
     private static final SimpleDateFormat LOG_FILE_TIME_FORMAT =
             new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US);
     private static final long MAX_LOG_FILE_SIZE = 1024 * 1024;
@@ -57,28 +61,11 @@ public class FileTree extends Timber.Tree {
                         Observable.interval(5, TimeUnit.MINUTES)
                 ))
                 .subscribeOn(Schedulers.io())
-                /*.subscribe(logElements -> {
-                    try {
-                        File f = getFile(filePath, LOG_FILE_NAME);
-                        FileWriter fw = new FileWriter(f, true);
-                        for (LogElement el : logElements) {
-                            fw.append(el.date).append("\t")
-                                    .append(LOG_LEVELS[el.priority]).append("\t")
-                                    .append(el.message != null ? el.message : "").append("\n");
-                        }
-                        fw.flush();
-                        fw.close();
-                        // Rotate logs right after writing a new batch
-                        rotateLogs(filePath, LOG_FILE_NAME);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });*/
                 .subscribe(logElements -> {
                     try {
                         File f = getFile(filePath, LOG_FILE_NAME);
 
-                        // ✅ Rotate if log file exceeds max size BEFORE writing
+                        // Rotate if log file exceeds max size BEFORE writing
                         if (f.exists() && f.length() >= MAX_LOG_FILE_SIZE) {
                             rotateLogs(filePath, LOG_FILE_NAME);
                         }
@@ -86,7 +73,8 @@ public class FileTree extends Timber.Tree {
                         try (FileWriter fw = new FileWriter(f, true)) {
                             for (LogElement el : logElements) {
                                 fw.append(el.date).append("\t")
-                                        .append(LOG_LEVELS[el.priority]).append("\t")
+                                        // Set correct priority since log levels start at 2
+                                        .append(LOG_LEVELS[el.priority - Log.VERBOSE]).append("\t")
                                         .append(el.message != null ? el.message : "").append("\n");
                             }
                             fw.flush();
@@ -136,32 +124,6 @@ public class FileTree extends Timber.Tree {
         return file;
     }
 
-    /**
-     * Rotates the given log file: compresses it, truncates it, and deletes old compressed files.
-     */
-    /*private void rotateLogs(String path, String name) throws IOException {
-        File file = getFile(path, name);
-
-        if (!compress(file)) {
-            throw new IOException("Failed to compress file for rotation: " + file.getAbsolutePath());
-        }
-
-        // Truncate the file to zero bytes
-        new PrintWriter(file).close();
-
-        long currentTime = System.currentTimeMillis();
-
-        File[] files = file.getParentFile().listFiles();
-        if (files != null) {
-            for (File f : files) {
-                String ext = getFileExtension(f.getName()).toLowerCase(Locale.ROOT);
-                if (ext.equals("gz") && f.lastModified() + LOG_FILE_RETENTION < currentTime) {
-                    f.delete();
-                }
-            }
-        }
-    }*/
-
     private void rotateLogs(String path, String name) {
         File logFile = getFile(path, name);
         if (!logFile.exists() || logFile.length() == 0) {
@@ -190,6 +152,7 @@ public class FileTree extends Timber.Tree {
         File[] files = logFile.getParentFile().listFiles();
         if (files != null) {
             for (File f : files) {
+                //Log.d("TIMING", f.lastModified() + LOG_FILE_RETENTION+","+currentTime);
                 if (f.getName().startsWith(name.substring(0, name.lastIndexOf('.')) + "_") &&
                         f.getName().endsWith(".txt") &&
                         f.lastModified() + LOG_FILE_RETENTION < currentTime) {
@@ -200,38 +163,7 @@ public class FileTree extends Timber.Tree {
     }
 
 
-    /**
-     * Compresses the specified file into GZIP format with a timestamped filename.
-     */
-    private boolean compress(File file) {
-        try {
-            String baseName = file.getName().substring(0, file.getName().lastIndexOf('.'));
-            File compressed = new File(file.getParentFile(),
-                    baseName + "_" + LOG_FILE_TIME_FORMAT.format(new Date()) + ".gz");
-
-            try (FileInputStream input = new FileInputStream(file);
-                 FileOutputStream output = new FileOutputStream(compressed);
-                 GZIPOutputStream zipped = new GZIPOutputStream(output)) {
-
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = input.read(buffer)) > 0) {
-                    zipped.write(buffer, 0, length);
-                }
-
-                zipped.finish();
-            }
-            return true;
-
-        } catch (IOException e) {
-            e.printStackTrace(); // Or log with Timber
-            return false;
-        }
-    }
-
-    /**
-     * Gets the file extension from a file name.
-     */
+     //Gets the file extension from a file name.
     private String getFileExtension(String fileName) {
         int lastDot = fileName.lastIndexOf('.');
         return (lastDot >= 0) ? fileName.substring(lastDot + 1) : "";
