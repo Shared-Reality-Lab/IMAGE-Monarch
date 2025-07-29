@@ -101,13 +101,8 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
                 }
                 catch(RuntimeException ex){
                     Timber.e(ex, "TTS ERROR");
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
+                } catch (XPathExpressionException | ParserConfigurationException | IOException | SAXException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -191,13 +186,8 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
         mainGraphic = intent.getStringExtra("image");
         try {
             brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), 0, true));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (XPathExpressionException e) {
-            throw new RuntimeException(e);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
+        } catch (IOException | XPathExpressionException | ParserConfigurationException | SAXException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
         mDetector = new GestureDetectorCompat(this,this);
@@ -223,13 +213,8 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
         resetGraphicParams();
         try {
             setImageDims();
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
-        } catch (XPathExpressionException e) {
+        } catch (ParserConfigurationException | IOException | SAXException | XPathExpressionException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
         DataAndMethods.tempImage = "";

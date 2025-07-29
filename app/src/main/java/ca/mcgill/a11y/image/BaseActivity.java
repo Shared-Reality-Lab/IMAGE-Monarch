@@ -175,12 +175,16 @@ public class BaseActivity extends AppCompatActivity {
                     return false;
             }
         } catch (IOException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         } catch (XPathExpressionException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         } catch (ParserConfigurationException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         } catch (SAXException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
     }

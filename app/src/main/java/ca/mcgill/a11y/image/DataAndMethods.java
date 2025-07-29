@@ -402,6 +402,7 @@ public class DataAndMethods {
             brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), !silentStart));
         }}
         catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
     }
@@ -438,9 +439,9 @@ public class DataAndMethods {
             transformer.transform(domSource, result);
             return writer.toString();
         }
-        catch(TransformerException ex)
+        catch(TransformerException e)
         {
-            Timber.d("ERROR: "+ "Write Failed");
+            Timber.e(e, "EXCEPTION");
             return null;
         }
     }
@@ -535,6 +536,7 @@ public class DataAndMethods {
                     // Generally occurs with a little delay following the tactile rendering
                     pingsPlayer(R.raw.ping);
                 } catch (XPathExpressionException | IOException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -990,14 +992,17 @@ public class DataAndMethods {
                 catch (IOException | ParserConfigurationException | SAXException |
                        XPathExpressionException e) {
                     //history.setHistory(false);
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 } catch (ArrayIndexOutOfBoundsException | NullPointerException e){
+                    Timber.e(e, "EXCEPTION");
                     pingsPlayer(R.raw.image_error);
                     /*if (followingUp.getValue()){
                         followingUp.setValue(false);
                     }*/
                     //history.setHistory(false);
                 } catch (Exception e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -1333,7 +1338,7 @@ public class DataAndMethods {
             mp=MediaPlayer.create(context, file);
             mp.start();
         } catch (Exception e) {
-            Timber.d("ERROR: "+ e.toString());
+            Timber.e(e, "EXCEPTION");
         }
     }
 
@@ -1354,8 +1359,10 @@ public class DataAndMethods {
                     showAll = true;
                     pingsPlayer(R.raw.ping);
                 } catch (XPathExpressionException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 } catch (IOException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }

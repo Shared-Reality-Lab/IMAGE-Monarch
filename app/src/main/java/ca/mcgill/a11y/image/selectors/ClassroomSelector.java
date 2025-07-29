@@ -124,9 +124,8 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
                 //Log.d("KEY EVENT", event.toString());
                 try {
                     DataAndMethods.checkForUpdate();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (JSONException e) {
+                } catch (IOException | JSONException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
                 return true;

@@ -66,8 +66,10 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
                 try {
                     DataAndMethods.speaker(DataAndMethods.getFile(++fileSelected), TextToSpeech.QUEUE_FLUSH);
                 } catch (IOException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 } catch (JSONException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
                 return true;
@@ -76,8 +78,10 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
                 try {
                     DataAndMethods.speaker(DataAndMethods.getFile(--fileSelected), TextToSpeech.QUEUE_FLUSH);
                 } catch (IOException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 } catch (JSONException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
                 return true;
@@ -115,8 +119,10 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
             // might want to read file name here
             DataAndMethods.getFile(++DataAndMethods.fileSelected);
         } catch (IOException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         } catch (JSONException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
         super.onResume();

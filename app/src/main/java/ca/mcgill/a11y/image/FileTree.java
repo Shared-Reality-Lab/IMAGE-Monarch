@@ -22,6 +22,7 @@ import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import timber.log.Timber;
 
+// inspired and modified form Logging to disk reactively on Android by Karn Saheb on Medium
 public class FileTree extends Timber.Tree {
 
     private static final SimpleDateFormat LOG_LINE_TIME_FORMAT =
@@ -160,12 +161,5 @@ public class FileTree extends Timber.Tree {
                 }
             }
         }
-    }
-
-
-     //Gets the file extension from a file name.
-    private String getFileExtension(String fileName) {
-        int lastDot = fileName.lastIndexOf('.');
-        return (lastDot >= 0) ? fileName.substring(lastDot + 1) : "";
     }
 }

@@ -72,6 +72,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                     brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, false));
                 } catch (IOException | XPathExpressionException | ParserConfigurationException |
                          SAXException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
                 DataAndMethods.speaker(getResources().getString(R.string.received_query_0)+query+" "+getResources().getString(R.string.received_query_1_temp), TextToSpeech.QUEUE_FLUSH);
@@ -100,6 +101,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                         try {
                             DataAndMethods.sendFollowUpQuery(query, region);
                         } catch (JSONException | IOException e) {
+                            Timber.e(e, "EXCEPTION");
                             throw new RuntimeException(e);
                         }
                         titleRead = false;
@@ -164,13 +166,8 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                 }
                 catch(RuntimeException ex){
                     Timber.d(ex, "TTS ERROR");
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
+                } catch (XPathExpressionException | ParserConfigurationException | IOException | SAXException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -205,7 +202,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
             DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
         }
         catch(RuntimeException ex){
-            Timber.d(ex, "TTS ERROR");
+            Timber.e(ex, "TTS ERROR");
         }
         // Log.d("GESTURE!", "onLongPress: " + event.toString());
 

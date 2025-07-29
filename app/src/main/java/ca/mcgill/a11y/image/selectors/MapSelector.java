@@ -79,6 +79,7 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
                 } catch (NumberFormatException e){
                     speaker(getResources().getString(R.string.invalid_coord), TextToSpeech.QUEUE_FLUSH);
                 } catch (JSONException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
                 //startActivity(new Intent(getApplicationContext(), BasicPhotoMapRenderer.class));
