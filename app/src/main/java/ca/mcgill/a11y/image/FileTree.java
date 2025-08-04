@@ -53,7 +53,7 @@ public class FileTree extends Timber.Tree {
                 .observeOn(Schedulers.computation())
                 .doAfterNext(logElement -> {
                     processedCount++;
-                    if (processedCount % 20 == 0) {
+                    if ((processedCount % 20 == 0)|| (logElement.priority >= Log.ERROR)) {
                         flush.onNext(1L);
                     }
                 })
