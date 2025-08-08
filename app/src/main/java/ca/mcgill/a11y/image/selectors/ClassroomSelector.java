@@ -57,6 +57,7 @@ import ca.mcgill.a11y.image.PollingService;
 import ca.mcgill.a11y.image.R;
 import ca.mcgill.a11y.image.renderers.Exploration;
 import ca.mcgill.a11y.image.renderers.Guidance;
+import timber.log.Timber;
 
 public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
     public static String channelSubscribed; // make this the place the request takes it from
@@ -120,12 +121,11 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
             case "UP":
             case "DOWN":
                 // make force refresh
-                Log.d("KEY EVENT", event.toString());
+                //Log.d("KEY EVENT", event.toString());
                 try {
                     DataAndMethods.checkForUpdate();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (JSONException e) {
+                } catch (IOException | JSONException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
                 return true;
@@ -133,7 +133,7 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
                 finish();
                 return false;
             default:
-                Log.d("KEY EVENT", event.toString());
+                Timber.d("KEY EVENT: "+ event.toString());
                 return false;
         }
     }
@@ -150,14 +150,14 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "Classroom Selector Resumed");
+        Timber.d("ACTIVITY: "+ "Classroom Selector Resumed");
         DataAndMethods.speaker(getResources().getString(R.string.res_classroom_selector), TextToSpeech.QUEUE_FLUSH);
         //startService(new Intent(getApplicationContext(), PollingService.class));
         super.onResume();
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "Exploration Paused");
+        Timber.d("ACTIVITY: "+ "Exploration Paused");
         //stopService(new Intent(getApplicationContext(), PollingService.class));
         super.onPause();
     }

@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
+import timber.log.Timber;
+
 public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     Intent intent;
     String mainGraphic;
@@ -50,7 +52,7 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
     private BrailleDisplay brailleServiceObj = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d("ACTIVITY", "FollowUpQuery Created");
+        Timber.d("ACTIVITY: "+ "FollowUpQuery Created");
         super.onCreate(savedInstanceState);
         brailleServiceObj = DataAndMethods.brailleServiceObj;
 
@@ -67,7 +69,7 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
                 finish();
                 return true;
             default:
-                Log.d("KEY EVENT", event.toString());
+                Timber.d("KEY EVENT: "+ event.toString());
                 return false;
         }
     }
@@ -86,7 +88,7 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
                         DataAndMethods.zoom(pins, "Exploration");
                     }
                     else {
-                        Log.d("TAGS", "ACCESS TTS");
+                        //Log.d("TAGS", "ACCESS TTS");
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
@@ -98,14 +100,9 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
                     }
                 }
                 catch(RuntimeException ex){
-                    Log.d("TTS ERROR", String.valueOf(ex));
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
+                    Timber.e(ex, "TTS ERROR");
+                } catch (XPathExpressionException | ParserConfigurationException | IOException | SAXException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -120,7 +117,7 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
 
     @Override
     public boolean onDown(MotionEvent event) {
-        Log.d("GESTURE!","onDown: " + event.toString());
+        //Log.d("GESTURE!","onDown: " + event.toString());
 
         return true;
     }
@@ -128,7 +125,7 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2,
                            float velocityX, float velocityY) {
-        Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
+        //Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
         return true;
     }
 
@@ -140,62 +137,57 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
             DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
         }
         catch(RuntimeException ex){
-            Log.d("TTS ERROR", String.valueOf(ex));
+            Timber.e(ex, "TTS ERROR");
         }
-        Log.d("GESTURE!", "onLongPress: " + event.toString());
+        // Log.d("GESTURE!", "onLongPress: " + event.toString());
 
     }
 
     @Override
     public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
                             float distanceY) {
-        Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
+        // Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
         return true;
     }
 
     @Override
     public void onShowPress(MotionEvent event) {
-        Log.d("GESTURE!", "onShowPress: " + event.toString());
+        // Log.d("GESTURE!", "onShowPress: " + event.toString());
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
-        Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
+        // Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onDoubleTap(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTap: " + event.toString());
+        // Log.d("GESTURE!", "onDoubleTap: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onDoubleTapEvent(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
+        // Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onSingleTapConfirmed(MotionEvent event) {
-        Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
+        // Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
         return true;
     }
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "FollowUpQuery Resumed");
+        Timber.d("ACTIVITY: "+ "FollowUpQuery Resumed");
         intent = getIntent();
         mainGraphic = intent.getStringExtra("image");
         try {
             brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), 0, true));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (XPathExpressionException e) {
-            throw new RuntimeException(e);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
+        } catch (IOException | XPathExpressionException | ParserConfigurationException | SAXException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
         mDetector = new GestureDetectorCompat(this,this);
@@ -206,7 +198,7 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
                     onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
-                    Log.d("MOTION EVENT", String.valueOf(ex));
+                    Timber.e(ex, "EXCEPTION" );
                 }
 
             return false;
@@ -216,18 +208,13 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "FollowUpQuery Paused");
+        Timber.d("ACTIVITY: "+ "FollowUpQuery Paused");
         DataAndMethods.image = mainGraphic;
         resetGraphicParams();
         try {
             setImageDims();
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
-            throw new RuntimeException(e);
-        } catch (XPathExpressionException e) {
+        } catch (ParserConfigurationException | IOException | SAXException | XPathExpressionException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
         DataAndMethods.tempImage = "";

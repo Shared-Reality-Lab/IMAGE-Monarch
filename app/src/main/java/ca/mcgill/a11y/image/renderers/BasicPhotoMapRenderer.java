@@ -44,6 +44,7 @@ import javax.xml.xpath.XPathExpressionException;
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.R;
+import timber.log.Timber;
 
 // renders graphic currently stored in string 'image'
 public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener  {
@@ -69,14 +70,10 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                     try {
                         DataAndMethods.onShowFollowUp();
                     } catch (UnsupportedEncodingException e) {
+                        Timber.e(e, "EXCEPTION");
                         throw new RuntimeException(e);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (XPathExpressionException e) {
-                        throw new RuntimeException(e);
-                    } catch (ParserConfigurationException e) {
-                        throw new RuntimeException(e);
-                    } catch (SAXException e) {
+                    } catch (IOException | XPathExpressionException | ParserConfigurationException | SAXException e) {
+                        Timber.e(e, "EXCEPTION");
                         throw new RuntimeException(e);
                     }
                 }
@@ -97,7 +94,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                 DataAndMethods.speechRecognizer.startListening(DataAndMethods.speechRecognizerIntent);
                 return true;
             default:
-                Log.d("KEY EVENT", event.toString());
+                Timber.d("KEY EVENT: "+ event.toString());
                 return true;
         }
     }
@@ -120,7 +117,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                         DataAndMethods.zoom(pins, "Exploration");
                     }
                     else {
-                        Log.d("TAGS", "ACCESS TTS");
+                        //Log.d("TAGS", "ACCESS TTS");
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
@@ -132,14 +129,9 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                     }
                 }
                 catch(RuntimeException ex){
-                    Log.d("TTS ERROR", String.valueOf(ex));
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
+                    Timber.e(ex, "TTS ERROR");
+                } catch (XPathExpressionException | ParserConfigurationException | IOException | SAXException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -149,7 +141,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
 
     @Override
     public boolean onDown(MotionEvent event) {
-        Log.d("GESTURE!","onDown: " + event.toString());
+        //Log.d("GESTURE!","onDown: " + event.toString());
 
         return true;
     }
@@ -157,7 +149,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2,
                            float velocityX, float velocityY) {
-        Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
+        //Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
         return true;
     }
 
@@ -169,51 +161,51 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
             DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
         }
         catch(RuntimeException ex){
-            Log.d("TTS ERROR", String.valueOf(ex));
+            Timber.e(ex, "TTS ERROR");
         }
-        Log.d("GESTURE!", "onLongPress: " + event.toString());
+        //Log.d("GESTURE!", "onLongPress: " + event.toString());
 
     }
 
     @Override
     public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
                             float distanceY) {
-        Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
+        // Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
         return true;
     }
 
     @Override
     public void onShowPress(MotionEvent event) {
-        Log.d("GESTURE!", "onShowPress: " + event.toString());
+        // Log.d("GESTURE!", "onShowPress: " + event.toString());
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
-        Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
+        // Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onDoubleTap(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTap: " + event.toString());
+        // Log.d("GESTURE!", "onDoubleTap: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onDoubleTapEvent(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
+        // Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onSingleTapConfirmed(MotionEvent event) {
-        Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
+        // Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
         return true;
     }
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "Exploration Resumed");
+        Timber.d("ACTIVITY: "+ "Exploration Resumed");
 
         DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration", silentStart);
         silentStart = false;
@@ -227,7 +219,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
                     onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
-                    Log.d("MOTION EVENT", String.valueOf(ex));
+                    Timber.e(ex, "EXCEPTION");
                 }}
 
             return false;
@@ -237,7 +229,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "BasicPhotoMapRenderer Paused");
+        Timber.d("ACTIVITY: "+ "BasicPhotoMapRenderer Paused");
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }

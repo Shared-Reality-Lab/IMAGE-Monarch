@@ -1,7 +1,5 @@
 package ca.mcgill.a11y.image;
 
-import android.util.Log;
-
 import com.google.gson.Gson;
 
 import org.json.JSONException;

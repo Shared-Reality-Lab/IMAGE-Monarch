@@ -122,6 +122,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import timber.log.Timber;
 
 public class DataAndMethods {
     // SVG data received from response 
@@ -232,7 +233,7 @@ public class DataAndMethods {
                 public void onInit(int status) {
 
                     if (status != TextToSpeech.SUCCESS) {
-                        Log.e("error", "Initialization Failed!" + status);
+                        Timber.e("error: "+ "Initialization Failed!" + status);
                     } else {
                         tts.setLanguage(Locale.forLanguageTag(res.getString(R.string.locale)));
                         tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
@@ -281,7 +282,7 @@ public class DataAndMethods {
 
                 @Override
                 public void onBeginningOfSpeech() {
-                    Log.d("SPEECHREC", "Listening");
+                    Timber.d("SPEECHREC: "+ "Listening");
                     //Toast toast = Toast.makeText(getApplicationContext() , "Listening...", Toast.LENGTH_SHORT);
                     //toast.show();
                 }
@@ -303,7 +304,7 @@ public class DataAndMethods {
 
                 @Override
                 public void onError(int i) {
-                    Log.d("SPEECHREC", String.valueOf(i));
+                    Timber.d("SPEECHREC: "+String.valueOf(i));
                     switch (i) {
                         case SpeechRecognizer.ERROR_NO_MATCH:
                             DataAndMethods.speaker(res.getString(R.string.text_error), TextToSpeech.QUEUE_FLUSH);
@@ -331,7 +332,14 @@ public class DataAndMethods {
                 }
             });
         }
+        //Log.d("FILE", String.valueOf(context.getFilesDir()));
+        File logDir = new File(context.getFilesDir(), "logs");
+
+        // Create and plant the FileTree
+        Timber.plant(new FileTree(logDir.getAbsolutePath()));
+
     }
+
 
     public static void onShowFollowUp() throws IOException, XPathExpressionException, ParserConfigurationException, SAXException {
         Intent myIntent = new Intent(DataAndMethods.context, ShowFollowUp.class);
@@ -359,11 +367,11 @@ public class DataAndMethods {
             }
             else if (history.type.equals("Map")) {
                 speaker(context.getString(R.string.followup_no_support_maps), TextToSpeech.QUEUE_FLUSH);
-                Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
+                Timber.d("onVoiceRecognitionResults: "+ "NOT HANDLED YET!");
             }
         }
         else {
-            Log.d("onVoiceRecognitionResults", "NOT HANDLED YET!");
+            Timber.d("onVoiceRecognitionResults: "+"NOT HANDLED YET!");
             speaker(context.getString(R.string.followup_no_support), TextToSpeech.QUEUE_FLUSH);
         }
     }
@@ -394,6 +402,7 @@ public class DataAndMethods {
             brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), !silentStart));
         }}
         catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
     }
@@ -430,9 +439,9 @@ public class DataAndMethods {
             transformer.transform(domSource, result);
             return writer.toString();
         }
-        catch(TransformerException ex)
+        catch(TransformerException e)
         {
-            Log.d("ERROR", "Write Failed");
+            Timber.e(e, "EXCEPTION");
             return null;
         }
     }
@@ -527,6 +536,7 @@ public class DataAndMethods {
                     // Generally occurs with a little delay following the tactile rendering
                     pingsPlayer(R.raw.ping);
                 } catch (XPathExpressionException | IOException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -975,21 +985,24 @@ public class DataAndMethods {
                         update.setValue(true);
                     }
                     else{
-                        Log.d("CACHE", "Fetching from cache!");
+                        Timber.d("CACHE: "+ "Fetching from cache!");
                     }
                 }
                 // This occurs when there is no rendering returned
                 catch (IOException | ParserConfigurationException | SAXException |
                        XPathExpressionException e) {
                     //history.setHistory(false);
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 } catch (ArrayIndexOutOfBoundsException | NullPointerException e){
+                    Timber.e(e, "EXCEPTION");
                     pingsPlayer(R.raw.image_error);
                     /*if (followingUp.getValue()){
                         followingUp.setValue(false);
                     }*/
                     //history.setHistory(false);
                 } catch (Exception e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -1002,7 +1015,7 @@ public class DataAndMethods {
                 // This text is not read out when a request is cancelled as there is expected to be
                 // an ongoing request and can be confused as a result of that request.
                 // Causes interrupted requests to die silently!
-                Log.d("RESPONSE", "FAILED!");
+                Timber.d("RESPONSE: "+ "FAILED!");
                 if (!call.isCanceled()){
                     pingsPlayer(R.raw.image_error);
                 }
@@ -1325,7 +1338,7 @@ public class DataAndMethods {
             mp=MediaPlayer.create(context, file);
             mp.start();
         } catch (Exception e) {
-            Log.d("ERROR", e.toString());
+            Timber.e(e, "EXCEPTION");
         }
     }
 
@@ -1346,8 +1359,10 @@ public class DataAndMethods {
                     showAll = true;
                     pingsPlayer(R.raw.ping);
                 } catch (XPathExpressionException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 } catch (IOException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }

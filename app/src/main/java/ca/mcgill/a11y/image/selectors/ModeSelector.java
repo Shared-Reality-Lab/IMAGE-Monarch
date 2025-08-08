@@ -42,6 +42,7 @@ import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.renderers.Exploration;
 import ca.mcgill.a11y.image.R;
+import timber.log.Timber;
 
 // Launcher activity; switches mode of application
 public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
@@ -127,7 +128,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "ModeSelector Resumed");
+        Timber.d("ACTIVITY: "+ "ModeSelector Resumed");
         DataAndMethods.speaker(getResources().getString(R.string.res_mode_selector), TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image = null;
         update.setValue(false);
@@ -135,7 +136,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "ModeSelector Paused");
+        Timber.d("ACTIVITY: "+ "ModeSelector Paused");
         super.onPause();
     }
 

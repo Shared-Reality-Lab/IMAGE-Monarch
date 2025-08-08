@@ -50,6 +50,7 @@ import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.PollingService;
 
 import ca.mcgill.a11y.image.R;
+import timber.log.Timber;
 
 public class Guidance extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
     private BrailleDisplay brailleServiceObj = null;
@@ -89,12 +90,11 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                 case "UP":
                 case "DOWN":
                     // make force refresh
-                    Log.d("KEY EVENT", event.toString());
+                    // Log.d("KEY EVENT", event.toString());
                     try {
                         DataAndMethods.checkForUpdate();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (JSONException e) {
+                    } catch (IOException | JSONException e) {
+                        Timber.e(e, "EXCEPTION");
                         throw new RuntimeException(e);
                     }
                     //DataAndMethods.checkForUpdate();
@@ -110,7 +110,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                         DataAndMethods.displayGraphic(backButton, "Guidance", false);
                     return false;
                 default:
-                    Log.d("KEY EVENT", event.toString());
+                    Timber.d("KEY EVENT: "+ event.toString());
                     return false;
             }
     }
@@ -128,7 +128,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                         DataAndMethods.zoom(pins, "Guidance");
                     }
                     else {
-                        Log.d("TAGS", "ACCESS TTS");
+                        // Log.d("TAGS", "ACCESS TTS");
                         // Speak out label tags based on finger location and ping when detailed description is available
                         if ((tags.get(1)[pins[1]][pins[0]] != null) && (tags.get(1)[pins[1]][pins[0]].trim().length() > 0)) {
                             //Log.d("CHECKING!", tags.get(1)[pins[1]][pins[0]]);
@@ -140,14 +140,9 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                     }
                 }
                 catch(RuntimeException ex){
-                    Log.d("TTS ERROR", String.valueOf(ex));
-                } catch (XPathExpressionException e) {
-                    throw new RuntimeException(e);
-                } catch (ParserConfigurationException e) {
-                    throw new RuntimeException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (SAXException e) {
+                    Timber.e(ex, "TTS ERROR");
+                } catch (XPathExpressionException | ParserConfigurationException | IOException | SAXException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
             }
@@ -157,7 +152,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
     @Override
     public boolean onDown(MotionEvent event) {
-        Log.d("GESTURE!","onDown: " + event.toString());
+        // Log.d("GESTURE!","onDown: " + event.toString());
 
         return true;
     }
@@ -165,7 +160,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2,
                            float velocityX, float velocityY) {
-        Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
+        // Log.d("GESTURE!", "onFling: " + event1.toString() + event2.toString());
         return true;
     }
 
@@ -177,33 +172,33 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
             DataAndMethods.speaker(DataAndMethods.tags.get(1)[pins[1]][pins[0]], TextToSpeech.QUEUE_FLUSH);
         }
         catch(RuntimeException ex){
-            Log.d("TTS ERROR", String.valueOf(ex));
+            Timber.e(ex, "TTS ERROR");
         }
-        Log.d("GESTURE!", "onLongPress: " + event.toString());
+        // Log.d("GESTURE!", "onLongPress: " + event.toString());
 
     }
 
     @Override
     public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
                             float distanceY) {
-        Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
+        // Log.d("GESTURE!", "onScroll: " + event1.toString() + event2.toString());
         return true;
     }
 
     @Override
     public void onShowPress(MotionEvent event) {
-        Log.d("GESTURE!", "onShowPress: " + event.toString());
+        // Log.d("GESTURE!", "onShowPress: " + event.toString());
     }
 
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
-        Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
+        // Log.d("GESTURE!", "onSingleTapUp: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onDoubleTap(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTap: " + event.toString());
+        // Log.d("GESTURE!", "onDoubleTap: " + event.toString());
         try {
             if (!DataAndMethods.showAll)
                 brailleServiceObj.display(DataAndMethods.displayTargetLayer(DataAndMethods.getfreshDoc()));
@@ -212,13 +207,8 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                 DataAndMethods.showAll = !DataAndMethods.showAll;
             }
             //DataAndMethods.showAll = !DataAndMethods.showAll;
-        } catch (XPathExpressionException e) {
-            throw new RuntimeException(e);
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (SAXException e) {
+        } catch (XPathExpressionException | ParserConfigurationException | IOException | SAXException e) {
+            Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
         }
         return true;
@@ -226,13 +216,13 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
     @Override
     public boolean onDoubleTapEvent(MotionEvent event) {
-        Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
+        // Log.d("GESTURE!", "onDoubleTapEvent: " + event.toString());
         return true;
     }
 
     @Override
     public boolean onSingleTapConfirmed(MotionEvent event) {
-        Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
+        // Log.d("GESTURE!", "onSingleTapConfirmed: " + event.toString());
         return true;
     }
 
@@ -244,7 +234,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "Guidance Resumed");
+        Timber.d("ACTIVITY: "+ "Guidance Resumed");
         DataAndMethods.speaker(getString(R.string.guidance_mode), TextToSpeech.QUEUE_FLUSH);
         startService(new Intent(getApplicationContext(), PollingService.class));
         mDetector = new GestureDetectorCompat(this,this);
@@ -256,7 +246,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
                     onTouchEvent(e);
                 }
                 catch(RuntimeException ex){
-                    Log.d("MOTION EVENT", String.valueOf(ex));
+                    Timber.e(ex, "TTS ERROR");
                 }}
 
             return false;
@@ -266,7 +256,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "Guidance Paused");
+        Timber.d("ACTIVITY: "+ "Guidance Paused");
         stopService(new Intent(getApplicationContext(), PollingService.class));
         brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();

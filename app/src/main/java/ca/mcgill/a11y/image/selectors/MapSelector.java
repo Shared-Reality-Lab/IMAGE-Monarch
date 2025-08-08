@@ -36,6 +36,7 @@ import org.json.JSONException;
 import ca.mcgill.a11y.image.renderers.BasicPhotoMapRenderer;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.R;
+import timber.log.Timber;
 
 // generates map request using latitude and longitude coordinates and allows for selecting among map renderer(s) 
 public class MapSelector extends AppCompatActivity implements MediaPlayer.OnCompletionListener{
@@ -78,6 +79,7 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
                 } catch (NumberFormatException e){
                     speaker(getResources().getString(R.string.invalid_coord), TextToSpeech.QUEUE_FLUSH);
                 } catch (JSONException e) {
+                    Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
                 //startActivity(new Intent(getApplicationContext(), BasicPhotoMapRenderer.class));
@@ -86,7 +88,7 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
                 finish();
                 return false;
             default:
-                Log.d("KEY EVENT", event.toString());
+                Timber.d("KEY EVENT: "+ event.toString());
                 return false;
         }
     }
@@ -105,14 +107,14 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
 
     @Override
     protected void onResume() {
-        Log.d("ACTIVITY", "MapSelector Resumed");
+        Timber.d("ACTIVITY: "+"MapSelector Resumed");
         DataAndMethods.speaker(getResources().getString(R.string.res_map_selector), TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image= null;
         super.onResume();
     }
     @Override
     protected void onPause() {
-        Log.d("ACTIVITY", "MapSelector Paused");
+        Timber.d("ACTIVITY: "+ "MapSelector Paused");
         super.onPause();
     }
 }
