@@ -229,17 +229,22 @@ The flowcharts indicate the sequence of functions called when you interact with 
 
 While some of the functions called return values, this has not been made explicit by the arrows.  
 
-1. Functions executed in PhotoSelector activity (by pressing the Up and Down arrow buttons on the device )
+1. Functions executed in PhotoSelector activity (by pressing the Up and Down arrow buttons on the device)
+
 ![PhotoSelector_flow](https://github.com/user-attachments/assets/c0459fc7-60f6-45e9-93a3-d888f32aa03e)
 
-2. Functions executed in MapSelector activity (by entering latitude and longitude coordinates and pressing confirm (dot 8) )
+2. Functions executed in MapSelector activity (by entering latitude and longitude coordinates and pressing confirm (dot 8))
+
 ![MapSelector_flow](https://github.com/user-attachments/assets/3b948a72-d621-42e0-a420-f9fa57af7cf6)
 
 3. Functions executed in Exploration activity 
+
 ![Exploration_flow](https://github.com/user-attachments/assets/bc96b61b-7648-462e-923d-596bc7a08353)
 
 4. Functions executed to render the next layer (when the confirm (dot 8) or cancel (dot 7) button on the device are pressed)
+
 ![Layer_load_flow](https://github.com/user-attachments/assets/3cc6aa56-b7b0-4902-afb6-367e493e5df8)
+
 
 Details of the XPath queries can be found in [here](XPathQueries.md).
 
