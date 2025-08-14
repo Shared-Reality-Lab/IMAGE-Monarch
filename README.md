@@ -9,7 +9,7 @@
 - [Details...](#details)
   - [Tactile graphics](#tactile-graphics)
   - [Develop, debug, improve!](#develop-debug-improve)
-  - [How do I use the application?](how-do-i-use-the-application)
+  - [Modifying existing code](#modifying-existing-code)
 
 ## Introduction
 This is the source code for an Android application to render tactile graphics on the [Monarch](https://www.humanware.com/en-usa/monarch). The application works by reading graphic files from the device file system (or using the coordinates entered for maps), making requests to the [IMAGE server](https://github.com/Shared-Reality-Lab/IMAGE-server) and rendering the responses as tactile graphics on the pin array.
@@ -218,31 +218,28 @@ myIntent = new Intent(getApplicationContext(), MyOwnRenderer.class);
 
 NOTE: Despite it being executed as a separate activity, the underlying functions used to run MyOwnRenderer and end user experience are the same as that for BasicPhotoMapRenderer... Some liberties have been taken for the purpose of writing this tutorial, however typically, you should reuse BasicPhotoMapRenderer here! After you've gone through this tutorial, you should be able to figure out how to do this on your own...
 
---Documentation is somewhat outdated after this point--
 
-### How do I use the application?
-The application UI visually appears as shown below:
-![Monarch application GUI](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/5223165a-6b75-4595-b403-e8b9fe176d51)
-
-**DOWN**: Lowers all the raised pins \
-<a name="UpButton"> **UP** </a>: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
-**DebugView**: Shows/hides the debug view i.e. the visual display of the pins. \
-**Text Fields**: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the point of interest (POI) in the first and second text fields respectively. \
-**GET MAP!**: Sends a request to the server for the latitude and longitude coordinates of the POI entered in the text fields. 
-
-Use the directional buttons on the Monarch to navigate through the buttons and fields on the UI. Press the 'confirm' button (i.e. the Enter/ dot 8 in a Perkins style keyboard) to click on a button.
-Use the Up and Down arrows on the device to navigate between the files in the target directory.
-
+### Modifying existing code
 Refer this section for an overview of the program flow to get you started... 
 
-The flowcharts indicate the sequence of functions called when you interact with the elements of the UI. The list beside each block provides the sequential order of various actions executed by each function. Function calls/ important code segments within each function are indicated by a cascade of blocks from the calling function. 
+The flowchart below indicates which Android activities are launched on interacting with elements of the UI. 
+![Android activity flow]()
 
-While the functions called return values in most cases, this has not been made explicit by the arrows.  
+The flowcharts indicate the sequence of functions called when you interact with the device. The list beside each block provides the sequential order of various actions executed by each function. Function calls/ important code segments within each function are indicated by a cascade of blocks from the calling function. 
 
-1. Functions executed when a file is read from storage (by pressing the Up and Down arrow buttons on the device )
-![Server_request_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/51b0b946-025f-4d9d-b01a-d5ddcda5e1bd)
+While some of the functions called return values, this has not been made explicit by the arrows.  
 
-2. Functions executed to render the next layer (when the [UP button](#UpButton) is pressed)
+1. Functions executed in PhotoSelector activity (by pressing the Up and Down arrow buttons on the device )
+![PhotoSelector_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/51b0b946-025f-4d9d-b01a-d5ddcda5e1bd)
+
+2. Functions executed in MapSelector activity (by entering latitude and longitude coordinates and pressing confirm (dot 8) )
+![MapSelector_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/51b0b946-025f-4d9d-b01a-d5ddcda5e1bd)
+
+3. Functions executed in Exploration activity 
+![ClassroomSelector_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/51b0b946-025f-4d9d-b01a-d5ddcda5e1bd)
+
+4. Functions executed to render the next layer (when the confirm (dot 8) or cancel (dot 7) button on the device are pressed)
 ![Layer_load_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/c340412c-8ccb-45b8-a3f8-1ab1d12dfe65)
 
 Details of the XPath queries can be found in [here](XPathQueries.md).
+
