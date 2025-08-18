@@ -245,6 +245,9 @@ While some of the functions called return values, this has not been made explici
 
 ![Layer_load_flow](https://github.com/user-attachments/assets/3cc6aa56-b7b0-4902-afb6-367e493e5df8)
 
+5. Functions executed to create and render the follow up query
+
+![Follow_up_query_flow](https://github.com/user-attachments/assets/5d0d24b5-eb49-41e3-9b7f-c82e79538440)
 
 Details of the XPath queries can be found in [here](XPathQueries.md).
 
