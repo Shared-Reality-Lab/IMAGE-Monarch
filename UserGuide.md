@@ -62,7 +62,7 @@
 1. Instead of selecting ‘Send to Monarch’ select ‘Send to Tactile Authoring Tool (TAT)’ in step 1 of [SENDING CONTENT TO MONARCH](#sending-content-to-the-monarch) section.   
 2. The TAT opens in a new tab and prompts for a password. Type abc and click ‘OK’.  
 3. Customize the SVG using the drawing tools.   
-4. Click ![Publish tool icon][image1] on the side toolbar and then ”Submit" in the pop-up window to send the customized content to the Monarch. 
+4. Click ![Publish tool icon]() on the side toolbar and then ”Submit" in the pop-up window to send the customized content to the Monarch. 
 
 # FAQ:
 
@@ -84,6 +84,3 @@
 
 * To confirm if the app has crashed, open scrcpy. If you see a message like ‘Application has stopped responding’ close the app using  scrcpy. If you see the home screen/ any other screen instead, you might have accidentally exited the application.   
 * Use adb to launch the IMAGE-Monarch System as described in [SENDING CONTENT TO MONARCH](#sending-content-to-the-monarch) section (step 2).  
-
-
-[image1]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAdCAYAAADLnm6HAAADjElEQVR4Xs2UWUxTQRSGfXNJjHvExBU1oNZKa0tbpJStgJYuBEUhrnGXWHEvJIYE4hY1EeODCu4RURFUVEAUNLjhBgVcaCmIIKDxWaMx/nam6U1hql3A5eHLzcyZc+a7586dPptS0/Av6dN94m/z/wqEahIgnxPfa5B6y9bpmX2cCkTHJ0ESMxey2fN6DVKv/9jpUCUsci0wwl+Czs7OXid9bxZ8pslcC/QdzWOSe4Pisgpa222B7LN59PnkeTV9nsy9hNa2Nq5gbv5VWJqaYWq00HFBUTFevW7Au9bWLht3dHR4J7AiJY0mXysuo2N9agYaLU1c4bSd+2Gsq0e1sY6O92QdQeWjKpgtNqEeC/QEUiNMNx9tbe+5OY8Fbt4q71K0tPweLfjGZKbjisqHaH7bwsUfPH6KBnMjxXxfBWmEDLFJq7hP6bGAtxABk1Vg384IyGMkGDKJj7yCop4JPKs2QqFNgq9IgVPn85m4I3fu3UdLVSx+vNVRvpi1GOYnpJ3wWmBr+h7wZwVigz4YftJwJu7IMv0WbnM7otCZCI9b4J1A4fUSxC1Zh4WLpSi5oLReJraLypC5DzW19Xhu7Y7jetlsNSOwO0NBb0KPBIpKyjBksgCquEB8b9LSQqUXozB4YgCNk1+QPO2/Wd3LV2hvb8fBIyfwsaarxKhpQugNOzwT8OEFYZZSxG1O+GRUY5Avn8ZJVx5WPaP/PhkvT0m1St9Gbf1LTJWJ0frEdg6+WrRQJy7w/BCSVudmRzLtJJ/CseXOGMWT4NzRCKBFh+bHKryoqfVcwFckR8FpVmDlKhmzYXcmiUNw8bgtt6FShTcNJvcFhOGxyDl7AZkHDtOE1WuCaKEP1WrIo8UYNFGAKzdKfwvJM96ZQ/OK86Jw7Mx5jBMoEKjUuBZIMaTCX6aEf1AUJojCMHA8Hz+addiVEYKh1kNJ5l3RbwwPn00aKpCdFU7riSM12GjoupdTAUeWrF1P34YUOrg3FH6SIGaNMwKChdwnS07+dY5LgeRNWziBwjNK640mYNY4Y/8uBScwdoaQidtxKUDgBSu5YhFqCaTROmaNIxu2G7B1czDuFkZDIBdBrtIya+y4JaBJXIpvjTaBy6ciMXKKmFnTHdKpkVOEiInXQr9tOxO345YAOZSZ6SFUIOdQGIb7iZg13uKWAGGA9R4PkIsxYNx0RMUnMnFvcVvgT/HPBX4CTZ5w0SpmJ5cAAAAASUVORK5CYII=>

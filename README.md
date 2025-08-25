@@ -3,8 +3,8 @@
 - [Introduction](#introduction)
 
 - [Getting started](#getting-started)
-  - [How do I install it on my Monarch?](how-do-i-install-it-on-my-monarch-from-the-repo)
-  - [How do I use the application?](how-do-i-use-the-application)
+  - [How do I install it on my Monarch?](#how-do-i-install-it-on-my-monarch-from-the-repo)
+  - [How do I use the application?](#how-do-i-use-the-application)
 
 
 - [Details...](#details)
@@ -41,7 +41,7 @@ You might will also need to do some (or all) of the following (especially for a 
 ```
 
 ### How do I use the application?
-Once you have successfully installed the Monarch application, refer the [User Guide](UserGuide.md) for details on using the IMAGE-Monarch application.
+Once you have successfully installed the Monarch application, refer the [User Guide](UserGuide.md) for details on using the application.
 
 ## Details...
 ### Tactile graphics
