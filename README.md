@@ -246,7 +246,7 @@ While some of the functions called return values, this has not been made explici
 
 4. Functions executed to render the next layer (when the confirm (dot 8) or cancel (dot 7) button on the device are pressed)
 
-![Layer_load_flow](https://github.com/user-attachments/assets/3cc6aa56-b7b0-4902-afb6-367e493e5df8)
+![Layer_load_flow](https://github.com/user-attachments/assets/f6a241e7-9d87-41d8-a6fa-7a421ac1748c)
 
 5. Functions executed to create and render the follow up query
 
