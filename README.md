@@ -4,6 +4,7 @@
 
 - [Getting started](#getting-started)
   - [How do I install it on my Monarch?](how-do-i-install-it-on-my-monarch-from-the-repo)
+  - [How do I use the application?](how-do-i-use-the-application)
 
 
 - [Details...](#details)
@@ -24,7 +25,7 @@ git clone https://github.com/Shared-Reality-Lab/IMAGE-Monarch.git
 To include this library, download [svg_from_different_sources_sample.zip](https://scand.com/download/products/SVGkitAndroid/svg_from_different_sources_sample.zip) from the library's website.
 Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources_sample/app/libs` to `IMAGE-Monarch/app/libs`
 
-3. Connect the device to your system and Run 'app' from Android Studio
+3. Connect the device to your system and Run 'app' from Android Studio (tested with Android Studio Electric Eel | 2022.1.1 Patch 2 on Windows 11 10.0)
 
 **NOTE:**
 You might will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
@@ -39,6 +40,8 @@ You might will also need to do some (or all) of the following (especially for a 
 </resources>
 ```
 
+### How do I use the application?
+Once you have successfully installed the Monarch application, refer the [User Guide](UserGuide.md) for details on using the IMAGE-Monarch application.
 
 ## Details...
 ### Tactile graphics
