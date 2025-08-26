@@ -7,7 +7,7 @@
   - [How do I use the application?](#how-do-i-use-the-application)
 
 
-- [Details...](#details)
+- [Developer Details](#developer-details)
   - [Tactile graphics](#tactile-graphics)
   - [Develop, debug, improve!](#develop-debug-improve)
   - [Modifying existing code](#modifying-existing-code)
