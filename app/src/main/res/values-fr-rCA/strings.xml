@@ -57,6 +57,4 @@
     <string name="state_1">Double-cliquer sur le coin inférieur droit de la région d\'intérêt ou appuyer sur \'confirmer\' pour procéder sans sélection. Appuyez sur \'annuler\' pour revenir à la page précédente.</string>
     <string name="state_2">Appuyer sur \'confirmer\' pour demander la région sélectionnée. Appuyer sur \'annuler\' pour revenir à la sélection de la région</string>
 
-    <!--Temporary FollowUpQuery strings-->
-    <string name="received_query_1_temp">Appuyer sur \'confirmer\' lancer une requête. Appuyer sur \'annuler\' pour sortir.</string>
 </resources>
