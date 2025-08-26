@@ -43,7 +43,7 @@ You might will also need to do some (or all) of the following (especially for a 
 ### How do I use the application?
 Once you have successfully installed the Monarch application, refer the [User Guide](UserGuide.md) for details on using the application.
 
-## Details...
+## Developer Details
 ### Tactile graphics
 The tactile graphic to be rendered on the device is received in SVG format. Using SVGs makes the renderings independent of the form factor of the pin array. It also allows for the tags/descriptions associated with each object or region in the graphic to be defined within the SVG and simple implementation of features like layering and zooming (not supported yet!).
 Further, a format has been defined for the tactile graphic rendering SVGs. This ensures that as long as the format guidelines are followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. These guidelines were defined by taking inspiration from the [DAISY Accessible Publishing Knowledge Base](http://kb.daisy.org/publishing/docs/html/svg.html)
