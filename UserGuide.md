@@ -40,7 +40,7 @@
 2. Access graphics on the Monarch application   
    * Make sure that the Monarch is turned on and connected to the laptop/ PC via a USB cable. It should show up as a USB device connected to your system. The volume on the device should be turned up to hear the TTS.  
    * Open Command Prompt/ Terminal on Mac and execute the following adb command to launch the app on the Monarch:  
-     adb shell am start \-n ca.mcgill.a11y.image/ca.mcgill.a11y.image.selectors.ModeSelector  
+     ```adb shell am start -n ca.mcgill.a11y.image/ca.mcgill.a11y.image.selectors.ModeSelector```  
      **Note: You can use the same command to relaunch the application if you accidentally exit it or the device stops responding.**  
    * Once launched, use the up and down buttons on either of the D-pads to navigate the ‘modes’. When the TTS reads ‘Classroom Mode’ press the ‘confirm’ button (The dot-8 button/ right most button on the Perkins style keyboard).   
    * Use the up and down buttons on the D-pad until the TTS reads ‘Exploration mode’ and press the ‘confirm button’.  
@@ -62,7 +62,7 @@
 1. Instead of selecting ‘Send to Monarch’ select ‘Send to Tactile Authoring Tool (TAT)’ in step 1 of [SENDING CONTENT TO MONARCH](#sending-content-to-the-monarch) section.   
 2. The TAT opens in a new tab and prompts for a password. Type abc and click ‘OK’.  
 3. Customize the SVG using the drawing tools.   
-4. Click ![Publish tool icon]() on the side toolbar and then ”Submit" in the pop-up window to send the customized content to the Monarch. 
+4. Click ![Publish tool icon](https://github.com/user-attachments/assets/5df21331-36c6-402f-ac78-f63184b80bb8) on the side toolbar and then ”Submit" in the pop-up window to send the customized content to the Monarch. 
 
 # FAQ:
 

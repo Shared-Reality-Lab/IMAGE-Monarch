@@ -9,7 +9,7 @@
   - [How do I use the application?](#how-do-i-use-the-application)
 
 
-- [Details...](#details)
+- [Developer Details](#developer-details)
   - [Tactile graphics](#tactile-graphics)
   - [Develop, debug, improve!](#develop-debug-improve)
   - [Modifying existing code](#modifying-existing-code)
@@ -31,7 +31,7 @@ Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources
 3. Connect the device to your system and Run 'app' from Android Studio (tested with Android Studio Electric Eel | 2022.1.1 Patch 2 on Windows 11 10.0)
 
 **NOTE:**
-You might will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
+You will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
 - Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
 - Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
 - Grant permission to speech recognizer for making followup queries:
@@ -99,7 +99,7 @@ Starting: Intent { cmp=ca.mcgill.a11y.image/.selectors.ModeSelector }
 ### How do I use the application?
 Once you have successfully installed the Monarch application, refer the [User Guide](UserGuide.md) for details on using the application.
 
-## Details...
+## Developer Details
 ### Tactile graphics
 The tactile graphic to be rendered on the device is received in SVG format. Using SVGs makes the renderings independent of the form factor of the pin array. It also allows for the tags/descriptions associated with each object or region in the graphic to be defined within the SVG and simple implementation of features like layering and zooming (not supported yet!).
 Further, a format has been defined for the tactile graphic rendering SVGs. This ensures that as long as the format guidelines are followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. These guidelines were defined by taking inspiration from the [DAISY Accessible Publishing Knowledge Base](http://kb.daisy.org/publishing/docs/html/svg.html)
