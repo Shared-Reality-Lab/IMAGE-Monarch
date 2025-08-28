@@ -3,7 +3,9 @@
 - [Introduction](#introduction)
 
 - [Getting started](#getting-started)
-  - [How do I install it on my Monarch?](#how-do-i-install-it-on-my-monarch-from-the-repo)
+  - [How do I install the application on my Monarch?](#how-do-i-install-the-application-on-my-monarch)
+    - [From the repo](#from-the-repo)
+    - [From built apks](#from-built-apks-using-adb)
   - [How do I use the application?](#how-do-i-use-the-application)
 
 
@@ -16,7 +18,8 @@
 This is the source code for an Android application to render tactile graphics on the [Monarch](https://www.humanware.com/en-usa/monarch). The application works by reading graphic files from the device file system (or using the coordinates entered for maps), making requests to the [IMAGE server](https://github.com/Shared-Reality-Lab/IMAGE-server) and rendering the responses as tactile graphics on the pin array.
 
 ## Getting started
-### How do I install it on my Monarch (from the repo!)?
+### How do I install the application on my Monarch?
+#### From the repo
 1. Clone this repository
 ```
 git clone https://github.com/Shared-Reality-Lab/IMAGE-Monarch.git
@@ -31,6 +34,9 @@ Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources
 You might will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
 - Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
 - Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
+- Grant permission to speech recognizer for making followup queries:
+`adb shell pm grant com.google.android.tts android.permission.RECORD_AUDIO`
+`adb shell pm grant ca.mcgill.a11y.image android.permission.RECORD_AUDIO`
 - Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
 - You may be asked for microphone permissions on the Monarch. For this, it is best to download [ScreenCopy](https://github.com/Genymobile/scrcpy) to navigate through the permissions setup.
 - The graphics fetched in classroom mode (i.e. graphics published either from [Tactile Authoring Tool (TAT)](https://github.com/Shared-Reality-Lab/IMAGE-TactileAuthoring/) or IMAGE-Extension(https://github.com/Shared-Reality-Lab/IMAGE-browser)) are accessed by decrypting using the same password used by the publisher. This password needs to be configured by creating a new file app/src/main/res/values/secret.xml and entering
@@ -38,6 +44,56 @@ You might will also need to do some (or all) of the following (especially for a 
 <resources>
     <string name="password">[my-password-goes-here]</string>
 </resources>
+```
+
+#### From built apks (using adb)
+Connect the device to your system 
+
+1. `adb install <path_to_googletts.apk>`
+
+2. `adb install <path_to_monarch_client_apk>`
+
+You should see:
+
+```
+Performing Streamed Install
+Success
+```
+after each of the above two steps
+
+To grant photo mode read permissions
+
+3. `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
+
+
+You can copy photos over by first creating a directory (if it doesn't already exist):
+
+`adb shell "cd /sdcard && mkdir IMAGE/client" `
+
+If the above command fails you can try:
+
+```
+adb shell "cd /sdcard && mkdir IMAGE"
+adb shell "cd /sdcard/IMAGE && mkdir client"
+```
+
+Copy over a photo to the new directory using:
+
+`adb push <path_to_a_photo_on_system> /sdcard/IMAGE/client/`
+
+To grant permission to speech recognizer for making followup queries:
+
+4. `adb shell pm grant com.google.android.tts android.permission.RECORD_AUDIO`
+
+5. `adb shell pm grant ca.mcgill.a11y.image android.permission.RECORD_AUDIO`
+
+To launch the application using adb:
+
+6.  `adb shell am start -n ca.mcgill.a11y.image/ca.mcgill.a11y.image.selectors.ModeSelector`
+
+You should see something like:
+```
+Starting: Intent { cmp=ca.mcgill.a11y.image/.selectors.ModeSelector }
 ```
 
 ### How do I use the application?
