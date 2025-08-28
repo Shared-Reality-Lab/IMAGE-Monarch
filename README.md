@@ -47,6 +47,8 @@ You will also need to do some (or all) of the following (especially for a Monarc
 ```
 
 #### From built apks (using adb)
+**NOTE:** To produce a built Monarch application apk you will need to follow step 1. and 2. in [the previous subsection](#from-the-repo) and then within Android studio select Build > Build Bundle(s) / APK(s) > Build APK (s). 
+
 Connect the device to your system 
 
 1. `adb install <path_to_googletts.apk>`
