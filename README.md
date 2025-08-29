@@ -24,27 +24,33 @@ This is the source code for an Android application to render tactile graphics on
 ```
 git clone https://github.com/Shared-Reality-Lab/IMAGE-Monarch.git
 ```
-2. Download [SVG Kit for Android](https://scand.com/products/svgkit-android/) library
-To include this library, download [svg_from_different_sources_sample.zip](https://scand.com/download/products/SVGkitAndroid/svg_from_different_sources_sample.zip) from the library's website.
-Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources_sample/app/libs` to `IMAGE-Monarch/app/libs`
 
-3. Connect the device to your system and Run 'app' from Android Studio (tested with Android Studio Electric Eel | 2022.1.1 Patch 2 on Windows 11 10.0)
-
-**NOTE:**
-You will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
-- Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
-- Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
-- Grant permission to speech recognizer for making followup queries:
-`adb shell pm grant com.google.android.tts android.permission.RECORD_AUDIO`
-`adb shell pm grant ca.mcgill.a11y.image android.permission.RECORD_AUDIO`
-- Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
-- You may be asked for microphone permissions on the Monarch. For this, it is best to download [ScreenCopy](https://github.com/Genymobile/scrcpy) to navigate through the permissions setup.
-- The graphics fetched in classroom mode (i.e. graphics published either from [Tactile Authoring Tool (TAT)](https://github.com/Shared-Reality-Lab/IMAGE-TactileAuthoring/) or IMAGE-Extension(https://github.com/Shared-Reality-Lab/IMAGE-browser)) are accessed by decrypting using the same password used by the publisher. This password needs to be configured by creating a new file app/src/main/res/values/secret.xml and entering
+The graphics fetched in classroom mode (i.e. graphics published either from [Tactile Authoring Tool (TAT)](https://github.com/Shared-Reality-Lab/IMAGE-TactileAuthoring/) or [IMAGE-Extension](https://github.com/Shared-Reality-Lab/IMAGE-browser)) are accessed by decrypting using the same password used by the publisher. This password needs to be configured by creating a new file app/src/main/res/values/secret.xml and entering
 ```
 <resources>
     <string name="password">[my-password-goes-here]</string>
 </resources>
 ```
+
+2. Download [SVG Kit for Android](https://scand.com/products/svgkit-android/) library
+To include this library, download [svg_from_different_sources_sample.zip](https://scand.com/download/products/SVGkitAndroid/svg_from_different_sources_sample.zip) from the library's website.
+Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources_sample/app/libs` to `IMAGE-Monarch/app/libs`
+
+3. Connect the device to your system and Run 'app' from Android Studio (tested with Android Studio Electric Eel | gradle-7.4 | 2022.1.1 Patch 2 on Windows 11 10.0)
+
+**NOTE:**
+You will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
+- Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
+- Grant permission to the application to read from storage. Do this by running the adb command 
+
+`adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
+- Grant permission to speech recognizer for making followup queries:
+
+`adb shell pm grant com.google.android.tts android.permission.RECORD_AUDIO`
+
+`adb shell pm grant ca.mcgill.a11y.image android.permission.RECORD_AUDIO`
+- Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
+- You may be asked for microphone permissions on the Monarch. For this, it is best to download [ScreenCopy](https://github.com/Genymobile/scrcpy) to navigate through the permissions setup.
 
 #### From built apks (using adb)
 **NOTE:** To produce a built Monarch application apk you will need to follow step 1. and 2. in [the previous subsection](#from-the-repo) and then within Android studio select Build > Build Bundle(s) / APK(s) > Build APK (s). 
