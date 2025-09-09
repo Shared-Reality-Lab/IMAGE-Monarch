@@ -3,44 +3,111 @@
 - [Introduction](#introduction)
 
 - [Getting started](#getting-started)
-  - [How do I install it on my Monarch?](how-do-i-install-it-on-my-monarch-from-the-repo)
+  - [How do I install the application on my Monarch?](#how-do-i-install-the-application-on-my-monarch)
+    - [From the repo](#from-the-repo)
+    - [From built apks](#from-built-apks-using-adb)
+  - [How do I use the application?](#how-do-i-use-the-application)
 
 
-- [Details...](#details)
+- [Developer Details](#developer-details)
   - [Tactile graphics](#tactile-graphics)
   - [Develop, debug, improve!](#develop-debug-improve)
-  - [How do I use the application?](how-do-i-use-the-application)
+  - [Modifying existing code](#modifying-existing-code)
 
 ## Introduction
 This is the source code for an Android application to render tactile graphics on the [Monarch](https://www.humanware.com/en-usa/monarch). The application works by reading graphic files from the device file system (or using the coordinates entered for maps), making requests to the [IMAGE server](https://github.com/Shared-Reality-Lab/IMAGE-server) and rendering the responses as tactile graphics on the pin array.
 
 ## Getting started
-### How do I install it on my Monarch (from the repo!)?
+### How do I install the application on my Monarch?
+#### From the repo
 1. Clone this repository
 ```
 git clone https://github.com/Shared-Reality-Lab/IMAGE-Monarch.git
 ```
-2. Download [SVG Kit for Android](https://scand.com/products/svgkit-android/) library
-To include this library, download [svg_from_different_sources_sample.zip](https://scand.com/download/products/SVGkitAndroid/svg_from_different_sources_sample.zip) from the library's website.
-Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources_sample/app/libs` to `IMAGE-Monarch/app/libs`
 
-3. Connect the device to your system and Run 'app' from Android Studio
-
-**NOTE:**
-You might will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
-- Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
-- Grant permission to the application to read from storage. Do this by running the adb command `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
-- Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
-- You may be asked for microphone permissions on the Monarch. For this, it is best to download [ScreenCopy](https://github.com/Genymobile/scrcpy) to navigate through the permissions setup.
-- The graphics fetched in classroom mode (i.e. graphics published either from [Tactile Authoring Tool (TAT)](https://github.com/Shared-Reality-Lab/IMAGE-TactileAuthoring/) or IMAGE-Extension(https://github.com/Shared-Reality-Lab/IMAGE-browser)) are accessed by decrypting using the same password used by the publisher. This password needs to be configured by creating a new file app/src/main/res/values/secret.xml and entering
+The graphics fetched in classroom mode (i.e. graphics published either from [Tactile Authoring Tool (TAT)](https://github.com/Shared-Reality-Lab/IMAGE-TactileAuthoring/) or [IMAGE-Extension](https://github.com/Shared-Reality-Lab/IMAGE-browser)) are accessed by decrypting using the same password used by the publisher. This password needs to be configured by creating a new file app/src/main/res/values/secret.xml and entering
 ```
 <resources>
     <string name="password">[my-password-goes-here]</string>
 </resources>
 ```
 
+2. Download [SVG Kit for Android](https://scand.com/products/svgkit-android/) library
+To include this library, download [svg_from_different_sources_sample.zip](https://scand.com/download/products/SVGkitAndroid/svg_from_different_sources_sample.zip) from the library's website.
+Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources_sample/app/libs` to `IMAGE-Monarch/app/libs`
 
-## Details...
+3. Connect the device to your system and Run 'app' from Android Studio (tested with Android Studio Electric Eel | 2022.1.1 Patch 2 and gradle-7.4 on Windows 11 10.0)
+
+**NOTE:**
+You will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
+- Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
+- Grant permission to the application to read from storage. Do this by running the adb command 
+
+`adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
+- Grant permission to speech recognizer for making followup queries:
+
+`adb shell pm grant com.google.android.tts android.permission.RECORD_AUDIO`
+
+`adb shell pm grant ca.mcgill.a11y.image android.permission.RECORD_AUDIO`
+- Create a directory `/sdcard/IMAGE/client/` on the Monarch sdcard for the application to read from. The application reads files from this directory. So you will need to copy over your 'graphic' files to this location.
+- You may be asked for microphone permissions on the Monarch. For this, it is best to download [ScreenCopy](https://github.com/Genymobile/scrcpy) to navigate through the permissions setup.
+
+#### From built apks (using adb)
+**NOTE:** To produce a built Monarch application apk you will need to follow step 1. and 2. in [the previous subsection](#from-the-repo) and then within Android studio select Build > Build Bundle(s) / APK(s) > Build APK (s). 
+
+Connect the device to your system 
+
+1. `adb install <path_to_googletts.apk>`
+
+2. `adb install <path_to_monarch_client_apk>`
+
+You should see:
+
+```
+Performing Streamed Install
+Success
+```
+after each of the above two steps
+
+To grant photo mode read permissions
+
+3. `adb shell pm grant ca.mcgill.a11y.image android.permission.READ_EXTERNAL_STORAGE`
+
+
+You can copy photos over by first creating a directory (if it doesn't already exist):
+
+`adb shell "cd /sdcard && mkdir IMAGE/client" `
+
+If the above command fails you can try:
+
+```
+adb shell "cd /sdcard && mkdir IMAGE"
+adb shell "cd /sdcard/IMAGE && mkdir client"
+```
+
+Copy over a photo to the new directory using:
+
+`adb push <path_to_a_photo_on_system> /sdcard/IMAGE/client/`
+
+To grant permission to speech recognizer for making followup queries:
+
+4. `adb shell pm grant com.google.android.tts android.permission.RECORD_AUDIO`
+
+5. `adb shell pm grant ca.mcgill.a11y.image android.permission.RECORD_AUDIO`
+
+To launch the application using adb:
+
+6.  `adb shell am start -n ca.mcgill.a11y.image/ca.mcgill.a11y.image.selectors.ModeSelector`
+
+You should see something like:
+```
+Starting: Intent { cmp=ca.mcgill.a11y.image/.selectors.ModeSelector }
+```
+
+### How do I use the application?
+Once you have successfully installed the Monarch application, refer the [User Guide](UserGuide.md) for details on using the application.
+
+## Developer Details
 ### Tactile graphics
 The tactile graphic to be rendered on the device is received in SVG format. Using SVGs makes the renderings independent of the form factor of the pin array. It also allows for the tags/descriptions associated with each object or region in the graphic to be defined within the SVG and simple implementation of features like layering and zooming (not supported yet!).
 Further, a format has been defined for the tactile graphic rendering SVGs. This ensures that as long as the format guidelines are followed, the application should be capable of rendering the tactile graphic thus making it extensible to other graphics (beyond photos and maps) while keeping the client side code light. These guidelines were defined by taking inspiration from the [DAISY Accessible Publishing Knowledge Base](http://kb.daisy.org/publishing/docs/html/svg.html)
@@ -218,31 +285,36 @@ myIntent = new Intent(getApplicationContext(), MyOwnRenderer.class);
 
 NOTE: Despite it being executed as a separate activity, the underlying functions used to run MyOwnRenderer and end user experience are the same as that for BasicPhotoMapRenderer... Some liberties have been taken for the purpose of writing this tutorial, however typically, you should reuse BasicPhotoMapRenderer here! After you've gone through this tutorial, you should be able to figure out how to do this on your own...
 
---Documentation is somewhat outdated after this point--
 
-### How do I use the application?
-The application UI visually appears as shown below:
-![Monarch application GUI](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/5223165a-6b75-4595-b403-e8b9fe176d51)
-
-**DOWN**: Lowers all the raised pins \
-<a name="UpButton"> **UP** </a>: Raises the pins of the next available layer of the tactile graphic. You can loop through the sequence of layers in the tactile graphic by repeatedly pressing the UP button. (After you press the UP button, the pins corresponding to the layer are raised almost instantly. However, there is a lag in loading the TTS labels associated with the objects in each layer. A ping will play when the TTS labels are successfully loaded.) \
-**DebugView**: Shows/hides the debug view i.e. the visual display of the pins. \
-**Text Fields**: The two text fields help you to make dynamic server requests for the map of any desired POI. You will need to enter the latitude and longitude coordinates of the point of interest (POI) in the first and second text fields respectively. \
-**GET MAP!**: Sends a request to the server for the latitude and longitude coordinates of the POI entered in the text fields. 
-
-Use the directional buttons on the Monarch to navigate through the buttons and fields on the UI. Press the 'confirm' button (i.e. the Enter/ dot 8 in a Perkins style keyboard) to click on a button.
-Use the Up and Down arrows on the device to navigate between the files in the target directory.
-
+### Modifying existing code
 Refer this section for an overview of the program flow to get you started... 
 
-The flowcharts indicate the sequence of functions called when you interact with the elements of the UI. The list beside each block provides the sequential order of various actions executed by each function. Function calls/ important code segments within each function are indicated by a cascade of blocks from the calling function. 
+The flowchart below indicates which Android activities are launched on interacting with elements of the UI. 
+![Android activity flow](https://github.com/user-attachments/assets/769d2977-a817-492b-9e6e-79e359ebf363)
 
-While the functions called return values in most cases, this has not been made explicit by the arrows.  
+The flowcharts indicate the sequence of functions called when you interact with the device. The list beside each block provides the sequential order of various actions executed by each function. Function calls/ important code segments within each function are indicated by a cascade of blocks from the calling function. 
 
-1. Functions executed when a file is read from storage (by pressing the Up and Down arrow buttons on the device )
-![Server_request_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/51b0b946-025f-4d9d-b01a-d5ddcda5e1bd)
+While some of the functions called return values, this has not been made explicit by the arrows.  
 
-2. Functions executed to render the next layer (when the [UP button](#UpButton) is pressed)
-![Layer_load_flow](https://github.com/Shared-Reality-Lab/IMAGE-Monarch/assets/53469681/c340412c-8ccb-45b8-a3f8-1ab1d12dfe65)
+1. Functions executed in PhotoSelector activity (by pressing the Up and Down arrow buttons on the device)
+
+![PhotoSelector_flow](https://github.com/user-attachments/assets/c0459fc7-60f6-45e9-93a3-d888f32aa03e)
+
+2. Functions executed in MapSelector activity (by entering latitude and longitude coordinates and pressing confirm (dot 8))
+
+![MapSelector_flow](https://github.com/user-attachments/assets/3b948a72-d621-42e0-a420-f9fa57af7cf6)
+
+3. Functions executed in Exploration activity 
+
+![Exploration_flow](https://github.com/user-attachments/assets/bc96b61b-7648-462e-923d-596bc7a08353)
+
+4. Functions executed to render the next layer (when the confirm (dot 8) or cancel (dot 7) button on the device are pressed)
+
+![Layer_load_flow](https://github.com/user-attachments/assets/f6a241e7-9d87-41d8-a6fa-7a421ac1748c)
+
+5. Functions executed to create and render the follow up query
+
+![Follow_up_query_flow](https://github.com/user-attachments/assets/5d0d24b5-eb49-41e3-9b7f-c82e79538440)
 
 Details of the XPath queries can be found in [here](XPathQueries.md).
+

@@ -53,6 +53,7 @@ public class FileTree extends Timber.Tree {
                 .observeOn(Schedulers.computation())
                 .doAfterNext(logElement -> {
                     processedCount++;
+                    // Write to file at every 20 logs or when log level is higher than error
                     if ((processedCount % 20 == 0)|| (logElement.priority >= Log.ERROR)) {
                         flush.onNext(1L);
                     }
@@ -149,6 +150,8 @@ public class FileTree extends Timber.Tree {
         }
 
         // Clean up old rotated files
+        // TO DO: Clean up old rotated files if folder side exceeds limit; 
+        // This could further limit impact of file logging on performance
         long currentTime = System.currentTimeMillis();
         File[] files = logFile.getParentFile().listFiles();
         if (files != null) {
