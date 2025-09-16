@@ -75,8 +75,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                     Timber.e(e, "EXCEPTION");
                     throw new RuntimeException(e);
                 }
-                DataAndMethods.speaker(getResources().getString(R.string.received_query_0)+query+" "+getResources().getString(R.string.received_query_1_temp), TextToSpeech.QUEUE_FLUSH);
-                        //getResources().getString(R.string.received_query_1), TextToSpeech.QUEUE_FLUSH);
+                DataAndMethods.speaker(getResources().getString(R.string.received_query_0)+query+" "+getResources().getString(R.string.received_query_1), TextToSpeech.QUEUE_FLUSH);
                 break;
             case 1:
                 //Log.d("STATE", "State 1");
@@ -230,7 +229,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
     public boolean onDoubleTap(MotionEvent event) {
         Timber.d("GESTURE!: "+ "onDoubleTap: " + event.toString());
         Integer [] pins=DataAndMethods.pinCheck(event.getX(), event.getY());
-        /*switch(state){
+        switch(state){
             case 0:
                 region = new Integer[]{0, 0, 0, 0};
                 region[0] = pins[0];
@@ -259,7 +258,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
                 break;
             default:
                 break;
-        }*/
+        }
         return true;
     }
 
