@@ -316,5 +316,12 @@ While some of the functions called return values, this has not been made explici
 
 ![Follow_up_query_flow](https://github.com/user-attachments/assets/5d0d24b5-eb49-41e3-9b7f-c82e79538440)
 
+## License
+
+IMAGE project components (e.g., IMAGE browser extension and IMAGE Services), henceforth "Our Software" are licensed under GNU GPL3 (https://www.gnu.org/licenses/gpl-3.0.en.html) or AGPLv3 terms (https://www.gnu.org/licenses/agpl-3.0.txt) or later, as indicated in specific repositories or files on the project github located at https://github.com/Shared-Reality-Lab.
+
+If you incorporate IMAGE code into your own project, but do not want to release your changes and additions consistent with the open source terms under which the IMAGE code is licensed, you may contact us to obtain an alternative license. For all inquiries, please contact us at image@cim.mcgill.ca.
+
+If you are making a contribution to IMAGE, please note that we [require a Contributor License Agreement (CLA)](/CLA.md).
 Details of the XPath queries can be found in [here](XPathQueries.md).
 
