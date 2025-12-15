@@ -202,7 +202,7 @@ public class DataAndMethods {
         put(KEYCODE_BACK, "BACK");
     }};
 
-    // speech recognizer stuff
+    // speech recognizer stuff 
     public static SpeechRecognizer speechRecognizer = null;
     public static Intent speechRecognizerIntent;
     public static Resources res;
@@ -380,14 +380,14 @@ public class DataAndMethods {
     public static void displayGraphic(int keyCode, String mode, Boolean silentStart){
         try{if (mode=="Exploration"){
 
-                DataAndMethods.ttsEnabled=true;
-                if(keyCode ==confirmButton){
-                    ++ DataAndMethods.presentLayer;
-                }
-                else{
-                    -- DataAndMethods.presentLayer;
-                }
-                brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, !silentStart));
+            DataAndMethods.ttsEnabled=true;
+            if(keyCode ==confirmButton){
+                ++ DataAndMethods.presentLayer;
+            }
+            else{
+                -- DataAndMethods.presentLayer;
+            }
+            brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, !silentStart));
 
 
 
@@ -520,7 +520,7 @@ public class DataAndMethods {
             if (zoomVal<zoomLevel)
                 ((Element)node).setAttribute("display","none");
         }
-        // get bitmap of present layer
+        // get bitmap of present layers
         byte[] byteArray= docToBitmap(doc);
         //Log.d("BITMAP", Arrays.toString(byteArray));
 
@@ -600,7 +600,7 @@ public class DataAndMethods {
             //Log.d("GETTING TAGS",((Element)node).getAttribute("aria-label"));
         }
         if (readCaption){
-        speaker(res.getString(R.string.layer) + ": " + tag, TextToSpeech.QUEUE_FLUSH);}
+            speaker(res.getString(R.string.layer) + ": " + tag, TextToSpeech.QUEUE_FLUSH);}
 
         byte[] target = docToBitmap(doc);
 
@@ -809,22 +809,61 @@ public class DataAndMethods {
     }
 
     // initializes dims, zoomBox and origDims for new graphic
-    public static void setImageDims() throws ParserConfigurationException, IOException, SAXException, XPathExpressionException {
+    public static void setImageDims()
+            throws ParserConfigurationException, IOException,
+            SAXException, XPathExpressionException {
+
         Document doc = getfreshDoc();
         XPath xPath = XPathFactory.newInstance().newXPath();
-        Element node = (Element)((NodeList)xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
+        Element node = (Element) ((NodeList)
+                xPath.evaluate("/svg", doc, XPathConstants.NODESET)).item(0);
+
+        if (node == null) {
+            return;
+        }
+
         if (!node.hasAttribute("viewBox")) {
+
             Float width = Float.valueOf(node.getAttribute("width"));
             Float height = Float.valueOf(node.getAttribute("height"));
-            dims[2] = width;
-            dims[3] = height;
-            zoomBox = dims[0] + " " + dims[1] + " " + width + " " + height;
+
+            // Rendered dimension
             origDims = new Float[]{0f, 0f, width, height};
-        }
-        else {
+
+            // Fallback: ratio dims = rendered dims
+            origRatioDims = new Float[]{width, height};
+
+            // Visible zoom area
             dims = Arrays.copyOf(origDims, origDims.length);
-            dims[2] += dims[0];
-            dims[3] += dims[1];
+            zoomBox = "0 0 " + width + " " + height;
+
+        } else {
+            // VIEWBOX CASE
+            String[] vb = node.getAttribute("viewBox").trim().split("\\s+");
+
+            if (vb.length < 4) {
+                return;
+            }
+
+            Float vbX = Float.valueOf(vb[0]);
+            Float vbY = Float.valueOf(vb[1]);
+            Float vbW = Float.valueOf(vb[2]);
+            Float vbH = Float.valueOf(vb[3]);
+
+            origDims = new Float[]{vbX, vbY, vbW, vbH};
+
+            // Ratio dims = viewBox width/height
+            origRatioDims = new Float[]{vbW, vbH};
+
+            // Zoom area initially equals full viewBox
+            dims = new Float[]{
+                    vbX,
+                    vbY,
+                    vbX + vbW,
+                    vbY + vbH
+            };
+
+            zoomBox = vbX + " " + vbY + " " + vbW + " " + vbH;
         }
     }
 
@@ -976,7 +1015,7 @@ public class DataAndMethods {
                             else{
                                 furesponse = res.getString(R.string.unknown_type);
                             }
-                                // Log.d("RESPONSE", furesponse);
+                            // Log.d("RESPONSE", furesponse);
                             //}
                             history.setResponse(furesponse);
                         }
@@ -1112,7 +1151,7 @@ public class DataAndMethods {
             }
         }
 
-            //node.setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
+        //node.setAttribute("transform", "translate("+translations[0]+" "+translations[1]+")");
         //Log.d("TRANS", "translate("+translations[0]+" "+translations[1]+")");
         // check if it is the initial run
         if (origDims[2]==0f){
@@ -1131,9 +1170,9 @@ public class DataAndMethods {
                 //Log.d("VIEW_new", zoomBox);
                 node.setAttribute("viewBox", zoomBox );
             }}
-            else{
-                node.setAttribute("viewBox", zoomBox );
-            }
+        else{
+            node.setAttribute("viewBox", zoomBox );
+        }
         //Log.d("VIEW", node.getAttribute("viewBox"));
         return doc;
     }
@@ -1225,7 +1264,7 @@ public class DataAndMethods {
         dims[3] = dims[1] + zoomHeight;
         //Log.d("NEW DIMS", dims[0]+","+dims[1]+","+dims[2]+","+dims[3]);
         // ensure that the newly calculted dimensions are within the limits of the origincal graphic
-        if (dims[0]<origDims[0]){ 
+        if (dims[0]<origDims[0]){
             dims[0] = origDims[0];
             dims[2] = dims[0] + zoomWidth;
         }
@@ -1420,12 +1459,14 @@ public class DataAndMethods {
             Float yPerDot = currentDims[3]/ DataAndMethods.brailleServiceObj.getDotLineCount();
             Float xShift = origRatioDims[0]==0f?0f:(origDims[2]-origRatioDims[0])/2;
             Float yShift = origRatioDims[1]==0f?0f:(origDims[3]-origRatioDims[1])/2;
+
             //Float a = 0f;
             //Log.d("CHECK!", String.valueOf(0f==a)); // checking java == on float
             // Log.d("ZOOMED_ON", Arrays.toString(currentDims));
             // Log.d("ORIG_DIMS", Arrays.toString(origDims));
             // Log.d("ORIG_RATIO_DIMS", Arrays.toString(origRatioDims));
             // Log.d("REGION", Arrays.toString(region));
+
             // get outer bounds of region of selected pins within graphic
             focus[0]= (xPerDot*region[0]+currentDims[0]-xShift<origDims[0])?
                     origDims[0] : xPerDot*region[0]+currentDims[0]-xShift;
@@ -1433,11 +1474,32 @@ public class DataAndMethods {
                     origDims[1] : yPerDot*region[1]+currentDims[1]-yShift;
             focus[2]= Math.min(xPerDot * (region[2] + 1) + currentDims[0]-xShift, (origDims[0] + origRatioDims[0]));
             focus[3]= Math.min(yPerDot * (region[3] + 1) + currentDims[1]-yShift, (origDims[1] + origRatioDims[1]));
+
             // Log.d("FOCUS", Arrays.toString(focus));
-            focus[0] = (focus[0] -origDims[0]) / origRatioDims[0];
-            focus[1] = (focus[1] -origDims[1]) / origRatioDims[1];
-            focus[2] = (focus[2] -origDims[0]) / origRatioDims[0];
-            focus[3] = (focus[3] -origDims[1]) / origRatioDims[1];
+
+            // Normalize to 0-1 range - FIXED to handle division by zero
+            if (origRatioDims[0] != 0f && origRatioDims[1] != 0f) {
+                // Normal case: use origRatioDims when viewBox existed
+                focus[0] = (focus[0] - origDims[0]) / origRatioDims[0];
+                focus[1] = (focus[1] - origDims[1]) / origRatioDims[1];
+                focus[2] = (focus[2] - origDims[0]) / origRatioDims[0];
+                focus[3] = (focus[3] - origDims[1]) / origRatioDims[1];
+                Timber.d("FOLLOWUP_DEBUG: Normalized using origRatioDims");
+            } else if (origDims[2] != 0f && origDims[3] != 0f) {
+                // Fallback: SVG didn't have viewBox, use origDims (padded dimensions) instead
+                focus[0] = (focus[0] - origDims[0]) / origDims[2];
+                focus[1] = (focus[1] - origDims[1]) / origDims[3];
+                focus[2] = (focus[2] - origDims[0]) / origDims[2];
+                focus[3] = (focus[3] - origDims[1]) / origDims[3];
+                Timber.d("FOLLOWUP_DEBUG: Normalized using origDims (fallback)");
+            } else {
+                // Can't normalize at all - should rarely happen
+                Timber.e("FOLLOWUP_DEBUG: Cannot normalize - both origRatioDims and origDims are zero!");
+                focus = null;
+            }
+
+            Timber.d("FOLLOWUP_DEBUG: Focus after normalization: " + (focus != null ? Arrays.toString(focus) : "NULL"));
+
             // Log.d("FOCUS", Arrays.toString(focus));
         }
 
@@ -1459,6 +1521,21 @@ public class DataAndMethods {
                 String[][] previous = setPrevious();
                 req.setPrevious(previous);
             }
+
+            // Debug logging to verify focus is in request
+            try {
+                Gson gson = new Gson();
+                String reqJson = gson.toJson(req);
+                Timber.d("FOLLOWUP_DEBUG: Request JSON length: " + reqJson.length());
+                if (focus != null && reqJson.contains("focus")) {
+                    Timber.d("FOLLOWUP_DEBUG: ✅ Focus found in request JSON");
+                } else if (focus != null) {
+                    Timber.e("FOLLOWUP_DEBUG: ❌ Focus NOT in request JSON!");
+                }
+            } catch (Exception e) {
+                Timber.e(e, "FOLLOWUP_DEBUG: Error serializing request");
+            }
+
             //history.updateHistory(req);
             //followingUp.setValue(true);
             call= makereq.makePhotoRequest(req);
@@ -1476,21 +1553,31 @@ public class DataAndMethods {
                 String[][] previous = setPrevious();
                 req.setPrevious(previous);
             }
+
+            // Debug logging to verify focus is in request
+            try {
+                Gson gson = new Gson();
+                String reqJson = gson.toJson(req);
+                Timber.d("FOLLOWUP_DEBUG: Request JSON length: " + reqJson.length());
+                if (focus != null && reqJson.contains("focus")) {
+                    Timber.d("FOLLOWUP_DEBUG: ✅ Focus found in request JSON");
+                } else if (focus != null) {
+                    Timber.e("FOLLOWUP_DEBUG: ❌ Focus NOT in request JSON!");
+                }
+            } catch (Exception e) {
+                Timber.e(e, "FOLLOWUP_DEBUG: Error serializing request");
+            }
+
             //history.updateHistory(req);
             call = makereq.makeMapRequest(req);
         }
 
-
-
         // Log.d("REQUEST", String.valueOf(history.temp_request.getJSONObject("followup")));
-
-
         // need to make a separate function so that 'image' is not replaced
         makeServerCall(call, true);
         pingsPlayer(R.raw.image_request_sent);
-
     }
-    
+
     public static String[][] setPrevious() throws JSONException {
         // Log.d("PREVIOUS", String.valueOf(history.request.getJSONObject("followup")));
         String query = history.request.getJSONObject("followup").getString("query");
