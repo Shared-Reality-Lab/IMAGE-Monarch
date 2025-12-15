@@ -202,7 +202,7 @@ public class DataAndMethods {
         put(KEYCODE_BACK, "BACK");
     }};
 
-    // speech recognizer stuff
+    // speech recognizer stuff 
     public static SpeechRecognizer speechRecognizer = null;
     public static Intent speechRecognizerIntent;
     public static Resources res;
@@ -520,7 +520,7 @@ public class DataAndMethods {
             if (zoomVal<zoomLevel)
                 ((Element)node).setAttribute("display","none");
         }
-        // get bitmap of present layer
+        // get bitmap of present layers
         byte[] byteArray= docToBitmap(doc);
         //Log.d("BITMAP", Arrays.toString(byteArray));
 
