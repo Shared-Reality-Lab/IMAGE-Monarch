@@ -52,6 +52,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import androidx.lifecycle.MutableLiveData;
 
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.PollingService;
@@ -59,12 +61,12 @@ import ca.mcgill.a11y.image.R;
 import timber.log.Timber;
 
 public class Exploration extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
-    private BrailleDisplay brailleServiceObj = null;
+    private SelfBraillingManager brailleServiceObj = null;
     private GestureDetectorCompat mDetector;
 
     @SuppressLint("WrongConstant")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_main);
@@ -241,7 +243,7 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Timber.d("ACTIVITY: "+ "Exploration Resumed");
         if (!silentStart)
             DataAndMethods.speaker(getString(R.string.exploration_mode), TextToSpeech.QUEUE_FLUSH);
@@ -263,14 +265,14 @@ public class Exploration extends BaseActivity implements GestureDetector.OnGestu
 
             return false;
         };
-        brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "Exploration Paused");
         stopService(new Intent(getApplicationContext(), PollingService.class));
-        brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }
 

@@ -35,6 +35,9 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+import com.humanware.keysoftsdk.selfbrailling.widget.SelfBraillingWidget;
+
 import org.json.JSONException;
 import org.xml.sax.SAXException;
 
@@ -54,9 +57,11 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
 
     Integer[] region = null;
     private GestureDetectorCompat mDetector;
-    private BrailleDisplay brailleServiceObj = null;
+    private SelfBraillingManager brailleServiceObj = null;
+    private SelfBraillingWidget widget = null;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         Timber.d("ACTIVITY: "+ "FollowUpQuery Created");
         super.onCreate(savedInstanceState);
         brailleServiceObj = DataAndMethods.brailleServiceObj;
@@ -69,7 +74,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
             case 0:
                 // Log.d("QUERY", query);
                 try {
-                    brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, false));
+                    brailleServiceObj.displayDots(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, false));
                 } catch (IOException | XPathExpressionException | ParserConfigurationException |
                          SAXException e) {
                     Timber.e(e, "EXCEPTION");
@@ -275,7 +280,7 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Timber.d("ACTIVITY: "+ "FollowUpQuery Resumed");
         intent = getIntent();
         query = intent.getStringExtra("query");
@@ -293,17 +298,19 @@ public class FollowUpQuery extends BaseActivity implements GestureDetector.OnGes
 
             return false;
         };
-        brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+        widget = new SelfBraillingWidget(this);
+        setContentView(widget);
+        //brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
 
         state = -1;
         updateState();
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "FollowUpQuery Paused");
         DataAndMethods.presentLayer--;
-        brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }
 }

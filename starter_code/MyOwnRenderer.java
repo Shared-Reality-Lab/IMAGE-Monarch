@@ -44,7 +44,7 @@ public class MyOwnRenderer extends BaseActivity implements MediaPlayer.OnComplet
 
     private GestureDetectorCompat mDetector;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
     }
@@ -57,7 +57,7 @@ public class MyOwnRenderer extends BaseActivity implements MediaPlayer.OnComplet
 
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Log.d("ACTIVITY", "Exploration Resumed");
         try {
             // Code Snippet
@@ -75,7 +75,7 @@ public class MyOwnRenderer extends BaseActivity implements MediaPlayer.OnComplet
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Log.d("ACTIVITY", "BasicPhotoMapRenderer Paused");
         super.onPause();
     }

@@ -43,7 +43,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
 
     @SuppressLint("WrongConstant")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_photo_selector);
@@ -113,7 +113,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
 
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         DataAndMethods.speaker(getResources().getString(R.string.res_photo_selector), TextToSpeech.QUEUE_FLUSH);
         try {
             // might want to read file name here
@@ -128,7 +128,7 @@ public class PhotoSelector extends BaseActivity implements MediaPlayer.OnComplet
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "PhotoSelector Paused");
         super.onPause();
     }

@@ -41,13 +41,13 @@ import ca.mcgill.a11y.image.R;
 
 // Launcher activity; switches mode of application
 public class MyOwnSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
-    private BrailleDisplay brailleServiceObj = null;
+    private SelfBraillingManager brailleServiceObj = null;
     private GestureDetectorCompat mDetector;
 
 
     @SuppressLint("WrongConstant")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
 
@@ -70,14 +70,14 @@ public class MyOwnSelector extends BaseActivity implements MediaPlayer.OnComplet
 
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Log.d("ACTIVITY", "MyOwnSelector Resumed");
         DataAndMethods.speaker("My Own Selector");
         DataAndMethods.makePseudoServerCall();
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Log.d("ACTIVITY", "MyOwnSelector Paused");
         super.onPause();
     }

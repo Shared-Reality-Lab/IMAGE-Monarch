@@ -34,6 +34,8 @@ import android.view.MotionEvent;
 
 import androidx.core.view.GestureDetectorCompat;
 
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+
 import org.json.JSONException;
 import org.xml.sax.SAXException;
 
@@ -49,9 +51,9 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
     Intent intent;
     String mainGraphic;
     private GestureDetectorCompat mDetector;
-    private BrailleDisplay brailleServiceObj = null;
+    private SelfBraillingManager brailleServiceObj = null;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         Timber.d("ACTIVITY: "+ "FollowUpQuery Created");
         super.onCreate(savedInstanceState);
         brailleServiceObj = DataAndMethods.brailleServiceObj;
@@ -180,12 +182,12 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Timber.d("ACTIVITY: "+ "FollowUpQuery Resumed");
         intent = getIntent();
         mainGraphic = intent.getStringExtra("image");
         try {
-            brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), 0, true));
+            brailleServiceObj.displayDots(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), 0, true));
         } catch (IOException | XPathExpressionException | ParserConfigurationException | SAXException e) {
             Timber.e(e, "EXCEPTION");
             throw new RuntimeException(e);
@@ -203,11 +205,11 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
 
             return false;
         };
-        brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "FollowUpQuery Paused");
         DataAndMethods.image = mainGraphic;
         resetGraphicParams();
@@ -220,7 +222,7 @@ public class ShowFollowUp extends BaseActivity implements GestureDetector.OnGest
         DataAndMethods.tempImage = "";
         DataAndMethods.followup = false;
         DataAndMethods.presentLayer--;
-        brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }
 }

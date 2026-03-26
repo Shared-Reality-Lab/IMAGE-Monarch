@@ -31,6 +31,8 @@ import android.widget.EditText;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+
 import org.json.JSONException;
 
 import ca.mcgill.a11y.image.renderers.BasicPhotoMapRenderer;
@@ -40,12 +42,12 @@ import timber.log.Timber;
 
 // generates map request using latitude and longitude coordinates and allows for selecting among map renderer(s) 
 public class MapSelector extends AppCompatActivity implements MediaPlayer.OnCompletionListener{
-    private BrailleDisplay brailleServiceObj = null;
+    private SelfBraillingManager brailleServiceObj = null;
 
 
     @SuppressLint("WrongConstant")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map_selector);
@@ -106,14 +108,14 @@ public class MapSelector extends AppCompatActivity implements MediaPlayer.OnComp
 
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Timber.d("ACTIVITY: "+"MapSelector Resumed");
         DataAndMethods.speaker(getResources().getString(R.string.res_map_selector), TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image= null;
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "MapSelector Paused");
         super.onPause();
     }
