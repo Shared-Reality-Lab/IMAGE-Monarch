@@ -64,15 +64,15 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
             switch (position) {
                 case 0:
                     targetActivity = ClassroomSelector.class;
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_classroom_mode), TextToSpeech.QUEUE_FLUSH);
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_classroom_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
                 case 1:
                     targetActivity = PhotoSelector.class;
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_photo_mode), TextToSpeech.QUEUE_FLUSH);
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_photo_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
                 case 2:
                     targetActivity = MapSelector.class;
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_map_mode), TextToSpeech.QUEUE_FLUSH);
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_map_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
                 default:
                     throw new UnsupportedOperationException();
@@ -109,7 +109,7 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
     @Override
     public void onResume() {
         Timber.d("ACTIVITY: "+ "ModeSelector Resumed");
-        DataAndMethods.speaker(getResources().getString(R.string.res_mode_selector), TextToSpeech.QUEUE_FLUSH);
+        //DataAndMethods.speaker(getResources().getString(R.string.res_mode_selector), TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image = null;
         update.setValue(false);
         super.onResume();

@@ -95,11 +95,11 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
             switch (position) {
                 case 0:
                     targetActivity = Exploration.class;
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_exploration_mode), TextToSpeech.QUEUE_FLUSH);
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_exploration_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
                 case 1:
                     targetActivity = Guidance.class;
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_guidance_mode), TextToSpeech.QUEUE_FLUSH);
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_guidance_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
                 default:
                     throw new UnsupportedOperationException();
@@ -162,7 +162,7 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
     @Override
     public void onResume() {
         Timber.d("ACTIVITY: "+ "Classroom Selector Resumed");
-        DataAndMethods.speaker(getResources().getString(R.string.res_classroom_selector), TextToSpeech.QUEUE_FLUSH);
+        //DataAndMethods.speaker(getResources().getString(R.string.res_classroom_selector), TextToSpeech.QUEUE_FLUSH);
         //startService(new Intent(getApplicationContext(), PollingService.class));
         super.onResume();
     }

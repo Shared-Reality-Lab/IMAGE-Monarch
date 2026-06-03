@@ -57,6 +57,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+import com.humanware.keysoftsdk.selfbrailling.aidl.DotsMatrix;
 import com.humanware.keysoftsdk.selfbrailling.widget.SelfBraillingWidget;
 import com.scand.svg.SVGHelper;
 
@@ -188,6 +189,7 @@ public class DataAndMethods {
     public static String tempImage = "";
     public static String forceSpeak = null;
     public static Boolean silentStart = false;
+    public static byte[][] brailleScreen = null;
     // mapping of keyCodes
     public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
         put(421, "UP");
@@ -227,47 +229,6 @@ public class DataAndMethods {
         tags.add(new String[SelfBraillingWidget.MAXIMUM_HEIGHT][SelfBraillingWidget.MAXIMUM_WIDTH]);
         tags.add(new String[SelfBraillingWidget.MAXIMUM_HEIGHT][SelfBraillingWidget.MAXIMUM_WIDTH]);
 
-        // only initialize tts if it is not already set up; otherwise this takes too long
-        if (tts == null) {
-            tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
-
-                @Override
-                public void onInit(int status) {
-
-                    if (status != TextToSpeech.SUCCESS) {
-                        Timber.e("error: "+ "Initialization Failed!" + status);
-                    } else {
-                        tts.setLanguage(Locale.forLanguageTag(res.getString(R.string.locale)));
-                        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                            @Override
-                            public void onStart(String s) {
-                                if (s.equals("forceSpeak")) {
-                                    forceSpeak = null;
-                                }
-                            }
-
-                            @Override
-                            public void onDone(String s) {
-                                //Log.d("CHECKING!", s);
-                                // plays ping when TTS readout is completed based on utteranceId
-                                if (s.equals("ping")) {
-                                    pingsPlayer(R.raw.blip);
-                                }
-                                if (forceSpeak!= null){
-                                    speaker(forceSpeak, TextToSpeech.QUEUE_FLUSH, "forceSpeak");
-                                    //forceSpeak = null;
-                                }
-                            }
-
-                            @Override
-                            public void onError(String s) {
-
-                            }
-                        });
-                    }
-                }
-            }, "com.google.android.tts");
-        }
         if (speechRecognizer == null) {
             // Voice Command Recognition Stuff
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(DataAndMethods.context);
@@ -378,8 +339,14 @@ public class DataAndMethods {
         }
     }
 
+    private static void displayDots(byte[][] matrix) {
+        brailleServiceObj.displayDots(new DotsMatrix(matrix));
+        brailleScreen = matrix;
+    }
+
     //check mode and display appropriate layer
     public static void displayGraphic(int keyCode, String mode, Boolean silentStart){
+        Log.d("REFRESH", "displayGraphic!");
         try{if (mode=="Exploration"){
 
             DataAndMethods.ttsEnabled=true;
@@ -389,8 +356,8 @@ public class DataAndMethods {
             else{
                 -- DataAndMethods.presentLayer;
             }
-            brailleServiceObj.displayDots(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, !silentStart));
-
+            displayDots(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, !silentStart));
+            Log.d("REFRESH", "REFRESHING!");
 
 
         } else if (mode=="Guidance"){
@@ -401,7 +368,8 @@ public class DataAndMethods {
             else{
                 -- DataAndMethods.presentTarget;
             }
-            brailleServiceObj.displayDots(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), !silentStart));
+            displayDots(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), !silentStart));
+
         }}
         catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
             Timber.e(e, "EXCEPTION");
@@ -1206,9 +1174,9 @@ public class DataAndMethods {
             zoomVal+= 25;
             node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
             if (mode.equals("Exploration"))
-                brailleServiceObj.displayDots(getBitmaps(doc, presentLayer, false));
+                displayDots(getBitmaps(doc, presentLayer, false));
             else if (mode.equals("Guidance"))
-                brailleServiceObj.displayDots(getGuidanceBitmaps(doc, false));
+                displayDots(getGuidanceBitmaps(doc, false));
         }
         else{
             if (zoomVal <= 100){
@@ -1219,13 +1187,13 @@ public class DataAndMethods {
                 if (zoomVal < 100) zoomVal = 100;
                 node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
                 if (mode.equals("Exploration"))
-                    brailleServiceObj.displayDots(getBitmaps(doc, presentLayer, false));
+                    displayDots(getBitmaps(doc, presentLayer, false));
                 else if (mode.equals("Guidance")) {
                     if (showAll){
-                        brailleServiceObj.displayDots(DataAndMethods.displayTargetLayer(doc));
+                        displayDots(DataAndMethods.displayTargetLayer(doc));
                     }
                     else {
-                        brailleServiceObj.displayDots(getGuidanceBitmaps(doc, false));
+                        displayDots(getGuidanceBitmaps(doc, false));
                     }
                 }
             }
@@ -1353,13 +1321,13 @@ public class DataAndMethods {
         node.setAttribute("viewBox", zoomBox);
         //Log.d("PAN", zoomBox);
         if (className.equals("renderers.Exploration") || className.equals("renderers.BasicPhotoMapRenderer"))
-            brailleServiceObj.displayDots(getBitmaps(doc, presentLayer, false));
+            displayDots(getBitmaps(doc, presentLayer, false));
         if (className.equals("renderers.Guidance")){
             if (showAll){
-                brailleServiceObj.displayDots(DataAndMethods.displayTargetLayer(doc));
+                displayDots(DataAndMethods.displayTargetLayer(doc));
             }
             else {
-                brailleServiceObj.displayDots(getGuidanceBitmaps(doc, false));
+                displayDots(getGuidanceBitmaps(doc, false));
             }
         }
     }
@@ -1444,7 +1412,7 @@ public class DataAndMethods {
                 Arrays.fill(selection[i], (byte) 0x00);
             }
         }
-        brailleServiceObj.displayDots(selection);
+        displayDots(selection);
     }
     // make follow up query to server
     public static void sendFollowUpQuery(String query, Integer[] region) throws JSONException, IOException {
