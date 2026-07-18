@@ -38,6 +38,8 @@ Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources
 
 3. Connect the device to your system and Run 'app' from Android Studio (tested with Android Studio Electric Eel | 2022.1.1 Patch 2 and gradle-7.4 on Windows 11 10.0). The project is also compatible with Android Studio Quail 2. When upgrading, install Android Studio in a clean directory or remove the previous version and clear Android Studio caches to avoid conflicts. Update the Gradle JDK setting to JDK 17 (File → Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JDK) since the project uses Gradle 7.4.
 
+4. Configure the Server URLs: Before running the application, verify the server endpoints in: app/src/main/res/values/setup.xml. URLs can be switched between Unicorn and Pegasus as required. The Maps service runs only on Pegasus due to its size and must not be changed to Unicorn. Rebuild the application after modifying `setup.xml`. If using your own server, these endpoints must be changed accordingly.
+
 **NOTE:**
 You will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
 - Install Google TTS apk. Download the apk from a reliable source and install it via adb. You might also need to make sure that the TTS Engine is selected in the device settings.
