@@ -36,7 +36,7 @@ The graphics fetched in classroom mode (i.e. graphics published either from [Tac
 To include this library, download [svg_from_different_sources_sample.zip](https://scand.com/download/products/SVGkitAndroid/svg_from_different_sources_sample.zip) from the library's website.
 Extract the zip file and copy file `libsvg.aar` from `svg_from_different_sources_sample/app/libs` to `IMAGE-Monarch/app/libs`
 
-3. Connect the device to your system and Run 'app' from Android Studio (tested with Android Studio Electric Eel | 2022.1.1 Patch 2 and gradle-7.4 on Windows 11 10.0)
+3. Connect the device to your system and Run 'app' from Android Studio (tested with Android Studio Electric Eel | 2022.1.1 Patch 2 and gradle-7.4 on Windows 11 10.0). The project is also compatible with Android Studio Quail 2. When upgrading, install Android Studio in a clean directory or remove the previous version and clear Android Studio caches to avoid conflicts. Update the Gradle JDK setting to JDK 17 (File → Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JDK) since the project uses Gradle 7.4.
 
 **NOTE:**
 You will also need to do some (or all) of the following (especially for a Monarch on which this application has never been installed before):
