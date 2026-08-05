@@ -51,6 +51,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import androidx.lifecycle.MutableLiveData;
 
+import com.humanware.keysoftsdk.ui.menu.AccessibleListView;
+import com.humanware.keysoftsdk.ui.menu.accessibleitem.AccessibleItem;
+import com.humanware.keysoftsdk.ui.menu.accessibleitem.attributes.AccessibleItemAttributes;
+
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
 import ca.mcgill.a11y.image.PollingService;
@@ -64,55 +68,62 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
 
     @SuppressLint("WrongConstant")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_classroom_selector);
+        //setContentView(R.layout.activity_classroom_selector);
 
 
         channelSubscribed = getApplicationContext().getString(R.string.share_code);
 
         // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
-
-        ((Button) findViewById(R.id.exploration_mode)).setOnKeyListener(btnListener);
-        ((Button) findViewById(R.id.exploration_mode)).setOnFocusChangeListener(focusListener);
-        ((Button) findViewById(R.id.guidance_mode)).setOnKeyListener(btnListener);
-        ((Button) findViewById(R.id.guidance_mode)).setOnFocusChangeListener(focusListener);
     }
 
+    @Override
+    public AccessibleListView.Sort initialize() {
+        listview = inflateSettingItemLayout();
+        return AccessibleListView.Sort.BY_POSITION;
+    }
 
-    private View.OnFocusChangeListener focusListener = new View.OnFocusChangeListener(){
-        @Override
-        public void onFocusChange(View view, boolean b) {
-            switch (view.getId()){
-                case R.id.exploration_mode:
-                    speaker(getResources().getString(R.string.exploration_mode), TextToSpeech.QUEUE_FLUSH);
+    private AccessibleListView inflateSettingItemLayout() {
+        AccessibleListView listView = findViewById(com.humanware.keysoftsdk.R.id.settings_listview);
+        listView.setNext(makeAccessibleItem(R.string.exploration_mode));
+        listView.setNext(makeAccessibleItem(R.string.guidance_mode));
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            Class<?> targetActivity;
+
+            switch (position) {
+                case 0:
+                    targetActivity = Exploration.class;
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_exploration_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
-                case R.id.guidance_mode:
-                    speaker(getResources().getString(R.string.guidance_mode), TextToSpeech.QUEUE_FLUSH);
+                case 1:
+                    targetActivity = Guidance.class;
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_guidance_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
+                default:
+                    throw new UnsupportedOperationException();
             }
-        }
-    };
-    private View.OnKeyListener btnListener = new View.OnKeyListener() {
-        @Override
-        public boolean onKey(View view, int i, KeyEvent keyEvent) {
-            if (keyEvent.getKeyCode()== DataAndMethods.confirmButton &&
-                    keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                Intent myIntent = null;
-                if ((findViewById(R.id.exploration_mode)).hasFocus()){
-                    myIntent = new Intent(getApplicationContext(), Exploration.class);
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_exploration_mode), TextToSpeech.QUEUE_FLUSH);
-                }
-                else if ((findViewById(R.id.guidance_mode)).hasFocus()){
-                    myIntent = new Intent(getApplicationContext(), Guidance.class);
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_guidance_mode), TextToSpeech.QUEUE_FLUSH);
-                }
-                //Code snippet 3
-                myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                getApplicationContext().startActivity(myIntent);
-            }
-            return false;
-        }};
+            Intent myIntent = new Intent(this, targetActivity);
+            //Code snippet 3
+            myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(myIntent);
+        });
+
+        return listView;
+    }
+
+    private AccessibleItem makeAccessibleItem(
+            int labelNameId
+    ) {
+        return new AccessibleItem(
+                new AccessibleItemAttributes(
+                        getResources().getString(labelNameId),
+                        com.humanware.keysoftsdk.R.layout.one_textview,
+                        com.humanware.keysoftsdk.R.id.textview
+                )
+        );
+    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -149,14 +160,14 @@ public class ClassroomSelector extends BaseActivity implements MediaPlayer.OnCom
 
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Timber.d("ACTIVITY: "+ "Classroom Selector Resumed");
-        DataAndMethods.speaker(getResources().getString(R.string.res_classroom_selector), TextToSpeech.QUEUE_FLUSH);
+        //DataAndMethods.speaker(getResources().getString(R.string.res_classroom_selector), TextToSpeech.QUEUE_FLUSH);
         //startService(new Intent(getApplicationContext(), PollingService.class));
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "Exploration Paused");
         //stopService(new Intent(getApplicationContext(), PollingService.class));
         super.onPause();

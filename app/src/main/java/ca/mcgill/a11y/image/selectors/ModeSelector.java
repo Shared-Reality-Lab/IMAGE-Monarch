@@ -23,10 +23,8 @@ import static ca.mcgill.a11y.image.DataAndMethods.update;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.media.MediaPlayer;
-import android.os.BrailleDisplay;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,84 +34,66 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 import androidx.core.view.GestureDetectorCompat;
 
-import java.util.Locale;
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+import com.humanware.keysoftsdk.ui.menu.AccessibleListView;
+import com.humanware.keysoftsdk.ui.menu.accessibleitem.AccessibleItem;
+import com.humanware.keysoftsdk.ui.menu.accessibleitem.attributes.AccessibleItemAttributes;
 
 import ca.mcgill.a11y.image.BaseActivity;
 import ca.mcgill.a11y.image.DataAndMethods;
-import ca.mcgill.a11y.image.renderers.Exploration;
 import ca.mcgill.a11y.image.R;
 import timber.log.Timber;
 
 // Launcher activity; switches mode of application
 public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompletionListener {
-    private BrailleDisplay brailleServiceObj = null;
-    private GestureDetectorCompat mDetector;
 
-
-    @SuppressLint("WrongConstant")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_mode_selector);
-
-        brailleServiceObj = DataAndMethods.brailleServiceObj;
-        // DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content));
-
-        ((Button) findViewById(R.id.classroom_mode)).setOnKeyListener(btnListener);
-        ((Button) findViewById(R.id.classroom_mode)).setOnFocusChangeListener(focusListener);
-        ((Button) findViewById(R.id.photo_mode)).setOnKeyListener(btnListener);
-        ((Button) findViewById(R.id.photo_mode)).setOnFocusChangeListener(focusListener);
-        ((Button) findViewById(R.id.map_mode)).setOnKeyListener(btnListener);
-        ((Button) findViewById(R.id.map_mode)).setOnFocusChangeListener(focusListener);
-        // Code snippet 1
-        
+    public AccessibleListView.Sort initialize() {
+        listview = inflateSettingItemLayout();
+        return AccessibleListView.Sort.BY_POSITION;
     }
 
-    private View.OnFocusChangeListener focusListener = new View.OnFocusChangeListener(){
-        @Override
-        public void onFocusChange(View view, boolean b) {
-            switch (view.getId()){
-                case R.id.classroom_mode:
-                    speaker(getResources().getString(R.string.classroom_mode),TextToSpeech.QUEUE_FLUSH);
+    private AccessibleListView inflateSettingItemLayout() {
+        AccessibleListView listView = findViewById(com.humanware.keysoftsdk.R.id.settings_listview);
+        listView.setNext(makeAccessibleItem(R.string.classroom_mode));
+        listView.setNext(makeAccessibleItem(R.string.photo_mode));
+        listView.setNext(makeAccessibleItem(R.string.map_mode));
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            Class<?> targetActivity;
+            switch (position) {
+                case 0:
+                    targetActivity = ClassroomSelector.class;
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_classroom_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
-                case R.id.photo_mode:
-                    speaker(getResources().getString(R.string.photo_mode), TextToSpeech.QUEUE_FLUSH);
+                case 1:
+                    targetActivity = PhotoSelector.class;
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_photo_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
-                case R.id.map_mode:
-                    speaker(getResources().getString(R.string.map_mode), TextToSpeech.QUEUE_FLUSH);
+                case 2:
+                    targetActivity = MapSelector.class;
+                    //DataAndMethods.speaker(getResources().getString(R.string.swi_map_mode), TextToSpeech.QUEUE_FLUSH);
                     break;
-                // Code snippet 2
+                default:
+                    throw new UnsupportedOperationException();
             }
-        }
-    };
-    private View.OnKeyListener btnListener = new View.OnKeyListener() {
-        @Override
-        public boolean onKey(View view, int i, KeyEvent keyEvent) {
-            if (keyEvent.getKeyCode()== DataAndMethods.confirmButton &&
-                    keyEvent.getAction()== KeyEvent.ACTION_DOWN){
-                Intent myIntent = null;
-                if ((findViewById(R.id.classroom_mode)).hasFocus()){
-                    myIntent = new Intent(getApplicationContext(), ClassroomSelector.class);
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_classroom_mode), TextToSpeech.QUEUE_FLUSH);
-                }
-                else if ((findViewById(R.id.photo_mode)).hasFocus()){
-                    myIntent = new Intent(getApplicationContext(), PhotoSelector.class);
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_photo_mode), TextToSpeech.QUEUE_FLUSH);
+            startActivity(new Intent(this, targetActivity));
+        });
 
-                }
-                else if ((findViewById(R.id.map_mode)).hasFocus()){
-                    myIntent = new Intent(getApplicationContext(), MapSelector.class);
-                    DataAndMethods.speaker(getResources().getString(R.string.swi_map_mode), TextToSpeech.QUEUE_FLUSH);
-                }
-                //Code snippet 3
-                myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                getApplicationContext().startActivity(myIntent);
-            }
-            return false;
-        }};
+        return listView;
+    }
 
-
-
+    private AccessibleItem makeAccessibleItem(
+            int labelNameId
+    ) {
+        return new AccessibleItem(
+                new AccessibleItemAttributes(
+                        getResources().getString(labelNameId),
+                        com.humanware.keysoftsdk.R.layout.one_textview,
+                        com.humanware.keysoftsdk.R.id.textview
+                )
+        );
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event){
@@ -127,15 +107,15 @@ public class ModeSelector extends BaseActivity implements MediaPlayer.OnCompleti
 
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Timber.d("ACTIVITY: "+ "ModeSelector Resumed");
-        DataAndMethods.speaker(getResources().getString(R.string.res_mode_selector), TextToSpeech.QUEUE_FLUSH);
+        //DataAndMethods.speaker(getResources().getString(R.string.res_mode_selector), TextToSpeech.QUEUE_FLUSH);
         DataAndMethods.image = null;
         update.setValue(false);
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "ModeSelector Paused");
         super.onPause();
     }

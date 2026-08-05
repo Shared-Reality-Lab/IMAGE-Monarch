@@ -36,6 +36,8 @@ import android.view.MotionEvent;
 import androidx.core.view.GestureDetectorCompat;
 import androidx.lifecycle.Observer;
 
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+
 import org.json.JSONException;
 import org.xml.sax.SAXException;
 
@@ -53,12 +55,12 @@ import ca.mcgill.a11y.image.R;
 import timber.log.Timber;
 
 public class Guidance extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener {
-    private BrailleDisplay brailleServiceObj = null;
+    private SelfBraillingManager brailleServiceObj = null;
     private GestureDetectorCompat mDetector;
 
     @SuppressLint("WrongConstant")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_main);
@@ -201,9 +203,9 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
         // Log.d("GESTURE!", "onDoubleTap: " + event.toString());
         try {
             if (!DataAndMethods.showAll)
-                brailleServiceObj.display(DataAndMethods.displayTargetLayer(DataAndMethods.getfreshDoc()));
+                brailleServiceObj.displayDots(DataAndMethods.displayTargetLayer(DataAndMethods.getfreshDoc()));
             else {
-                brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), true));
+                brailleServiceObj.displayDots(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), true));
                 DataAndMethods.showAll = !DataAndMethods.showAll;
             }
             //DataAndMethods.showAll = !DataAndMethods.showAll;
@@ -233,7 +235,7 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Timber.d("ACTIVITY: "+ "Guidance Resumed");
         DataAndMethods.speaker(getString(R.string.guidance_mode), TextToSpeech.QUEUE_FLUSH);
         startService(new Intent(getApplicationContext(), PollingService.class));
@@ -251,14 +253,14 @@ public class Guidance extends BaseActivity implements GestureDetector.OnGestureL
 
             return false;
         };
-        brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "Guidance Paused");
         stopService(new Intent(getApplicationContext(), PollingService.class));
-        brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }
 

@@ -62,6 +62,10 @@ import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.core.view.GestureDetectorCompat;
 
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+import com.humanware.keysoftsdk.ui.menu.AbstractMenuActivity;
+import com.humanware.keysoftsdk.ui.menu.AccessibleListView;
+
 import org.json.JSONException;
 import org.xml.sax.SAXException;
 
@@ -78,11 +82,11 @@ import javax.xml.xpath.XPathExpressionException;
 import timber.log.Timber;
 
 // Base activity which is extended by all other activities. Implements functionality common to all/most activities
-public class BaseActivity extends AppCompatActivity {
-    static BrailleDisplay brailleServiceObj = null;
+public class BaseActivity extends AbstractMenuActivity {
+    private SelfBraillingManager brailleServiceObj = null;
     @SuppressLint("WrongConstant")
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         /*Configuration newConfig = new Configuration();
@@ -92,13 +96,14 @@ public class BaseActivity extends AppCompatActivity {
         AppCompatDelegate.setApplicationLocales(appLocale);
 
         // View Actions
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
         if(ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
             checkPermission();
         }
 
         if (DataAndMethods.brailleServiceObj==null) {
-            brailleServiceObj = (BrailleDisplay) getSystemService(BrailleDisplay.BRAILLE_DISPLAY_SERVICE);
+            brailleServiceObj = new SelfBraillingManager(this);
+            brailleServiceObj.bindService(); // TODO: You may need to put this in onResume instead. Usually we bind service in onResume but I'm unsure of the workflow of your app so I put it here for now.
             DataAndMethods.initialize(brailleServiceObj, getApplicationContext(), findViewById(android.R.id.content), getResources());
         }
         else{
@@ -117,6 +122,17 @@ public class BaseActivity extends AppCompatActivity {
         this.getOnBackPressedDispatcher().addCallback(onBackPressedCallback);*/
 
     }
+
+    @Override
+    public int getTitleId() {
+        return R.string.app_name;
+    }
+
+    @Override
+    public AccessibleListView.Sort initialize() { // TODO: Remove
+        return null;
+    }
+
     // check permissions required for voice recognition
     private void checkPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -125,7 +141,9 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
+        brailleServiceObj.unbindService();
+        brailleServiceObj = null;
         super.onDestroy();
     }
 
@@ -195,7 +213,7 @@ public class BaseActivity extends AppCompatActivity {
     }
   
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
     }
 

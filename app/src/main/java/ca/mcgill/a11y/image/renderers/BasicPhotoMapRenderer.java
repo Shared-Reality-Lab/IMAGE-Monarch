@@ -34,6 +34,9 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+
 import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -49,12 +52,12 @@ import timber.log.Timber;
 // renders graphic currently stored in string 'image'
 public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MediaPlayer.OnCompletionListener  {
 
-    private BrailleDisplay brailleServiceObj = null;
+    private SelfBraillingManager brailleServiceObj = null;
 
     private GestureDetectorCompat mDetector;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_basic_photo_renderer);
         brailleServiceObj = DataAndMethods.brailleServiceObj;
@@ -204,7 +207,7 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         Timber.d("ACTIVITY: "+ "Exploration Resumed");
 
         DataAndMethods.displayGraphic(DataAndMethods.confirmButton, "Exploration", silentStart);
@@ -224,13 +227,13 @@ public class BasicPhotoMapRenderer extends BaseActivity implements GestureDetect
 
             return false;
         };
-        brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.registerMotionEventHandler(DataAndMethods.handler);
         super.onResume();
     }
     @Override
-    protected void onPause() {
+    public void onPause() {
         Timber.d("ACTIVITY: "+ "BasicPhotoMapRenderer Paused");
-        brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
+        //brailleServiceObj.unregisterMotionEventHandler(DataAndMethods.handler);
         super.onPause();
     }
 }

@@ -10,10 +10,33 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url gitlab_maven_repo_url
+            credentials(HttpHeaderCredentials) {
+                name = "Deploy-Token"
+                value = tokenFromKeystore("gitlab_maven_repo_deployToken")
+            }
+            authentication {
+                header(HttpHeaderAuthentication)
+            }
+        }
     }
 }
 
+def tokenFromKeystore(String propertyKey) {
+    def token = ""
+    def keystorePropertyFile = file("keystore.properties")
 
+    if (keystorePropertyFile.exists()) {
+        def keystoreProperties = new Properties()
+        keystoreProperties.load(keystorePropertyFile.newDataInputStream())
+        if (keystoreProperties.containsKey(propertyKey)) {
+            token = keystoreProperties.getProperty(propertyKey)
+        }
+    }
+
+    return token
+}
 
 
 rootProject.name = "IMAGE-Monarch"

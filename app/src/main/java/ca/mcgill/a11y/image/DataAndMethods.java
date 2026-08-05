@@ -56,6 +56,9 @@ import androidx.lifecycle.MutableLiveData;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.humanware.keysoftsdk.selfbrailling.SelfBraillingManager;
+import com.humanware.keysoftsdk.selfbrailling.aidl.DotsMatrix;
+import com.humanware.keysoftsdk.selfbrailling.widget.SelfBraillingWidget;
 import com.scand.svg.SVGHelper;
 
 import org.json.JSONArray;
@@ -158,7 +161,7 @@ public class DataAndMethods {
 
     // showing/hiding non-target elements in guidance mode
     public static boolean showAll = false;
-    public static BrailleDisplay brailleServiceObj = null;
+    public static SelfBraillingManager brailleServiceObj = null;
     public static BrailleDisplay.MotionEventHandler handler;
     // keep track of current request to server
     private static Call<ResponseFormat> ongoingCall;
@@ -186,6 +189,7 @@ public class DataAndMethods {
     public static String tempImage = "";
     public static String forceSpeak = null;
     public static Boolean silentStart = false;
+    public static byte[][] brailleScreen = null;
     // mapping of keyCodes
     public static Map<Integer, String> keyMapping = new HashMap<Integer, String>() {{
         put(421, "UP");
@@ -207,65 +211,24 @@ public class DataAndMethods {
     public static Intent speechRecognizerIntent;
     public static Resources res;
     // initializes the Braille display, TTS and other common components in newly created activity
-    public static void initialize(BrailleDisplay brailleServiceObj, Context context, View view, Resources res) {
+    public static void initialize(SelfBraillingManager brailleServiceObj, Context context, View view, Resources res) {
         DataAndMethods.brailleServiceObj = brailleServiceObj;
         DataAndMethods.context = context;
         DataAndMethods.view = view;
         DataAndMethods.res = res;
 
         // sets array with dimensions of pin array to 0s; used to refresh the pins when required
-        data = new byte[brailleServiceObj.getDotLineCount()][];
+        data = new byte[SelfBraillingWidget.MAXIMUM_HEIGHT][];
         for (int i = 0; i < data.length; ++i) {
-            data[i] = new byte[brailleServiceObj.getDotPerLineCount()];
+            data[i] = new byte[SelfBraillingWidget.MAXIMUM_WIDTH];
             Arrays.fill(data[i], (byte) 0x00);
         }
 
         // empty string array to be populated with descriptions when the layer is loaded
         tags = new ArrayList<>();
-        tags.add(new String[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
-        tags.add(new String[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()]);
+        tags.add(new String[SelfBraillingWidget.MAXIMUM_HEIGHT][SelfBraillingWidget.MAXIMUM_WIDTH]);
+        tags.add(new String[SelfBraillingWidget.MAXIMUM_HEIGHT][SelfBraillingWidget.MAXIMUM_WIDTH]);
 
-        // only initialize tts if it is not already set up; otherwise this takes too long
-        if (tts == null) {
-            tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
-
-                @Override
-                public void onInit(int status) {
-
-                    if (status != TextToSpeech.SUCCESS) {
-                        Timber.e("error: "+ "Initialization Failed!" + status);
-                    } else {
-                        tts.setLanguage(Locale.forLanguageTag(res.getString(R.string.locale)));
-                        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                            @Override
-                            public void onStart(String s) {
-                                if (s.equals("forceSpeak")) {
-                                    forceSpeak = null;
-                                }
-                            }
-
-                            @Override
-                            public void onDone(String s) {
-                                //Log.d("CHECKING!", s);
-                                // plays ping when TTS readout is completed based on utteranceId
-                                if (s.equals("ping")) {
-                                    pingsPlayer(R.raw.blip);
-                                }
-                                if (forceSpeak!= null){
-                                    speaker(forceSpeak, TextToSpeech.QUEUE_FLUSH, "forceSpeak");
-                                    //forceSpeak = null;
-                                }
-                            }
-
-                            @Override
-                            public void onError(String s) {
-
-                            }
-                        });
-                    }
-                }
-            }, "com.google.android.tts");
-        }
         if (speechRecognizer == null) {
             // Voice Command Recognition Stuff
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(DataAndMethods.context);
@@ -376,8 +339,14 @@ public class DataAndMethods {
         }
     }
 
+    private static void displayDots(byte[][] matrix) {
+        brailleServiceObj.displayDots(new DotsMatrix(matrix));
+        brailleScreen = matrix;
+    }
+
     //check mode and display appropriate layer
     public static void displayGraphic(int keyCode, String mode, Boolean silentStart){
+        Log.d("REFRESH", "displayGraphic!");
         try{if (mode=="Exploration"){
 
             DataAndMethods.ttsEnabled=true;
@@ -387,8 +356,8 @@ public class DataAndMethods {
             else{
                 -- DataAndMethods.presentLayer;
             }
-            brailleServiceObj.display(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, !silentStart));
-
+            displayDots(DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, !silentStart));
+            Log.d("REFRESH", "REFRESHING!");
 
 
         } else if (mode=="Guidance"){
@@ -399,7 +368,8 @@ public class DataAndMethods {
             else{
                 -- DataAndMethods.presentTarget;
             }
-            brailleServiceObj.display(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), !silentStart));
+            displayDots(DataAndMethods.getGuidanceBitmaps(DataAndMethods.getfreshDoc(), !silentStart));
+
         }}
         catch(IOException | SAXException | ParserConfigurationException | XPathExpressionException e) {
             Timber.e(e, "EXCEPTION");
@@ -543,9 +513,9 @@ public class DataAndMethods {
         });
 
         // reshape byte array into 2D array to match pin array dimensions
-        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
+        byte[][] dataRead = new byte[SelfBraillingWidget.MAXIMUM_HEIGHT][SelfBraillingWidget.MAXIMUM_WIDTH];
         for (int i = 0; i < data.length; ++i) {
-            dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+            dataRead[i]= Arrays.copyOfRange(byteArray, i*SelfBraillingWidget.MAXIMUM_WIDTH, (i+1)*SelfBraillingWidget.MAXIMUM_WIDTH);
         }
         return dataRead;
     }
@@ -608,9 +578,9 @@ public class DataAndMethods {
         for (int i = 0; i < mask.length; i++) {
             byteArray[i] = (byte) (mask[i] * target[i]);
         }
-        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
+        byte[][] dataRead = new byte[SelfBraillingWidget.MAXIMUM_HEIGHT][SelfBraillingWidget.MAXIMUM_WIDTH];
         for (int i = 0; i < data.length; ++i) {
-            dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+            dataRead[i]= Arrays.copyOfRange(byteArray, i*SelfBraillingWidget.MAXIMUM_WIDTH, (i+1)*SelfBraillingWidget.MAXIMUM_WIDTH);
         }
 
         return dataRead;
@@ -623,9 +593,9 @@ public class DataAndMethods {
         // query elements that are in the present layer AND have element level descriptions (NOT layer level descriptions)
         // Assuming that only elements with short description can have a long description here. Is this assumption safe?!
         NodeList nodeslist=(NodeList)xPath.evaluate("//*[not(ancestor-or-self::*[@display = 'none']) and not(descendant::*[@display = 'none']) and (not(self::*[@data-image-layer]) or not(child::*))  and ((self::*[@aria-labelledby] or self::*[@aria-label]) or parent::*[@data-image-layer])]", doc, XPathConstants.NODESET);        // temporary var for objects tags
-        String[] layerTags=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
+        String[] layerTags=new String[SelfBraillingWidget.MAXIMUM_WIDTH*SelfBraillingWidget.MAXIMUM_HEIGHT];
         // temporary var for objects long descriptions
-        String[] layerDesc=new String[brailleServiceObj.getDotPerLineCount()*brailleServiceObj.getDotLineCount()];
+        String[] layerDesc=new String[SelfBraillingWidget.MAXIMUM_WIDTH*SelfBraillingWidget.MAXIMUM_HEIGHT];
         //Log.d("GETTING TAGS", String.valueOf(nodeslist.getLength()));
         // initially hiding all elements filtered in the previous stage
         for(int i = 0 ; i < nodeslist.getLength() ; i ++) {
@@ -688,8 +658,8 @@ public class DataAndMethods {
 
         // converting string array into 2D array that maps to the pins
         for (int i = 0; i < data.length; ++i) {
-            tags.get(0)[i]=Arrays.copyOfRange(layerTags, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
-            tags.get(1)[i]=Arrays.copyOfRange(layerDesc, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+            tags.get(0)[i]=Arrays.copyOfRange(layerTags, i*SelfBraillingWidget.MAXIMUM_WIDTH, (i+1)*SelfBraillingWidget.MAXIMUM_WIDTH);
+            tags.get(1)[i]=Arrays.copyOfRange(layerDesc, i*SelfBraillingWidget.MAXIMUM_WIDTH, (i+1)*SelfBraillingWidget.MAXIMUM_WIDTH);
         }
         return;
     }
@@ -699,13 +669,13 @@ public class DataAndMethods {
         String img= getStringFromDocument(doc).replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?> ", "");
         //Log.d("SVG",img);
         //Log.d("DIMS", dims[0]+","+ dims[1]+","+dims[2]+","+dims[3]);
-        Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(brailleServiceObj.getDotPerLineCount(), brailleServiceObj.getDotLineCount()).getBitmap();
+        Bitmap svg = SVGHelper.noContext().open(img).setRequestBounds(SelfBraillingWidget.MAXIMUM_WIDTH, SelfBraillingWidget.MAXIMUM_HEIGHT).getBitmap();
         int x = svg.getWidth();
         int y = svg.getHeight();
         //Log.d("SVG",x+", "+ y);
         // padding bitmap to fit to pin array size
-        Bitmap svgScaled=padBitmap(svg, (brailleServiceObj.getDotPerLineCount()-x>0)?(brailleServiceObj.getDotPerLineCount()-x):0,
-                (brailleServiceObj.getDotLineCount()-y)>0?(brailleServiceObj.getDotLineCount()-y):0);
+        Bitmap svgScaled=padBitmap(svg, (SelfBraillingWidget.MAXIMUM_WIDTH-x>0)?(SelfBraillingWidget.MAXIMUM_WIDTH-x):0,
+                (SelfBraillingWidget.MAXIMUM_HEIGHT-y)>0?(SelfBraillingWidget.MAXIMUM_HEIGHT-y):0);
         svg.recycle();
         // extracting only the alpha value of bitmap to convert it into a byte array
         Bitmap alphas=svgScaled.extractAlpha();
@@ -1118,20 +1088,20 @@ public class DataAndMethods {
         //Log.d("NEWDOC", width+", "+height);
         float x=0 ,y=0;
         float[] translations = new float[]{0 , 0};
-        if (width/height > (float) brailleServiceObj.getDotPerLineCount()/ (float) brailleServiceObj.getDotLineCount()) {
+        if (width/height > (float) SelfBraillingWidget.MAXIMUM_WIDTH/ (float) SelfBraillingWidget.MAXIMUM_HEIGHT) {
             //padding along height
             x = width;
-            y = width * brailleServiceObj.getDotLineCount()/brailleServiceObj.getDotPerLineCount();
+            y = width * SelfBraillingWidget.MAXIMUM_HEIGHT/SelfBraillingWidget.MAXIMUM_WIDTH;
             translations[1] = (y - height)/2;
         }
         else {
             //padding along width
             y = height;
-            x= height * brailleServiceObj.getDotPerLineCount()/brailleServiceObj.getDotLineCount();
+            x= height * SelfBraillingWidget.MAXIMUM_WIDTH/SelfBraillingWidget.MAXIMUM_HEIGHT;
             translations[0] = (x- width)/2;
         }
         //Log.d("DIMS", width+ ", "+ height+ ";"+ x+ ", "+ y);
-        if((width/height- (float)brailleServiceObj.getDotPerLineCount()/ (float)brailleServiceObj.getDotLineCount())<0.01){
+        if((width/height- (float)SelfBraillingWidget.MAXIMUM_WIDTH/ (float)SelfBraillingWidget.MAXIMUM_HEIGHT)<0.01){
             node.setAttribute("width", String.valueOf(x));
             node.setAttribute("height", String.valueOf(y));
             NodeList nodeslist = (NodeList)xPath.evaluate("//*[self::*[@data-image-layer] and not(ancestor::metadata)]", doc, XPathConstants.NODESET);
@@ -1185,8 +1155,8 @@ public class DataAndMethods {
         float yMax=1080;
         double epsilon= 0.000001;
         // Calculating pin based on position
-        int pinX= (int) (Math.ceil((x-xMin+epsilon)/((xMax-xMin)/brailleServiceObj.getDotPerLineCount()))-1);
-        int pinY= (int) Math.ceil((y-yMin+epsilon)/((yMax-yMin)/brailleServiceObj.getDotLineCount()))-1;
+        int pinX= (int) (Math.ceil((x-xMin+epsilon)/((xMax-xMin)/SelfBraillingWidget.MAXIMUM_WIDTH))-1);
+        int pinY= (int) Math.ceil((y-yMin+epsilon)/((yMax-yMin)/SelfBraillingWidget.MAXIMUM_HEIGHT))-1;
         return new Integer[] {pinX, pinY};
     }
 
@@ -1204,9 +1174,9 @@ public class DataAndMethods {
             zoomVal+= 25;
             node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
             if (mode.equals("Exploration"))
-                brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+                displayDots(getBitmaps(doc, presentLayer, false));
             else if (mode.equals("Guidance"))
-                brailleServiceObj.display(getGuidanceBitmaps(doc, false));
+                displayDots(getGuidanceBitmaps(doc, false));
         }
         else{
             if (zoomVal <= 100){
@@ -1217,13 +1187,13 @@ public class DataAndMethods {
                 if (zoomVal < 100) zoomVal = 100;
                 node.setAttribute("viewBox", zoomer(width, height, zoomVal, pins));
                 if (mode.equals("Exploration"))
-                    brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+                    displayDots(getBitmaps(doc, presentLayer, false));
                 else if (mode.equals("Guidance")) {
                     if (showAll){
-                        brailleServiceObj.display(DataAndMethods.displayTargetLayer(doc));
+                        displayDots(DataAndMethods.displayTargetLayer(doc));
                     }
                     else {
-                        brailleServiceObj.display(getGuidanceBitmaps(doc, false));
+                        displayDots(getGuidanceBitmaps(doc, false));
                     }
                 }
             }
@@ -1243,10 +1213,10 @@ public class DataAndMethods {
         //int bufferPins;
 
 
-        scalingFactor= brailleServiceObj.getDotPerLineCount()/widthNew;
+        scalingFactor= SelfBraillingWidget.MAXIMUM_WIDTH/widthNew;
         //Log.d("SCALE", String.valueOf(scalingFactor));
         press[0] = (pins[0]/scalingFactor) + dims[0];
-        scalingFactor = brailleServiceObj.getDotLineCount()/heightNew;
+        scalingFactor = SelfBraillingWidget.MAXIMUM_HEIGHT/heightNew;
         press[1] = (pins[1]/scalingFactor) + dims[1];
 
         //Log.d("PINS", pins[0]+", "+pins[1]);
@@ -1256,10 +1226,10 @@ public class DataAndMethods {
 
         //Log.d("SCALE", zoomWidth+","+zoomHeight);
         // zoom while keeping the portion of the image at the point of press at the same pins post zoom
-        scalingFactor = zoomWidth/brailleServiceObj.getDotPerLineCount();
+        scalingFactor = zoomWidth/SelfBraillingWidget.MAXIMUM_WIDTH;
         dims[0] = press[0] - (scalingFactor * (pins[0]));
         dims[2] = dims[0] + zoomWidth;
-        scalingFactor = zoomHeight / brailleServiceObj.getDotLineCount();
+        scalingFactor = zoomHeight / SelfBraillingWidget.MAXIMUM_HEIGHT;
         dims [1] = press[1] - (scalingFactor * (pins[1]));
         dims[3] = dims[1] + zoomHeight;
         //Log.d("NEW DIMS", dims[0]+","+dims[1]+","+dims[2]+","+dims[3]);
@@ -1351,20 +1321,20 @@ public class DataAndMethods {
         node.setAttribute("viewBox", zoomBox);
         //Log.d("PAN", zoomBox);
         if (className.equals("renderers.Exploration") || className.equals("renderers.BasicPhotoMapRenderer"))
-            brailleServiceObj.display(getBitmaps(doc, presentLayer, false));
+            displayDots(getBitmaps(doc, presentLayer, false));
         if (className.equals("renderers.Guidance")){
             if (showAll){
-                brailleServiceObj.display(DataAndMethods.displayTargetLayer(doc));
+                displayDots(DataAndMethods.displayTargetLayer(doc));
             }
             else {
-                brailleServiceObj.display(getGuidanceBitmaps(doc, false));
+                displayDots(getGuidanceBitmaps(doc, false));
             }
         }
     }
 
     // TTS speaker. Probably needs a little more work on flushing and/or selecting whether to continue playing
     public static void speaker(String text, int queue, String... utterId){
-        tts.speak (text, queue, null, utterId.length > 0 ? utterId[0]  : "000000");
+        brailleServiceObj.announceText(text); // TODO: QUEUE MODE IS FORCED TO QUEUE_INTERRUPT in announceText method. We (Humanware) will need to add functionality to select queue mode in future SDK version.
         return;
     }
 
@@ -1407,9 +1377,9 @@ public class DataAndMethods {
             }
         });
 
-        byte[][] dataRead = new byte[brailleServiceObj.getDotLineCount()][brailleServiceObj.getDotPerLineCount()];
+        byte[][] dataRead = new byte[SelfBraillingWidget.MAXIMUM_HEIGHT][SelfBraillingWidget.MAXIMUM_WIDTH];
         for (int i = 0; i < data.length; ++i) {
-            dataRead[i]= Arrays.copyOfRange(byteArray, i*brailleServiceObj.getDotPerLineCount(), (i+1)*brailleServiceObj.getDotPerLineCount());
+            dataRead[i]= Arrays.copyOfRange(byteArray, i*SelfBraillingWidget.MAXIMUM_WIDTH, (i+1)*SelfBraillingWidget.MAXIMUM_WIDTH);
         }
         return dataRead;
     }
@@ -1426,15 +1396,15 @@ public class DataAndMethods {
     // show ROI selected
     public static void showRegion(Integer[] region) throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
         byte[][] data = DataAndMethods.getBitmaps(DataAndMethods.getfreshDoc(), DataAndMethods.presentLayer, false);
-        byte[][] selection = new byte[brailleServiceObj.getDotLineCount()][];
+        byte[][] selection = new byte[SelfBraillingWidget.MAXIMUM_HEIGHT][];
         //Log.d("DATA", String.valueOf(data[0].length));
         for (int i = 0; i < selection.length; ++i) {
-            selection[i] = new byte[brailleServiceObj.getDotPerLineCount()];
+            selection[i] = new byte[SelfBraillingWidget.MAXIMUM_WIDTH];
             if (i>=region[1] && i<=region[3]) {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
                 outputStream.write( Arrays.copyOfRange(DataAndMethods.data[i], 0 ,region[0] ));
                 outputStream.write( Arrays.copyOfRange(data[i], region[0] ,region[2]+1 ) );
-                outputStream.write( Arrays.copyOfRange(DataAndMethods.data[i], region[2]+1 ,brailleServiceObj.getDotPerLineCount() ));
+                outputStream.write( Arrays.copyOfRange(DataAndMethods.data[i], region[2]+1 ,SelfBraillingWidget.MAXIMUM_WIDTH ));
                 selection[i]= outputStream.toByteArray( );
             }
             else{
@@ -1442,7 +1412,7 @@ public class DataAndMethods {
                 Arrays.fill(selection[i], (byte) 0x00);
             }
         }
-        brailleServiceObj.display(selection);
+        displayDots(selection);
     }
     // make follow up query to server
     public static void sendFollowUpQuery(String query, Integer[] region) throws JSONException, IOException {
@@ -1455,8 +1425,8 @@ public class DataAndMethods {
         if (region!=null){
             focus= new Float[]{0f, 0f, 0f, 0f};
             Float[] currentDims = Arrays.stream(zoomBox.split(" ", -1)).map(Float::valueOf).toArray(Float[]::new);
-            Float xPerDot = currentDims[2]/ DataAndMethods.brailleServiceObj.getDotPerLineCount();
-            Float yPerDot = currentDims[3]/ DataAndMethods.brailleServiceObj.getDotLineCount();
+            Float xPerDot = currentDims[2]/ SelfBraillingWidget.MAXIMUM_WIDTH;
+            Float yPerDot = currentDims[3]/ SelfBraillingWidget.MAXIMUM_HEIGHT;
             Float xShift = origRatioDims[0]==0f?0f:(origDims[2]-origRatioDims[0])/2;
             Float yShift = origRatioDims[1]==0f?0f:(origDims[3]-origRatioDims[1])/2;
 
